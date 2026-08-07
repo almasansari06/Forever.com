@@ -22,20 +22,24 @@ app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
 
-// Root Route (Isse / par 500 Error aana band ho jayega)
+// Root Route
 app.get('/', (req, res) => {
-    res.send("API Working");
+    res.send('API Working');
 });
 
-const startServer = async () => {
-    try {
-        await connectDB();
-        connectCloudinary();
-        app.listen(port, () => console.log('Server started on PORT : ' + port));
-    } catch (error) {
-        console.log('Failed to start server:', error.message);
+// Connect database and cloudinary once at startup
+try {
+    await connectDB();
+    connectCloudinary();
+} catch (error) {
+    console.error('Failed to initialize backend:', error.message);
+    if (!process.env.VERCEL) {
         process.exit(1);
     }
-};
+}
 
-startServer();
+if (!process.env.VERCEL) {
+    app.listen(port, () => console.log('Server started on PORT : ' + port));
+}
+
+export default app;
