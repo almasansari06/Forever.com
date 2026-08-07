@@ -21,7 +21,7 @@ const loginUser = async (req, res) => {
 
         // Check if user account is disabled
         if (user.status === 'disabled') {
-            return res.json({ success: false, message: "Aapka account admin dwara disable kar diya gaya hai. Kripya support se sampark karein." });
+            return res.json({ success: false, message: "Your account has been disabled by the administrator. Please contact support." });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);

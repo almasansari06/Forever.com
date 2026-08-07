@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: { type: String, default: "" },
-    address: { type: Object, default: {} },
+    address: { type: Object, default: { street: '', city: '', state: '', zipcode: '', country: '', line1: '', line2: '' } },
     gender: { type: String, default: "" },
     dob: { type: String, default: "" },
     cartData: { type: Object, default: {} },

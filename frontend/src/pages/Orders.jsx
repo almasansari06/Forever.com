@@ -90,7 +90,9 @@ const Orders = () => {
       </div>
 
       <div>
-        {
+        {orderData.length === 0 ? (
+          <div className='py-12 text-center text-gray-500'>No orders found yet. Place an order and it will appear here.</div>
+        ) : (
           orderData.map((item, index) => (
             <div key={index} className='py-4 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
               
@@ -102,7 +104,7 @@ const Orders = () => {
                   <div className='flex items-center gap-3 mt-1 text-base text-gray-700'>
                     <p>{currency}{item.price}</p>
                     <p>Quantity: {item.quantity}</p>
-                    <p>Size: {item.size} </p>
+                    <p>Size: {item.size}</p>
                   </div>
                   <p className='mt-1 text-xs text-gray-500'>
                     Date: <span className='text-gray-400'>{new Date(item.date).toDateString()}</span>
@@ -114,9 +116,7 @@ const Orders = () => {
               </div>
 
               {/* Status and Buttons Container */}
-              <div className='md:w-1/2 flex justify-between items-center gap-2'>
-                
-                {/* Order Status Indicator */}
+              <div className='md:w-1/2 flex flex-col gap-3 justify-between'>
                 <div className='flex items-center gap-2'>
                   <p className='min-w-2.5 h-2.5 rounded-full bg-green-500'></p>
                   <p className='text-sm md:text-base font-medium text-gray-700'>
@@ -124,16 +124,14 @@ const Orders = () => {
                   </p>
                 </div>
 
-                {/* Buttons Group */}
-                <div className='flex items-center gap-2'>
+                <div className='flex flex-wrap items-center gap-2'>
                   <button 
                     onClick={loadOrderData} 
                     className='border border-gray-300 px-4 py-2 text-sm font-medium rounded-sm hover:bg-gray-50 active:scale-95 transition-all cursor-pointer'
                   >
-                    Track Order
+                    Refresh
                   </button>
 
-                  {/* Red Cancel Order Button */}
                   <button
                     onClick={() => cancelOrderHandler(item.orderId)}
                     className='bg-red-600 text-white hover:bg-red-700 px-3 py-2 text-sm font-medium rounded-sm active:scale-95 transition-all cursor-pointer shadow-xs'
@@ -141,12 +139,11 @@ const Orders = () => {
                     Cancel Order
                   </button>
                 </div>
-
               </div>
 
             </div>
           ))
-        }
+        )}
       </div>
     </div>
   )

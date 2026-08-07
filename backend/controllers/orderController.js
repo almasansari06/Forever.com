@@ -210,7 +210,7 @@ const cancelOrder = async (req, res) => {
 // All Orders data for Admin Panel
 const allOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find({})
+        const orders = await orderModel.find({}).sort({ date: -1 })
         res.json({ success: true, orders })
 
     } catch (error) {
@@ -224,7 +224,7 @@ const userOrders = async (req, res) => {
     try {
         const { userId } = req.body
 
-        const orders = await orderModel.find({ userId })
+        const orders = await orderModel.find({ userId }).sort({ date: -1 })
         res.json({ success: true, orders })
 
     } catch (error) {

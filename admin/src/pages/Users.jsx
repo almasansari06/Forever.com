@@ -42,7 +42,7 @@ const Users = ({ token }) => {
   };
 
   const deleteUserHandler = async (userId) => {
-    if (!window.confirm("Delete this user permanently?")) return;
+    if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
     try {
       const response = await axios.post(
         backendUrl + '/api/user/delete-user',
@@ -50,11 +50,13 @@ const Users = ({ token }) => {
         { headers: { token } }
       );
       if (response.data.success) {
-        toast.success(response.data.message);
+        toast.success(response.data.message || 'User deleted successfully');
         fetchUsers();
+      } else {
+        toast.error(response.data.message || 'Failed to delete user');
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message || 'An error occurred');
     }
   };
 

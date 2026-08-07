@@ -38,8 +38,8 @@ const PlaceOrder = () => {
         headers: { token: activeToken }
       });
 
-      if (response.data.success && response.data.user) {
-        const user = response.data.user;
+      if (response.data.success && response.data.userData) {
+        const user = response.data.userData;
         const nameParts = user.name ? user.name.trim().split(' ') : ['', ''];
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
@@ -48,7 +48,7 @@ const PlaceOrder = () => {
           firstName: firstName,
           lastName: lastName,
           email: user.email || '',
-          street: user.address?.street || '',
+          street: user.address?.street || user.address?.line1 || '',
           city: user.address?.city || '',
           state: user.address?.state || '',
           zipcode: user.address?.zipcode || '',
@@ -118,6 +118,16 @@ const PlaceOrder = () => {
       }
 
       const activeToken = token || localStorage.getItem('token');
+
+      if (!activeToken) {
+        toast.error('Please log in before placing an order.');
+        return;
+      }
+
+      if (orderItems.length === 0) {
+        toast.error('Your cart is empty. Add products before placing an order.');
+        return;
+      }
 
       let orderData = {
         address: formData,

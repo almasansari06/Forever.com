@@ -82,45 +82,90 @@ const MyProfile = () => {
               }}
             />
           ) : (
-            <p className='text-blue-400'>{userData.phone || "0000000000"}</p>
+            <p className='text-blue-400'>{userData.phone || "No phone number"}</p>
           )}
 
           <p className='font-medium'>Address:</p>
           {isEdit ? (
-            <div className='flex flex-col gap-1'>
+            <div className='grid gap-2'>
               <input
                 className='bg-gray-100 p-1 rounded border'
                 onChange={(e) => {
                   const val = e.target.value;
                   setUserData((prev) => ({
                     ...prev,
-                    address: { ...(prev.address || {}), line1: val }
+                    address: { ...(prev.address || {}), street: val }
                   }));
                 }}
-                value={userData.address?.line1 || ''}
+                value={userData.address?.street || userData.address?.line1 || ''}
                 type="text"
-                placeholder="Address Line 1"
+                placeholder="Street / Address Line"
               />
-              <input
-                className='bg-gray-100 p-1 rounded border'
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setUserData((prev) => ({
-                    ...prev,
-                    address: { ...(prev.address || {}), line2: val }
-                  }));
-                }}
-                value={userData.address?.line2 || ''}
-                type="text"
-                placeholder="Address Line 2"
-              />
+              <div className='grid grid-cols-2 gap-2'>
+                <input
+                  className='bg-gray-100 p-1 rounded border'
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setUserData((prev) => ({
+                      ...prev,
+                      address: { ...(prev.address || {}), city: val }
+                    }));
+                  }}
+                  value={userData.address?.city || ''}
+                  type="text"
+                  placeholder="City"
+                />
+                <input
+                  className='bg-gray-100 p-1 rounded border'
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setUserData((prev) => ({
+                      ...prev,
+                      address: { ...(prev.address || {}), state: val }
+                    }));
+                  }}
+                  value={userData.address?.state || ''}
+                  type="text"
+                  placeholder="State"
+                />
+              </div>
+              <div className='grid grid-cols-2 gap-2'>
+                <input
+                  className='bg-gray-100 p-1 rounded border'
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setUserData((prev) => ({
+                      ...prev,
+                      address: { ...(prev.address || {}), zipcode: val }
+                    }));
+                  }}
+                  value={userData.address?.zipcode || ''}
+                  type="text"
+                  placeholder="Zipcode"
+                />
+                <input
+                  className='bg-gray-100 p-1 rounded border'
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setUserData((prev) => ({
+                      ...prev,
+                      address: { ...(prev.address || {}), country: val }
+                    }));
+                  }}
+                  value={userData.address?.country || ''}
+                  type="text"
+                  placeholder="Country"
+                />
+              </div>
             </div>
           ) : (
-            <p className='text-gray-500'>
-              {userData.address?.line1 || "No address added"}
-              <br />
-              {userData.address?.line2 || ""}
-            </p>
+            <div className='text-gray-500'>
+              <p>{userData.address?.street || userData.address?.line1 || 'No address added'}</p>
+              {userData.address?.city && <p>{userData.address?.city}</p>}
+              {userData.address?.state && <p>{userData.address?.state}</p>}
+              {userData.address?.zipcode && <p>{userData.address?.zipcode}</p>}
+              {userData.address?.country && <p>{userData.address?.country}</p>}
+            </div>
           )}
         </div>
       </div>
