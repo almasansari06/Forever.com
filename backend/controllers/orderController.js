@@ -8,7 +8,9 @@ const currency = 'USD'
 const deliveryCharge = 10
 
 // Gateway initialization
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripeIsConfigured = stripeSecretKey && stripeSecretKey.startsWith('sk_') && !stripeSecretKey.includes('your_valid_key_here') && !stripeSecretKey.includes('dummy');
+const stripe = stripeIsConfigured ? new Stripe(stripeSecretKey) : null;
 
 const razorpayInstance = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
     ? new Razorpay({
@@ -85,7 +87,10 @@ const placeOrderStripe = async (req, res) => {
         })
 
         if (!stripe) {
-            return res.json({ success: false, message: "Stripe is not configured" });
+            return res.json({
+                success: false,
+                message: "Stripe secret key is missing or invalid. Set STRIPE_SECRET_KEY to a valid Stripe secret key in the backend environment.",
+            });
         }
 
         const session = await stripe.checkout.sessions.create({
