@@ -104,15 +104,31 @@ const PlaceOrder = () => {
 
       let orderItems = []
 
+      const hasCartProducts = Object.values(cartItems).some((sizes) =>
+        Object.values(sizes).some((quantity) => quantity > 0)
+      );
+
+      if (!hasCartProducts) {
+        toast.error('Your cart is empty. Add products before placing an order.');
+        return;
+      }
+
+      if (products.length === 0) {
+        toast.error('Products are still loading. Please wait a moment and try again.');
+        return;
+      }
+
       for (const items in cartItems) {
         for (const item in cartItems[items]) {
           if (cartItems[items][item] > 0) {
             const itemInfo = structuredClone(products.find(product => product._id === items))
-            if (itemInfo) {
-              itemInfo.size = item
-              itemInfo.quantity = cartItems[items][item]
-              orderItems.push(itemInfo)
+            if (!itemInfo) {
+              toast.error('Some cart products are not available yet. Please wait and try again.');
+              return;
             }
+            itemInfo.size = item
+            itemInfo.quantity = cartItems[items][item]
+            orderItems.push(itemInfo)
           }
         }
       }
@@ -121,11 +137,6 @@ const PlaceOrder = () => {
 
       if (!activeToken) {
         toast.error('Please log in before placing an order.');
-        return;
-      }
-
-      if (orderItems.length === 0) {
-        toast.error('Your cart is empty. Add products before placing an order.');
         return;
       }
 

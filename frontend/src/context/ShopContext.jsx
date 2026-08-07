@@ -12,9 +12,19 @@ const ShopContextProvider = (props) => {
 
     const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : '');
     const [userData, setUserData] = useState(false);
-    const [cartItems, setCartItems] = useState({});
+    const [cartItems, setCartItems] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('cartItems')) || {};
+        } catch (error) {
+            return {};
+        }
+    });
     const [products, setProducts] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    }, [cartItems]);
 
     // Profile Data Fetcher
     const loadUserProfileData = async () => {
