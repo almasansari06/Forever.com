@@ -1,0 +1,235 @@
+import React, { useContext, useEffect, useState } from 'react';
+import { ShopContext } from '../context/ShopContext';
+import { assets } from '../assets/assets';
+import Title from '../components/Title';
+import ProductItem from '../components/ProductItem';
+
+const Collection = () => {
+  const { products, search, showSearch } = useContext(ShopContext);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterProducts, setFilterProducts] = useState([]);
+  const [category, setCategory] = useState([]);
+  const [subCategory, setSubCategory] = useState([]);
+  const [sortType, setSortType] = useState('relavent');
+
+  const toggleCategory = (e) => {
+    if (category.includes(e.target.value)) {
+      setCategory(prev => prev.filter(item => item !== e.target.value));
+    } else {
+      setCategory(prev => [...prev, e.target.value]);
+    }
+    // Sirf mobile screens par filter auto-close hoga
+    if (window.innerWidth < 768) {
+      setShowFilter(false);
+    }
+  };
+
+  const toggleSubCategory = (e) => {
+    if (subCategory.includes(e.target.value)) {
+      setSubCategory(prev => prev.filter(item => item !== e.target.value));
+    } else {
+      setSubCategory(prev => [...prev, e.target.value]);
+    }
+    // Sirf mobile screens par filter auto-close hoga
+    if (window.innerWidth < 768) {
+      setShowFilter(false);
+    }
+  };
+
+  const applyFilter = () => {
+    let productsCopy = products.slice(0);
+
+    // Search Filter
+    if (showSearch && search) {
+      productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+    }
+
+    // Category Filter (Case-Insensitive)
+    if (category.length > 0) {
+      productsCopy = productsCopy.filter(item => 
+        item.category && category.some(cat => cat.toLowerCase() === item.category.toLowerCase())
+      );
+    }
+
+    // SubCategory Filter (Smart Case & Spelling Match)
+    if (subCategory.length > 0) {
+      productsCopy = productsCopy.filter(item => {
+        if (!item.subCategory) return false;
+        
+        return subCategory.some(subCat => {
+          const filterVal = subCat.toLowerCase();
+          const itemVal = item.subCategory.toLowerCase();
+
+          // Auto-match both 'Jewellery' and 'Jewelry' spellings
+          if (filterVal.includes('jewel') && itemVal.includes('jewel')) {
+            return true;
+          }
+
+          return filterVal === itemVal;
+        });
+      });
+    }
+
+    // Sorting
+    switch (sortType) {
+      case 'low-high':
+        productsCopy.sort((a, b) => a.price - b.price);
+        break;
+      case 'high-low':
+        productsCopy.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        break;
+    }
+
+    setFilterProducts(productsCopy);
+  };
+
+  useEffect(() => {
+    applyFilter();
+  }, [category, subCategory, search, showSearch, products, sortType]);
+
+  return (
+    <div className='flex flex-col md:flex-row gap-6 md:gap-10 pt-8 border-t border-gray-100 max-w-7xl mx-auto px-4 sm:px-6'>
+
+      {/* Sidebar Filter Options */}
+      <div className='w-full md:w-64 flex-shrink-0'>
+        {/* Mobile Filter Header Button */}
+        <div 
+          onClick={() => setShowFilter(!showFilter)} 
+          className='md:hidden flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer shadow-sm active:scale-[0.99] transition-all'
+        >
+          <div className='flex items-center gap-2.5'>
+            <span className='font-semibold text-gray-800 text-base tracking-wide'>FILTERS</span>
+            {(category.length > 0 || subCategory.length > 0) && (
+              <span className='bg-black text-white text-xs px-2 py-0.5 rounded-full font-medium'>
+                {category.length + subCategory.length}
+              </span>
+            )}
+          </div>
+          <img 
+            className={`h-3.5 w-3.5 transition-transform duration-300 ${showFilter ? 'rotate-180' : ''}`} 
+            src={assets.dropdown_icon} 
+            alt="Toggle Filters" 
+          />
+        </div>
+
+        {/* Filter Body - Scrollable on both Mobile & PC */}
+        <div className={`space-y-5 md:block md:sticky md:top-24 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar ${showFilter ? 'block mt-4' : 'hidden'}`}>
+          
+          {/* Categories Filter Box */}
+          <div className='bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='flex items-center justify-between mb-4 pb-2 border-b border-gray-100'>
+              <p className='text-xs font-bold text-gray-900 tracking-wider uppercase'>Categories</p>
+              {category.length > 0 && (
+                <button onClick={() => setCategory([])} className='text-[11px] text-gray-400 hover:text-black font-medium transition-colors cursor-pointer'>
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className='space-y-2.5 text-sm font-medium text-gray-600'>
+              {['Men', 'Women', 'Kids'].map((cat) => (
+                <label key={cat} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group'>
+                  <input 
+                    className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black' 
+                    type="checkbox" 
+                    value={cat} 
+                    checked={category.includes(cat)}
+                    onChange={toggleCategory} 
+                  />
+                  <span className='group-hover:text-gray-900 transition-colors'>{cat}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* SubCategory Filter Box */}
+          <div className='bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='flex items-center justify-between mb-4 pb-2 border-b border-gray-100'>
+              <p className='text-xs font-bold text-gray-900 tracking-wider uppercase'>Product Type</p>
+              {subCategory.length > 0 && (
+                <button onClick={() => setSubCategory([])} className='text-[11px] text-gray-400 hover:text-black font-medium transition-colors cursor-pointer'>
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className='space-y-2 text-sm font-medium text-gray-600'>
+              {[
+                { label: 'Topwear', val: 'Topwear' },
+                { label: 'Bottomwear', val: 'Bottomwear' },
+                { label: 'Winterwear', val: 'Winterwear' },
+                { label: 'Innerwear', val: 'Innerwear' },
+                { label: 'Footwear', val: 'Footwear' },
+                { label: 'Jewellery', val: 'Jewellery' },
+                { label: 'Makeup', val: 'MakeUp' }
+              ].map((item) => (
+                <label key={item.val} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group'>
+                  <input 
+                    className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black' 
+                    type="checkbox" 
+                    value={item.val} 
+                    checked={subCategory.includes(item.val)}
+                    onChange={toggleSubCategory} 
+                  />
+                  <span className='group-hover:text-gray-900 transition-colors'>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className='flex-1 min-w-0'>
+
+        {/* Top Header & Sort Control */}
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-gray-50/60 p-4 sm:p-5 rounded-2xl border border-gray-100'>
+          <Title text1={'ALL'} text2={'COLLECTIONS'} />
+          
+          <div className='flex items-center gap-2 self-end sm:self-auto'>
+            <span className='hidden sm:inline text-xs font-semibold text-gray-400 uppercase tracking-wider'>Sort:</span>
+            <select 
+              value={sortType}
+              onChange={(e) => setSortType(e.target.value)} 
+              className='bg-white border border-gray-200 hover:border-gray-400 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl outline-none cursor-pointer transition-all shadow-xs focus:ring-2 focus:ring-black/5'
+            >
+              <option value="relavent">Sort by: Relevant</option>
+              <option value="low-high">Price: Low to High</option>
+              <option value="high-low">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Product Grid / Empty State */}
+        {filterProducts.length > 0 ? (
+          <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6'>
+            {filterProducts.map((item, index) => (
+              <ProductItem 
+                key={item._id || index} 
+                name={item.name} 
+                id={item._id} 
+                price={item.price} 
+                image={item.image} 
+              />
+            ))}
+          </div>
+        ) : (
+          <div className='flex flex-col items-center justify-center py-20 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 text-center px-4'>
+            <p className='text-gray-500 font-medium text-lg mb-1'>No products match your filters</p>
+            <p className='text-gray-400 text-sm mb-4'>Try clearing some filters to see available products.</p>
+            <button 
+              onClick={() => { setCategory([]); setSubCategory([]); }} 
+              className='px-5 py-2 bg-black text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm cursor-pointer'
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+export default Collection;
