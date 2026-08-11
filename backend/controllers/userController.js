@@ -1,6 +1,5 @@
 import userModel from "../models/userModel.js";
 import validator from "validator";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 // Helper function to create JWT Token
@@ -27,7 +26,7 @@ const loginUser = async (req, res) => {
             return res.json({ success: false, message: "Your account has been deleted by the administrator and cannot be used. You cannot register a new account with this email." });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = password === user.password;
 
         if (isMatch) {
             const token = createToken(user._id);
@@ -62,13 +61,10 @@ const registerUser = async (req, res) => {
             return res.json({ success: false, message: "Please enter a strong password" });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
         const newUser = new userModel({
             name,
             email,
-            password: hashedPassword
+            password: password
         });
 
         const user = await newUser.save();
