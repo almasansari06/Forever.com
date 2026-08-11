@@ -65,29 +65,34 @@ const Users = ({ token }) => {
   }, [token]);
 
   return (
-    <div className='p-4 bg-white rounded border border-gray-200'>
+    <div className='p-4 bg-white rounded border border-gray-200 w-full max-w-4xl mx-auto'>
       <h3 className='text-lg font-bold mb-4'>User Management</h3>
       <div className='space-y-3'>
         {users.length === 0 ? (
-          <p>No users found</p>
+          <p className='text-gray-500'>No users found</p>
         ) : (
           users.map((user) => (
-            <div key={user._id} className='flex items-center justify-between border-b pb-2'>
-              <div>
-                <p className='font-semibold'>{user.name}</p>
-                <p className='text-sm text-gray-500'>{user.email}</p>
-                <p className='text-xs font-bold text-blue-600'>Status: {user.status || 'active'}</p>
+            <div 
+              key={user._id} 
+              className='flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 pt-1 gap-3'
+            >
+              <div className='min-w-0 flex-1'>
+                <p className='font-semibold text-gray-800 truncate'>{user.name}</p>
+                <p className='text-sm text-gray-500 truncate break-all'>{user.email}</p>
+                <p className='text-xs font-bold text-blue-600 mt-1'>
+                  Status: <span className={user.status === 'disabled' ? 'text-red-500' : 'text-green-600'}>{user.status || 'active'}</span>
+                </p>
               </div>
-              <div className='flex gap-2'>
+              <div className='flex gap-2 shrink-0'>
                 <button 
                   onClick={() => toggleStatusHandler(user._id, user.status || 'active')}
-                  className='bg-amber-500 text-white px-3 py-1 rounded text-xs'
+                  className='bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs transition duration-200'
                 >
                   {user.status === 'disabled' ? 'Enable' : 'Disable'}
                 </button>
                 <button 
                   onClick={() => deleteUserHandler(user._id)}
-                  className='bg-red-600 text-white px-3 py-1 rounded text-xs'
+                  className='bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs transition duration-200'
                 >
                   Delete
                 </button>
