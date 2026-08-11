@@ -1,15 +1,35 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const PlaceOrder = () => {
     const [method, setMethod] = useState('cod'); // Default COD
-    const { backendUrl, token, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems } = useContext(ShopContext);
+    const { backendUrl, token, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData } = useContext(ShopContext);
 
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', email: '', street: '', city: '', state: '', zipcode: '', country: '', phone: ''
     });
+
+    // Autofill formData from saved user profile address when available
+    useEffect(() => {
+        if (userData) {
+            const addr = userData.address || {};
+            const nameParts = (userData.name || '').split(' ');
+            setFormData((prev) => ({
+                ...prev,
+                firstName: nameParts[0] || prev.firstName,
+                lastName: nameParts.slice(1).join(' ') || prev.lastName,
+                email: userData.email || prev.email,
+                phone: userData.phone || prev.phone,
+                street: addr.street || addr.line1 || prev.street,
+                city: addr.city || prev.city,
+                state: addr.state || prev.state,
+                zipcode: addr.zipcode || prev.zipcode,
+                country: addr.country || prev.country,
+            }));
+        }
+    }, [userData]);
 
     const onChangeHandler = (event) => {
         const name = event.target.name;
@@ -19,6 +39,11 @@ const PlaceOrder = () => {
 
     const onSubmitHandler = async (event) => {
         event.preventDefault();
+        // Prevent disabled/deleted users from placing orders
+        if (userData && (userData.status === 'disabled' || userData.status === 'deleted')) {
+            toast.error(userData.status === 'deleted' ? 'Your account has been deleted and cannot place orders.' : 'Your account is disabled. You cannot place orders.');
+            return;
+        }
         try {
             let orderItems = [];
             for (const items in cartItems) {
@@ -71,6 +96,14 @@ const PlaceOrder = () => {
                 <input required onChange={onChangeHandler} name='lastName' value={formData.lastName} placeholder='Last name' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
                 <input required onChange={onChangeHandler} name='email' value={formData.email} placeholder='Email address' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="email" />
                 <input required onChange={onChangeHandler} name='street' value={formData.street} placeholder='Street' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                    <input required onChange={onChangeHandler} name='city' value={formData.city} placeholder='City' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                    <input required onChange={onChangeHandler} name='state' value={formData.state} placeholder='State' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                </div>
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                    <input required onChange={onChangeHandler} name='zipcode' value={formData.zipcode} placeholder='Zipcode' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                    <input required onChange={onChangeHandler} name='country' value={formData.country} placeholder='Country' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                </div>
                 <input required onChange={onChangeHandler} name='phone' value={formData.phone} placeholder='Phone' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="number" />
             </div>
 

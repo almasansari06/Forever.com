@@ -132,12 +132,18 @@ const Orders = () => {
                     Refresh
                   </button>
 
-                  <button
-                    onClick={() => cancelOrderHandler(item.orderId)}
-                    className='bg-red-600 text-white hover:bg-red-700 px-3 py-2 text-sm font-medium rounded-sm active:scale-95 transition-all cursor-pointer shadow-xs'
-                  >
-                    Cancel Order
-                  </button>
+                  {item.status === 'Cancelled' ? (
+                    <div className='px-3 py-2 text-sm text-red-600 bg-red-50 rounded-sm'>
+                      Your order has been cancelled due to a technical issue. We apologize for the inconvenience.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => cancelOrderHandler(item.orderId)}
+                      className='bg-red-600 text-white hover:bg-red-700 px-3 py-2 text-sm font-medium rounded-sm active:scale-95 transition-all cursor-pointer shadow-xs'
+                    >
+                      Cancel Order
+                    </button>
+                  )}
                 </div>
               </div>
 

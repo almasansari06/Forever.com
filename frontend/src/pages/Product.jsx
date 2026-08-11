@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
@@ -10,6 +10,7 @@ const Product = () => {
   const [productData, setProductData] = useState(null);
   const [image, setImage] = useState('');
   const [size, setSize] = useState('');
+  const imageRef = useRef(null);
 
   useEffect(() => {
     // Jab bhi new product page open ho, page auto top par scroll ho jaye
@@ -38,12 +39,12 @@ const Product = () => {
       <div className='flex gap-12 sm:gap-12 flex-col sm:flex-row'>
         {/* Images */}
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
+            <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
             {productData.image.map((item, index) => (
-              <img onClick={() => setImage(item)} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
+              <img onClick={() => { setImage(item); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
             ))}
           </div>
-          <div className='w-full sm:w-[80%]'>
+          <div ref={imageRef} className='w-full sm:w-[80%]'>
             <img className='w-full h-auto' src={image} alt="" />
           </div>
         </div>

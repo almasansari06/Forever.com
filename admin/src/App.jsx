@@ -5,6 +5,7 @@ import { Routes, Route } from 'react-router-dom'
 import Add from './pages/Add'
 import List from './pages/List'
 import Orders from './pages/Orders'
+import CancelledOrders from './pages/CancelledOrders'
 import Users from './pages/Users'
 import Login from './components/Login'
 import { ToastContainer } from 'react-toastify';
@@ -15,10 +16,19 @@ export const currency = '$'
 
 const App = () => {
 
-  const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : '');
+  // Validate token format (simple check for JWT: three parts separated by dots)
+  const storedToken = localStorage.getItem('token');
+  const isTokenValidFormat = (t) => typeof t === 'string' && t.split('.').length === 3;
+  const initialToken = isTokenValidFormat(storedToken) ? storedToken : '';
+
+  const [token, setToken] = useState(initialToken);
 
   useEffect(() => {
-    localStorage.setItem('token', token)
+    if (isTokenValidFormat(token)) {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
   }, [token])
 
   return (
@@ -36,6 +46,7 @@ const App = () => {
                 <Route path='/add' element={<Add token={token} />} />
                 <Route path='/list' element={<List token={token} />} />
                 <Route path='/orders' element={<Orders token={token} />} />
+                <Route path='/cancelled' element={<CancelledOrders token={token} />} />
                 <Route path='/users' element={<Users token={token} />} />
               </Routes>
             </div>

@@ -15,19 +15,25 @@ const Sidebar = () => {
 
         {/* List Items Link */}
         <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/list">
-          <img className='w-5 h-5' src={assets.order_icon} alt="" />
+          <img className='w-5 h-5' src={assets.list_icon} alt="" />
           <p className='hidden md:block font-medium'>List Items</p>
         </NavLink>
 
         {/* Orders Link */}
         <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/orders">
-          <img className='w-5 h-5' src={assets.order_icon} alt="" />
+          <img className='w-5 h-5' src={assets.parcel_icon} alt="" />
           <p className='hidden md:block font-medium'>Orders</p>
+        </NavLink>
+
+        {/* Cancelled Orders Link */}
+        <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/cancelled">
+          <img className='w-5 h-5' src={assets.cross_icon} alt="" />
+          <p className='hidden md:block font-medium'>Cancelled</p>
         </NavLink>
 
         {/* Users Management Link (Naya Option) */}
         <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/users">
-          <img className='w-5 h-5' src={assets.order_icon} alt="" />
+          <img className='w-5 h-5' src={assets.user_icon} alt="" />
           <p className='hidden md:block font-medium'>Users</p>
         </NavLink>
 

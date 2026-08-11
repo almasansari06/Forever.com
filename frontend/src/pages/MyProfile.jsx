@@ -8,6 +8,10 @@ const MyProfile = () => {
   const [isEdit, setIsEdit] = useState(false);
 
   const updateUserProfileData = async () => {
+    if (userData && (userData.status === 'disabled' || userData.status === 'deleted')) {
+      toast.error(userData.status === 'deleted' ? 'Your account has been deleted and cannot be updated.' : 'Your account is disabled. You cannot update profile.');
+      return;
+    }
     try {
       const response = await axios.post(
         backendUrl + '/api/user/update-profile',
@@ -218,7 +222,13 @@ const MyProfile = () => {
           </button>
         ) : (
           <button
-            onClick={() => setIsEdit(true)}
+            onClick={() => {
+              if (userData && (userData.status === 'disabled' || userData.status === 'deleted')) {
+                toast.error(userData.status === 'deleted' ? 'Your account has been deleted and cannot be edited.' : 'Your account is disabled. You cannot edit profile.');
+                return;
+              }
+              setIsEdit(true);
+            }}
             className='border border-black px-8 py-2 rounded-full hover:bg-black hover:text-white transition-all cursor-pointer'
           >
             Edit

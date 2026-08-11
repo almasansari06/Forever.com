@@ -31,7 +31,23 @@ const ShopContextProvider = (props) => {
         try {
             const response = await axios.get(backendUrl + '/api/user/get-profile', { headers: { token } });
             if (response.data.success) {
-                setUserData(response.data.userData);
+                const ud = response.data.userData;
+                setUserData(ud);
+
+                // If account disabled show informational popup and restrict actions
+                if (ud.status === 'disabled') {
+                    toast.info('Your account has been disabled by the administrator. You will not be able to perform actions like add to cart or edit profile. Please contact support.');
+                }
+
+                // If account deleted, force logout and show message
+                if (ud.status === 'deleted') {
+                    toast.error('Your account has been deleted by the administrator and cannot be used. You will be logged out.');
+                    // clear token and user data
+                    localStorage.removeItem('token');
+                    setToken('');
+                    setUserData(false);
+                    window.location.href = '/';
+                }
             } else {
                 toast.error(response.data.message);
             }
@@ -65,6 +81,12 @@ const ShopContextProvider = (props) => {
     }, [backendUrl]);
 
     const addToCart = async (itemId, size) => {
+        // Prevent disabled or deleted users from adding to cart
+        if (userData && (userData.status === 'disabled' || userData.status === 'deleted')) {
+            toast.error(userData.status === 'deleted' ? 'Your account has been deleted and cannot perform this action.' : 'Your account is disabled. You cannot add items to cart.');
+            return;
+        }
+
         const updatedCart = { ...cartItems };
         if (!updatedCart[itemId]) {
             updatedCart[itemId] = {};
@@ -77,6 +99,11 @@ const ShopContextProvider = (props) => {
     };
 
     const updateQuantity = async (itemId, size, quantity) => {
+        if (userData && (userData.status === 'disabled' || userData.status === 'deleted')) {
+            toast.error(userData.status === 'deleted' ? 'Your account has been deleted and cannot perform this action.' : 'Your account is disabled. You cannot change cart items.');
+            return;
+        }
+
         const updatedCart = { ...cartItems };
         if (!updatedCart[itemId]) {
             updatedCart[itemId] = {};

@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, default: "" },
     dob: { type: String, default: "" },
     cartData: { type: Object, default: {} },
-    status: { type: String, default: "active" } // Status: 'active' ya 'disabled'
+    status: { type: String, default: "active" }, // Status: 'active' | 'disabled' | 'deleted'
+    deletedAt: { type: Number }
 }, { minimize: false });
 
 const userModel = mongoose.models.user || mongoose.model('user', userSchema);

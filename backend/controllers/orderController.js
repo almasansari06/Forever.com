@@ -1,5 +1,6 @@
 import orderModel from '../models/orderModel.js';
 import userModel from '../models/userModel.js';
+import cancelledOrderModel from '../models/cancelledOrderModel.js';
 import Stripe from 'stripe';
 
 const currency = 'usd';
@@ -128,7 +129,8 @@ const verifyRazorpay = async (req, res) => {
 // 6. All Orders data for Admin Panel
 const allOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find({});
+        // Exclude orders that have been cancelled so admin main list doesn't show them
+        const orders = await orderModel.find({ status: { $ne: 'Cancelled' } });
         res.json({ success: true, orders });
     } catch (error) {
         console.log(error);
@@ -160,12 +162,81 @@ const updateStatus = async (req, res) => {
     }
 };
 
-// 9. Cancel Order
-const cancelOrder = async (req, res) => {
+// 9. User requests cancellation
+const requestCancel = async (req, res) => {
+    try {
+        const { orderId, reason } = req.body;
+        await orderModel.findByIdAndUpdate(orderId, {
+            cancellationRequested: true,
+            cancellationReason: reason || '',
+            cancellationRequestedAt: Date.now(),
+            status: 'Cancellation Requested'
+        });
+        res.json({ success: true, message: 'Cancellation requested' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// 10. Admin confirms cancellation (move to cancelled collection and remove original)
+const adminConfirmCancel = async (req, res) => {
     try {
         const { orderId } = req.body;
-        await orderModel.findByIdAndUpdate(orderId, { status: "Cancelled" });
-        res.json({ success: true, message: "Order Cancelled" });
+        const order = await orderModel.findById(orderId);
+        if (!order) {
+            return res.json({ success: false, message: 'Order not found or already removed' });
+        }
+
+        const cancelledBy = order.cancellationRequested ? 'user' : 'admin';
+
+        const cancelledDoc = new cancelledOrderModel({
+            originalOrderId: order._id.toString(),
+            userId: order.userId,
+            items: order.items,
+            amount: order.amount,
+            address: order.address,
+            paymentMethod: order.paymentMethod,
+            payment: order.payment,
+            date: order.date,
+            cancelledAt: Date.now(),
+            cancelledBy,
+            cancellationReason: order.cancellationReason || ''
+        });
+
+        await cancelledDoc.save();
+
+        // Keep the original order for user visibility but mark it cancelled
+        await orderModel.findByIdAndUpdate(orderId, {
+            status: 'Cancelled',
+            cancellationConfirmed: true,
+            cancellationConfirmedAt: Date.now()
+        });
+
+        res.json({ success: true, message: 'Order cancelled and recorded; user will see cancellation.' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// 11. List cancelled orders for admin
+const allCancelledOrders = async (req, res) => {
+    try {
+        const cancelled = await cancelledOrderModel.find({});
+        res.json({ success: true, cancelled });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// 12. Permanently delete cancelled order
+const deleteCancelledOrder = async (req, res) => {
+    try {
+        const { cancelledId } = req.body;
+        await cancelledOrderModel.findByIdAndDelete(cancelledId);
+        res.json({ success: true, message: 'Cancelled order permanently deleted' });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -181,5 +252,7 @@ export {
     updateStatus,
     verifyStripe,
     verifyRazorpay,
-    cancelOrder
+    requestCancel,
+    adminConfirmCancel
+    , allCancelledOrders, deleteCancelledOrder
 };

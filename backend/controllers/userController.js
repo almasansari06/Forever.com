@@ -19,9 +19,12 @@ const loginUser = async (req, res) => {
             return res.json({ success: false, message: "User doesn't exist" });
         }
 
-        // Check if user account is disabled
+        // Check if user account is disabled or deleted
         if (user.status === 'disabled') {
-            return res.json({ success: false, message: "Your account has been disabled by the administrator. Please contact support." });
+            return res.json({ success: false, message: "Your account has been disabled by the administrator. You cannot perform actions. Please contact support." });
+        }
+        if (user.status === 'deleted') {
+            return res.json({ success: false, message: "Your account has been deleted by the administrator and cannot be used. You cannot register a new account with this email." });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -46,6 +49,9 @@ const registerUser = async (req, res) => {
 
         const exists = await userModel.findOne({ email });
         if (exists) {
+            if (exists.status === 'deleted') {
+                return res.json({ success: false, message: "This email was previously deleted by the administrator. You cannot register with this email." });
+            }
             return res.json({ success: false, message: "User already exists" });
         }
 
@@ -114,6 +120,12 @@ const updateProfile = async (req, res) => {
     try {
         const { userId, name, phone, address, gender, dob } = req.body;
 
+        // Prevent profile update if user is disabled or deleted
+        const existing = await userModel.findById(userId);
+        if (!existing) return res.json({ success: false, message: 'User not found' });
+        if (existing.status === 'disabled') return res.json({ success: false, message: 'Your account is disabled. You cannot update profile.' });
+        if (existing.status === 'deleted') return res.json({ success: false, message: 'Your account has been deleted and cannot be updated.' });
+
         const updatedUser = await userModel.findByIdAndUpdate(
             userId,
             { $set: { name, phone, address, gender, dob } },
@@ -160,8 +172,9 @@ const toggleUserStatus = async (req, res) => {
 const deleteUser = async (req, res) => {
     try {
         const { userId } = req.body;
-        await userModel.findByIdAndDelete(userId);
-        res.json({ success: true, message: "User deleted permanently" });
+        // Soft-delete: mark as deleted so we can prevent re-registration with same email
+        await userModel.findByIdAndUpdate(userId, { status: 'deleted', deletedAt: Date.now() });
+        res.json({ success: true, message: "User marked as deleted" });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });

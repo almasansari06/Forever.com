@@ -67,6 +67,27 @@ const Orders = ({ token }) => {
     }
   }
 
+  // Confirm user-requested cancellation
+  const confirmCancellationHandler = async (orderId) => {
+    if (!window.confirm("Confirm cancellation for this order?")) return;
+    try {
+      const response = await axios.post(
+        backendUrl + '/api/order/admin-cancel',
+        { orderId },
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        toast.success(response.data.message || 'Cancellation confirmed');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  }
+
   useEffect(() => {
     fetchAllOrders()
   }, [token])
@@ -106,6 +127,17 @@ const Orders = ({ token }) => {
                 <p>Date : {new Date(order.date).toLocaleDateString()}</p>
               </div>
               <p className='text-sm sm:text-[15px] font-bold'>{currency} {order.amount}</p>
+
+              {/* Cancellation request banner */}
+              {order.cancellationRequested && !order.cancellationConfirmed && (
+                <div className='col-span-full p-3 rounded border border-yellow-300 bg-yellow-50 text-yellow-800'>
+                  <p className='font-semibold'>User requested cancellation</p>
+                  {order.cancellationReason && <p className='text-sm'>Reason: {order.cancellationReason}</p>}
+                  <div className='mt-2'>
+                    <button onClick={() => confirmCancellationHandler(order._id)} className='bg-yellow-600 text-white px-3 py-1 rounded mr-2'>Confirm Cancel</button>
+                  </div>
+                </div>
+              )}
 
               {/* Status Select & Cancel Button */}
               <div className='flex flex-col gap-2'>
