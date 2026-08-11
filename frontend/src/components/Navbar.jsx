@@ -6,7 +6,7 @@ import { ShopContext } from '../context/ShopContext';
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
 
-  const { setShowSearch, getCartCount, navigate, token, setToken, setCartItems } = useContext(ShopContext);
+  const { setShowSearch, getCartCount, navigate, token, setToken, setCartItems, theme, setTheme } = useContext(ShopContext);
 
   const logout = () => {
     navigate('/login');
@@ -26,26 +26,34 @@ const Navbar = () => {
         />
       </Link>
 
-      <ul className='hidden sm:flex gap-6 text-sm text-gray-700'>
+      <ul className='hidden sm:flex gap-6 text-sm text-gray-700 dark:text-slate-200'>
         <NavLink to='/' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors'>HOME</p>
-          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300' />
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>HOME</p>
+          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
         <NavLink to='/collection' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors'>COLLECTION</p>
-          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300' />
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>COLLECTION</p>
+          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
         <NavLink to='/about' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors'>ABOUT</p>
-          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300' />
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>ABOUT</p>
+          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
         <NavLink to='/contact' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors'>CONTACT</p>
-          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300' />
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>CONTACT</p>
+          <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
       </ul>
 
-      <div className='flex items-center gap-6'>
+      <div className='flex items-center gap-4 sm:gap-6'>
+        <button
+          type='button'
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className='flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-white text-lg shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+          aria-label='Toggle theme mode'
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
         <img
           onClick={() => setShowSearch(true)}
           src={assets.search_icon}
@@ -64,11 +72,11 @@ const Navbar = () => {
           {/* Animated Dropdown Menu */}
           {token && (
             <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4 z-50 transition-all duration-200 transform origin-top-right'>
-              <div className='flex flex-col gap-2 w-40 py-3 px-5 bg-white text-gray-600 rounded-xl shadow-xl border border-gray-100 text-sm'>
-                <p onClick={() => navigate('/profile')} className='cursor-pointer hover:text-black hover:translate-x-1 transition-all duration-150'>
+              <div className='flex flex-col gap-2 w-40 py-3 px-5 bg-white text-gray-600 rounded-xl shadow-xl border border-gray-100 text-sm dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700'>
+                <p onClick={() => navigate('/profile')} className='cursor-pointer hover:text-black hover:translate-x-1 transition-all duration-150 dark:hover:text-white'>
                   My Profile
                 </p>
-                <p onClick={() => navigate('/orders')} className='cursor-pointer hover:text-black hover:translate-x-1 transition-all duration-150'>
+                <p onClick={() => navigate('/orders')} className='cursor-pointer hover:text-black hover:translate-x-1 transition-all duration-150 dark:hover:text-white'>
                   Orders
                 </p>
                 <p onClick={logout} className='cursor-pointer hover:text-red-600 hover:translate-x-1 transition-all duration-150 font-medium'>
@@ -98,19 +106,19 @@ const Navbar = () => {
         <div onClick={() => setVisible(false)} className='fixed inset-0 bg-black/30 backdrop-blur-xs z-40 sm:hidden transition-opacity duration-300' />
       )}
 
-      <div className={`fixed top-0 right-0 h-full bg-white z-50 w-64 shadow-2xl transition-transform duration-300 ease-in-out ${visible ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 h-full bg-white z-50 w-64 shadow-2xl transition-transform duration-300 ease-in-out dark:bg-slate-900 ${visible ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className='flex flex-col h-full'>
-          <div onClick={() => setVisible(false)} className='flex items-center gap-4 p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors'>
+          <div onClick={() => setVisible(false)} className='flex items-center gap-4 p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'>
             <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="Back" />
-            <p className='text-gray-700 font-medium'>Back</p>
+            <p className='text-gray-700 font-medium dark:text-slate-200'>Back</p>
           </div>
 
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors' to='/'>HOME</NavLink>
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors' to='/collection'>COLLECTION</NavLink>
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors' to='/about'>ABOUT</NavLink>
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors' to='/contact'>CONTACT</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/'>HOME</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/collection'>COLLECTION</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/about'>ABOUT</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/contact'>CONTACT</NavLink>
           {token && (
-            <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-black font-semibold hover:bg-gray-50 transition-colors' to='/profile'>MY PROFILE</NavLink>
+            <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-black font-semibold hover:bg-gray-50 transition-colors dark:text-white dark:hover:bg-slate-800' to='/profile'>MY PROFILE</NavLink>
           )}
         </div>
       </div>

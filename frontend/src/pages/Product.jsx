@@ -10,6 +10,9 @@ const Product = () => {
   const [productData, setProductData] = useState(null);
   const [image, setImage] = useState('');
   const [size, setSize] = useState('');
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
   const imageRef = useRef(null);
 
   useEffect(() => {
@@ -22,11 +25,63 @@ const Product = () => {
     if (product) {
       setProductData(product);
       setImage(product.image[0]);
+      setCurrentImageIndex(0);
+      setViewerOpen(false);
       setSize(''); // Reset selected size on product change
     } else {
       setProductData(null);
     }
   }, [productId, products]);
+
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') setViewerOpen(false);
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
+  const openImageViewer = (index) => {
+    if (!productData || !productData.image || productData.image.length === 0) return;
+    setCurrentImageIndex(index);
+    setImage(productData.image[index]);
+    setViewerOpen(true);
+  };
+
+  const showNextImage = () => {
+    if (!productData || !productData.image || productData.image.length === 0) return;
+    const nextIndex = (currentImageIndex + 1) % productData.image.length;
+    setCurrentImageIndex(nextIndex);
+    setImage(productData.image[nextIndex]);
+  };
+
+  const showPreviousImage = () => {
+    if (!productData || !productData.image || productData.image.length === 0) return;
+    const prevIndex = (currentImageIndex - 1 + productData.image.length) % productData.image.length;
+    setCurrentImageIndex(prevIndex);
+    setImage(productData.image[prevIndex]);
+  };
+
+  const handleTouchStart = (event) => {
+    setTouchStartX(event.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX === null) return;
+    const touchEndX = event.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        showNextImage();
+      } else {
+        showPreviousImage();
+      }
+    }
+
+    setTouchStartX(null);
+  };
 
   if (!products || !productData) {
     return <div className="text-center py-10 text-gray-500">Loading Product...</div>;
@@ -41,11 +96,11 @@ const Product = () => {
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
             <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
             {productData.image.map((item, index) => (
-              <img onClick={() => { setImage(item); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
+              <img onClick={() => { setImage(item); setCurrentImageIndex(index); openImageViewer(index); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
             ))}
           </div>
           <div ref={imageRef} className='w-full sm:w-[80%]'>
-            <img className='w-full h-auto' src={image} alt="" />
+            <img onClick={() => openImageViewer(currentImageIndex)} className='w-full h-auto cursor-zoom-in' src={image} alt="" />
           </div>
         </div>
 
@@ -105,6 +160,41 @@ const Product = () => {
           <p>E-commerce websites typically display products or services along with detailed descriptions, images, prices, and any available variations...</p>
         </div>
       </div>
+
+      {viewerOpen && (
+        <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4' onClick={() => setViewerOpen(false)}>
+          <div className='relative w-full max-w-4xl' onClick={(event) => event.stopPropagation()} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <button
+              type='button'
+              className='absolute -top-12 right-0 text-white text-3xl leading-none cursor-pointer'
+              aria-label='Close image viewer'
+              onClick={() => setViewerOpen(false)}
+            >
+              ×
+            </button>
+            <button
+              type='button'
+              className='absolute left-3 top-1/2 -translate-y-1/2 bg-white/20 text-white text-3xl w-12 h-12 rounded-full backdrop-blur-sm cursor-pointer'
+              onClick={showPreviousImage}
+              aria-label='Previous image'
+            >
+              ‹
+            </button>
+            <img src={productData.image[currentImageIndex]} alt='Product view' className='max-h-[85vh] w-full object-contain rounded-lg shadow-2xl' />
+            <button
+              type='button'
+              className='absolute right-3 top-1/2 -translate-y-1/2 bg-white/20 text-white text-3xl w-12 h-12 rounded-full backdrop-blur-sm cursor-pointer'
+              onClick={showNextImage}
+              aria-label='Next image'
+            >
+              ›
+            </button>
+            <div className='mt-4 text-center text-white text-sm'>
+              {currentImageIndex + 1} / {productData.image.length}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Related Products */}
       <RelatedProduct category={productData.category} subCategory={productData.subCategory} />

@@ -19,7 +19,10 @@ const Login = () => {
         if (response.data.success) {
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
-          toast.success('Registration successful! 40% discount applied to your first order.');
+          toast.success('You got 40% discount on your first order.');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1200);
         } else {
           toast.error(response.data.message);
         }
@@ -28,6 +31,9 @@ const Login = () => {
         if (response.data.success) {
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 500);
         } else {
           toast.error(response.data.message);
         }
@@ -39,19 +45,14 @@ const Login = () => {
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      navigate('/');
-    }
-  }, [token]);
 
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-10 gap-4 text-gray-800'>
       
       {/* English Discount Banner Message */}
-      <div className='w-full bg-gradient-to-r from-purple-50 via-pink-50 to-red-50 border border-pink-200 rounded-xl p-3 text-center shadow-xs'>
-        <p className='text-xs font-semibold text-gray-700'>
-          🎉 <span className='text-pink-600 font-bold'>Instagram Offer:</span> Sign up with Instagram and get <span className='text-black font-bold underline decoration-pink-500'>FLAT 40% OFF</span> on your 1st order!
+      <div className='promo-banner w-full rounded-xl border p-3 text-center shadow-sm'>
+        <p className='text-xs font-semibold leading-relaxed text-gray-800'>
+          Sign up with Instagram and get <span className='font-black text-pink-600 underline decoration-pink-500'>40% discount</span> on your first order.
         </p>
       </div>
 

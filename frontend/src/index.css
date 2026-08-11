@@ -4,6 +4,93 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 transition-colors duration-300 antialiased dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  html.dark body,
+  html.dark body * {
+    color: white;
+  }
+
+  html.dark body a,
+  html.dark body button,
+  html.dark body input,
+  html.dark body textarea,
+  html.dark body select,
+  html.dark body label,
+  html.dark body p,
+  html.dark body span,
+  html.dark body div,
+  html.dark body h1,
+  html.dark body h2,
+  html.dark body h3,
+  html.dark body h4,
+  html.dark body h5,
+  html.dark body h6 {
+    color: white;
+  }
+
+  .promo-banner {
+    background: linear-gradient(90deg, #fdf2f8 0%, #f3e8ff 50%, #fee2e2 100%);
+    border-color: #f9a8d4;
+    box-shadow: 0 2px 12px rgba(236, 72, 153, 0.12);
+  }
+
+  .promo-banner p,
+  .promo-banner span {
+    color: #1f2937 !important;
+  }
+
+  .cancelled-status-box {
+    background: rgba(254, 226, 226, 0.9);
+    color: #991b1b !important;
+    border: 1px solid rgba(239, 68, 68, 0.32);
+  }
+
+  html.dark .promo-banner {
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.2) 0%, rgba(236, 72, 153, 0.25) 50%, rgba(239, 68, 68, 0.2) 100%);
+    border-color: rgba(244, 114, 182, 0.7);
+    box-shadow: 0 2px 14px rgba(236, 72, 153, 0.25);
+  }
+
+  html.dark .promo-banner p,
+  html.dark .promo-banner span {
+    color: #fff !important;
+  }
+
+  html.dark .cancelled-status-box {
+    background: rgba(127, 29, 29, 0.35);
+    color: #fca5a5 !important;
+    border-color: rgba(248, 113, 113, 0.6);
+  }
+
+  .Toastify__toast {
+    font-family: Outfit, sans-serif;
+  }
+
+  .Toastify__toast-theme--dark {
+    background: rgba(15, 23, 42, 0.96) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.4);
+  }
+
+  .Toastify__toast-theme--light {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .Toastify__progress-bar-theme--dark {
+    background: linear-gradient(90deg, #c084fc, #f472b6, #fca5a5) !important;
+  }
+}
+
 a.active hr{
     display: block;
 }
@@ -20,6 +107,21 @@ a.active hr{
 
   ::-webkit-scrollbar{
     display: none;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in-up {
+    animation: fadeUp 0.45s ease-out;
   }
 
   @media (max-width: 650px) {

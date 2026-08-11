@@ -22,14 +22,14 @@ const Contact = () => {
           <p className='font-semibold text-xl text-gray-700 uppercase tracking-wide'>Corporate Head Office</p>
 
           <p className='text-gray-500 leading-relaxed'>
-            Mindspace Building 12D, IT Park, Madhapur, <br />
-            Hyderabad, Telangana 500081, India
+            Al Wahda St - Industrial Area 4 - <br />
+            Sharjah-United Arab Emirates
           </p>
 
           <div className='text-gray-500 leading-relaxed space-y-1'>
             <p><span className='font-medium text-gray-700'>Tel:</span> +91 999915299</p>
             <p><span className='font-medium text-gray-700'>Tel:</span> +976 50-523-4444</p>
-            <p><span className='font-medium text-gray-700'>Email:</span> forevernew@forever.com</p>
+            <p><span className='font-medium text-gray-700'>Email:</span> <a href='mailto:foreverglobal.new@gmail.com' className='text-blue-600 hover:underline'>foreverglobal.new@gmail.com</a></p>
           </div>
 
           <p className='font-semibold text-xl text-gray-700 uppercase tracking-wide mt-2'>Careers at Forever</p>

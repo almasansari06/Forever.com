@@ -20,12 +20,12 @@ const SearchBar = () => {
   if (!showSearch) return null;
 
   return (
-    <div className='border-t border-b bg-gray-50/95 backdrop-blur-md text-center py-3.5 shadow-sm transition-all duration-300 transform translate-y-0 opacity-100'>
-      <div className='inline-flex items-center justify-center border border-gray-300 bg-white px-5 py-2 mx-3 rounded-full w-3/4 sm:w-1/2 shadow-xs focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all duration-200'>
+    <div className='border-t border-b bg-gray-50/95 backdrop-blur-md text-center py-3.5 shadow-sm transition-all duration-300 transform translate-y-0 opacity-100 dark:border-slate-700 dark:bg-slate-900/90'>
+      <div className='inline-flex items-center justify-center border border-gray-300 bg-white px-5 py-2 mx-3 rounded-full w-3/4 sm:w-1/2 shadow-xs focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all duration-200 dark:border-slate-600 dark:bg-slate-950'>
         <input
           value={search}
           onChange={handleSearchChange}
-          className='flex-1 outline-none bg-transparent text-sm text-gray-800 placeholder-gray-400'
+          className='flex-1 outline-none bg-transparent text-sm text-gray-800 placeholder-gray-400 dark:text-slate-100 dark:placeholder-slate-400'
           type="text"
           placeholder='Search products, categories...'
           autoFocus

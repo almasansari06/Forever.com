@@ -2,6 +2,7 @@ import orderModel from '../models/orderModel.js';
 import userModel from '../models/userModel.js';
 import cancelledOrderModel from '../models/cancelledOrderModel.js';
 import Stripe from 'stripe';
+import { sendOrderEmail, sendOrderStatusEmail } from '../utils/emailService.js';
 
 const currency = 'usd';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -23,6 +24,22 @@ const placeOrder = async (req, res) => {
 
         const newOrder = new orderModel(orderData);
         await newOrder.save();
+
+        const user = await userModel.findById(userId).select('name email');
+        if (user && user.email) {
+            try {
+                await sendOrderEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: {
+                        ...newOrder.toObject(),
+                        address: address || {}
+                    }
+                });
+            } catch (emailError) {
+                console.log('Order email failed:', emailError.message);
+            }
+        }
 
         await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
@@ -51,6 +68,22 @@ const placeOrderStripe = async (req, res) => {
 
         const newOrder = new orderModel(orderData);
         await newOrder.save();
+
+        const user = await userModel.findById(userId).select('name email');
+        if (user && user.email) {
+            try {
+                await sendOrderEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: {
+                        ...newOrder.toObject(),
+                        address: address || {}
+                    }
+                });
+            } catch (emailError) {
+                console.log('Order email failed:', emailError.message);
+            }
+        }
 
         const line_items = items.map((item) => ({
             price_data: {
@@ -154,7 +187,28 @@ const userOrders = async (req, res) => {
 const updateStatus = async (req, res) => {
     try {
         const { orderId, status } = req.body;
+        const order = await orderModel.findById(orderId);
+
+        if (!order) {
+            return res.json({ success: false, message: 'Order not found' });
+        }
+
         await orderModel.findByIdAndUpdate(orderId, { status });
+
+        const user = await userModel.findById(order.userId).select('name email');
+        if (user && user.email && ['Packing', 'Shipped', 'Out for delivery', 'Delivered', 'Cancelled'].includes(status)) {
+            try {
+                await sendOrderStatusEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: order.toObject(),
+                    status
+                });
+            } catch (emailError) {
+                console.log('Order status email failed:', emailError.message);
+            }
+        }
+
         res.json({ success: true, message: 'Status Updated' });
     } catch (error) {
         console.log(error);
@@ -166,13 +220,36 @@ const updateStatus = async (req, res) => {
 const requestCancel = async (req, res) => {
     try {
         const { orderId, reason } = req.body;
+        const order = await orderModel.findById(orderId);
+        if (!order) {
+            return res.json({ success: false, message: 'Order not found' });
+        }
+
         await orderModel.findByIdAndUpdate(orderId, {
             cancellationRequested: true,
             cancellationReason: reason || '',
             cancellationRequestedAt: Date.now(),
-            status: 'Cancellation Requested'
+            status: 'Cancelled',
+            cancelledBy: 'user',
+            cancelledMessage: 'Your order has been cancelled.'
         });
-        res.json({ success: true, message: 'Cancellation requested' });
+
+        const updatedOrder = await orderModel.findById(orderId);
+        const user = await userModel.findById(order.userId).select('name email');
+        if (user && user.email) {
+            try {
+                await sendOrderStatusEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: updatedOrder.toObject(),
+                    status: 'Cancelled'
+                });
+            } catch (emailError) {
+                console.log('Cancellation request email failed:', emailError.message);
+            }
+        }
+
+        res.json({ success: true, message: 'Your order has been cancelled.' });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -210,8 +287,25 @@ const adminConfirmCancel = async (req, res) => {
         await orderModel.findByIdAndUpdate(orderId, {
             status: 'Cancelled',
             cancellationConfirmed: true,
-            cancellationConfirmedAt: Date.now()
+            cancellationConfirmedAt: Date.now(),
+            cancelledBy: 'admin',
+            cancelledMessage: 'Your order has been cancelled due to a technical issue. We apologize for the inconvenience.'
         });
+
+        const updatedOrder = await orderModel.findById(orderId);
+        const user = await userModel.findById(order.userId).select('name email');
+        if (user && user.email) {
+            try {
+                await sendOrderStatusEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: updatedOrder.toObject(),
+                    status: 'Cancelled'
+                });
+            } catch (emailError) {
+                console.log('Order cancellation email failed:', emailError.message);
+            }
+        }
 
         res.json({ success: true, message: 'Order cancelled and recorded; user will see cancellation.' });
     } catch (error) {

@@ -133,8 +133,10 @@ const Orders = () => {
                   </button>
 
                   {item.status === 'Cancelled' ? (
-                    <div className='px-3 py-2 text-sm text-red-600 bg-red-50 rounded-sm'>
-                      Your order has been cancelled due to a technical issue. We apologize for the inconvenience.
+                    <div className='cancelled-status-box px-3 py-2 text-sm rounded-sm'>
+                      {item.cancelledMessage || (item.cancelledBy === 'admin'
+                        ? 'Your order has been cancelled due to a technical issue. We apologize for the inconvenience.'
+                        : 'Your order has been cancelled.')}
                     </div>
                   ) : (
                     <button

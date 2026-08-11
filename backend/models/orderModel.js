@@ -12,6 +12,8 @@ const orderSchema = new mongoose.Schema({
     cancellationRequestedAt: { type: Number },
     cancellationConfirmed: { type: Boolean, required: true, default: false },
     cancellationConfirmedAt: { type: Number },
+    cancelledBy: { type: String, default: '' },
+    cancelledMessage: { type: String, default: '' },
     paymentMethod: { type: String, required: true }, // 'COD' ya 'Stripe'
     payment: { type: Boolean, required: true, default: false },
     date: { type: Number, required: true }

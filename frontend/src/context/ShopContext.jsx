@@ -21,10 +21,21 @@ const ShopContextProvider = (props) => {
     });
     const [products, setProducts] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
+    const [theme, setTheme] = useState(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) return savedTheme;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    });
 
     useEffect(() => {
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
     }, [cartItems]);
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.style.colorScheme = theme;
+        localStorage.setItem('theme', theme);
+    }, [theme]);
 
     // Profile Data Fetcher
     const loadUserProfileData = async () => {
@@ -159,6 +170,8 @@ const ShopContextProvider = (props) => {
         setProducts,
         showSearch,
         setShowSearch,
+        theme,
+        setTheme,
         addToCart,
         updateQuantity,
         getCartCount,

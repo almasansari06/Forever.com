@@ -9,6 +9,19 @@ const LatestCollection = () => {
     const [latestProducts,setLatestProducts]= useState([]);
 
     useEffect(()=>{
+        const fourDaysInMs = 4 * 24 * 60 * 60 * 1000;
+        const activeNewArrivals = products.filter((item) => {
+            if (!item.newArrival) return false;
+            if (!item.date) return true;
+            const productAge = Date.now() - new Date(item.date).getTime();
+            return productAge <= fourDaysInMs;
+        });
+
+        if (activeNewArrivals.length > 0) {
+            setLatestProducts(activeNewArrivals.slice(0,10));
+            return;
+        }
+
         setLatestProducts(products.slice(0,10));
     },[products])
     
