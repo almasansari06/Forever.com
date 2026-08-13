@@ -13,34 +13,13 @@ import {
 import adminAuth from '../middleware/adminAuth.js';
 import authUser from '../middleware/auth.js';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
 
 const userRouter = express.Router();
 
-// Get current directory for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Ensure uploads/resumes directory exists
-const uploadsDir = path.join(__dirname, '../uploads/resumes');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadsDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-
-const upload = multer({ 
-    storage,
+// Use memory storage so uploads work on Vercel/serverless environments.
+// We do not persist the file to disk because Vercel's filesystem is not reliable.
+const upload = multer({
+    storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
         const allowedMimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         if (allowedMimes.includes(file.mimetype)) {

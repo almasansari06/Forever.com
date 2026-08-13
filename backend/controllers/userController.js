@@ -200,8 +200,8 @@ const applyJob = async (req, res) => {
             return res.json({ success: false, message: 'Invalid email address' });
         }
 
-        // Get resume filename if uploaded
-        const resumeFileName = req.file ? req.file.filename : 'No resume uploaded';
+        // Get resume filename if uploaded. Keep this serverless-safe.
+        const resumeFileName = req.file ? req.file.originalname : 'No resume uploaded';
 
         // Send email to admin
         try {
