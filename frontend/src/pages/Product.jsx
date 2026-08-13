@@ -220,11 +220,14 @@ const Product = () => {
 
           <button 
             onClick={() => {
-              if (!size) {
-                toast.error('Please select a size');
+              const hasSizeOptions = productData.sizes && productData.sizes.length > 0;
+
+              if (hasSizeOptions && !size) {
+                toast.error('Please select the size');
                 return;
               }
-              addToCart(productData._id, size);
+
+              addToCart(productData._id, hasSizeOptions ? size : 'default');
             }} 
             className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 mt-6 cursor-pointer'
           >
