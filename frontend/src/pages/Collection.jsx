@@ -65,8 +65,15 @@ const Collection = () => {
     let productsCopy = products.slice(0);
 
     // Search Filter
-    if (showSearch && search) {
-      productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+    if (search && search.trim()) {
+      const term = search.trim().toLowerCase();
+      productsCopy = productsCopy.filter(item => {
+        const name = (item.name || '').toLowerCase();
+        const category = (item.category || '').toLowerCase();
+        const subCategory = (item.subCategory || '').toLowerCase();
+
+        return name.includes(term) || category.includes(term) || subCategory.includes(term);
+      });
     }
 
     // Category Filter (Case-Insensitive)
@@ -128,7 +135,7 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter();
-  }, [category, subCategory, search, showSearch, products, sortType]);
+  }, [category, subCategory, search, products, sortType]);
 
   return (
     <div className='flex flex-col md:flex-row gap-6 md:gap-10 pt-8 border-t border-gray-100 max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 dark:border-slate-800'>

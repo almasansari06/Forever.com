@@ -14,6 +14,15 @@ const orderSchema = new mongoose.Schema({
     cancellationConfirmedAt: { type: Number },
     cancelledBy: { type: String, default: '' },
     cancelledMessage: { type: String, default: '' },
+    // Return workflow
+    returnRequested: { type: Boolean, required: true, default: false },
+    returnAccepted: { type: Boolean, required: true, default: false },
+    returnReason: { type: String, default: '' },
+    returnRequestedAt: { type: Number },
+    returnStatus: { type: String, default: '' },
+    returnCompleted: { type: Boolean, required: true, default: false },
+    returnCompletedAt: { type: Number },
+    returnMessage: { type: String, default: '' },
     paymentMethod: { type: String, required: true }, // 'COD' ya 'Stripe'
     payment: { type: Boolean, required: true, default: false },
     date: { type: Number, required: true }

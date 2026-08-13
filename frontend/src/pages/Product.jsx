@@ -1,18 +1,24 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
+import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProduct from '../components/RelatedProduct';
+import { toast } from 'react-toastify';
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart } = useContext(ShopContext);
+  const { products, currency, addToCart, backendUrl } = useContext(ShopContext);
   const [productData, setProductData] = useState(null);
   const [image, setImage] = useState('');
   const [size, setSize] = useState('');
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [touchStartX, setTouchStartX] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewFiles, setReviewFiles] = useState([]);
   const imageRef = useRef(null);
 
   useEffect(() => {
@@ -41,6 +47,12 @@ const Product = () => {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
+
+  useEffect(() => {
+    if (productId) {
+      fetchReviews();
+    }
+  }, [productId]);
 
   const openImageViewer = (index) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
@@ -81,6 +93,79 @@ const Product = () => {
     }
 
     setTouchStartX(null);
+  };
+
+  const handleReviewFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 3) {
+      toast.error('Maximum 3 images allowed');
+      return;
+    }
+    setReviewFiles(files);
+  };
+
+  const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read image'));
+    reader.readAsDataURL(file);
+  });
+
+  const fetchReviews = async () => {
+    try {
+      const response = await axios.post(backendUrl + '/api/review/list', { productId }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.data.success) {
+        setReviews(response.data.reviews || []);
+      }
+    } catch (error) {
+      console.log('Failed to fetch reviews:', error);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewComment.trim()) {
+      toast.error('Please write a review');
+      return;
+    }
+
+    if (reviewRating === 0) {
+      toast.error('Please select at least one star');
+      return;
+    }
+
+    try {
+      const imageUrls = reviewFiles.length > 0
+        ? await Promise.all(reviewFiles.map(file => fileToDataUrl(file)))
+        : [];
+
+      const payload = {
+        productId,
+        userName: 'Customer',
+        rating: reviewRating,
+        comment: reviewComment,
+        images: imageUrls
+      };
+
+      const response = await axios.post(backendUrl + '/api/review/add', payload);
+
+      if (response.data.success) {
+        setReviewComment('');
+        setReviewRating(0);
+        setReviewFiles([]);
+        setShowReviewForm(false);
+        await fetchReviews();
+        toast.success('Review submitted successfully!');
+      } else {
+        toast.error(response.data.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message || 'Failed to submit review');
+    }
   };
 
   if (!products || !productData) {
@@ -134,7 +219,13 @@ const Product = () => {
           )}
 
           <button 
-            onClick={() => addToCart(productData._id, size)} 
+            onClick={() => {
+              if (!size) {
+                toast.error('Please select a size');
+                return;
+              }
+              addToCart(productData._id, size);
+            }} 
             className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 mt-6 cursor-pointer'
           >
             ADD TO CART
@@ -152,12 +243,122 @@ const Product = () => {
       {/* Description */}
       <div className='mt-20'>
         <div className='flex'>
-          <b className='border px-5 py-3 text-sm'>Description</b>
-          <p className='border px-5 py-3 text-sm'>Reviews (122)</p>
+          <b className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>Description</b>
+          <p className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>Reviews ({reviews.length})</p>
         </div>
-        <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500'>
-          <p>An e-commerce website is an online platform that facilitates the buying and selling of products or services over the internet...</p>
-          <p>E-commerce websites typically display products or services along with detailed descriptions, images, prices, and any available variations...</p>
+        <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
+          <p>{productData.description}</p>
+        </div>
+      </div>
+
+      {/* Reviews Section */}
+      <div className='mt-10 mb-20'>
+        <div className='flex items-center justify-between mb-6'>
+          <h3 className='text-xl font-semibold'>Customer Reviews</h3>
+          <button
+            onClick={() => setShowReviewForm(!showReviewForm)}
+            className='bg-black text-white px-6 py-2 text-sm rounded cursor-pointer hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600'
+          >
+            {showReviewForm ? 'Cancel' : 'Write a Review'}
+          </button>
+        </div>
+
+        {/* Review Form */}
+        {showReviewForm && (
+          <form onSubmit={handleReviewSubmit} className='border rounded-lg p-6 mb-6 bg-gray-50 dark:bg-slate-900 dark:border-slate-700'>
+            <div className='mb-4'>
+              <label className='block text-sm font-medium mb-2'>Rating</label>
+              <div className='flex gap-2'>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type='button'
+                    onClick={() => setReviewRating(star)}
+                    className={`text-2xl transition-colors ${star <= reviewRating ? 'text-yellow-400' : 'text-gray-300'}`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className='mb-4'>
+              <label className='block text-sm font-medium mb-2'>Your Review</label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder='Share your experience with this product...'
+                className='w-full border rounded-lg p-3 text-sm outline-none focus:border-black dark:bg-slate-800 dark:border-slate-600 dark:text-white'
+                rows='4'
+              />
+            </div>
+
+            <div className='mb-4'>
+              <label className='block text-sm font-medium mb-2'>Upload Photos (Max 3)</label>
+              <input
+                type='file'
+                multiple
+                accept='image/*'
+                onChange={handleReviewFileChange}
+                className='w-full border rounded-lg p-3 text-sm dark:bg-slate-800 dark:border-slate-600'
+              />
+              {reviewFiles.length > 0 && (
+                <div className='mt-2 flex gap-2'>
+                  {reviewFiles.map((file, idx) => (
+                    <div key={idx} className='relative'>
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`review-${idx}`}
+                        className='w-20 h-20 object-cover rounded'
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              type='submit'
+              className='w-full bg-black text-white py-2 rounded font-medium hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600'
+            >
+              Submit Review
+            </button>
+          </form>
+        )}
+
+        {/* Display Reviews */}
+        <div className='space-y-4'>
+          {reviews.length === 0 ? (
+            <p className='text-gray-500 dark:text-slate-400 text-center py-8'>No reviews yet. Be the first to review!</p>
+          ) : (
+            reviews.map((review) => (
+              <div key={review.id} className='border rounded-lg p-4 bg-white dark:bg-slate-800 dark:border-slate-700'>
+                <div className='flex items-center justify-between mb-2'>
+                  <div className='flex gap-1'>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  <span className='text-xs text-gray-500 dark:text-slate-400'>{review.date}</span>
+                </div>
+                <p className='text-sm mb-3 dark:text-slate-200'>{review.comment}</p>
+                {review.images && review.images.length > 0 && (
+                  <div className='flex gap-2 flex-wrap'>
+                    {review.images.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt={`review-img-${idx}`}
+                        className='w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80'
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 

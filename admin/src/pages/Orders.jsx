@@ -77,10 +77,30 @@ const Orders = ({ token }) => {
         { headers: { token } }
       );
       if (response.data.success) {
-        toast.success(response.data.message || 'Cancellation confirmed');
+        toast.success('Your order has been cancelled successfully.');
         await fetchAllOrders();
       } else {
         toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  }
+
+  // Reject cancellation request
+  const rejectCancellationHandler = async (orderId) => {
+    try {
+      const response = await axios.post(
+        backendUrl + '/api/order/reject-cancellation',
+        { orderId },
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        toast.success('Cancellation request rejected');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message || 'Failed to reject cancellation');
       }
     } catch (error) {
       console.log(error);
@@ -97,7 +117,8 @@ const Orders = ({ token }) => {
       <h3 className='text-lg font-semibold mb-3'>Order Page</h3>
       <div>
         {
-          orders.map((order, index) => (
+          orders.map((order, index) => {
+            return (
             <div className='grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] lg:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-sm text-gray-700 rounded-lg bg-white shadow-xs' key={index}>
               <img className='w-12' src={assets.parcel_icon} alt="" />
               <div>
@@ -130,35 +151,55 @@ const Orders = ({ token }) => {
 
               {/* Cancellation request banner */}
               {order.cancellationRequested && !order.cancellationConfirmed && (
-                <div className='col-span-full p-3 rounded border border-yellow-300 bg-yellow-50 text-yellow-800'>
-                  <p className='font-semibold'>User requested cancellation</p>
-                  {order.cancellationReason && <p className='text-sm'>Reason: {order.cancellationReason}</p>}
-                  <div className='mt-2'>
-                    <button onClick={() => confirmCancellationHandler(order._id)} className='bg-yellow-600 text-white px-3 py-1 rounded mr-2'>Confirm Cancel</button>
+                <div className='col-span-full p-4 rounded border-2 border-yellow-400 bg-yellow-50 text-yellow-900 shadow-sm'>
+                  <p className='font-bold text-lg mb-1'>⚠️ User Requested Order Cancellation</p>
+                  {order.cancellationReason && <p className='text-sm mb-3'>Reason: {order.cancellationReason}</p>}
+                  <div className='flex gap-3 flex-wrap'>
+                    <button 
+                      onClick={() => confirmCancellationHandler(order._id)} 
+                      className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium transition-all active:scale-95'
+                    >
+                      Confirm this order
+                    </button>
+                    <button 
+                      onClick={() => rejectCancellationHandler(order._id)} 
+                      className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium transition-all active:scale-95'
+                    >
+                      Not cancel
+                    </button>
                   </div>
                 </div>
               )}
 
               {/* Status Select & Cancel Button */}
               <div className='flex flex-col gap-2'>
-                <select onChange={(event) => statusHandler(event, order._id)} value={order.status} className='p-2 font-semibold border border-gray-300 rounded outline-none cursor-pointer bg-gray-50'>
-                  <option value="Order Placed">Order Placed</option>
-                  <option value="Packing">Packing</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Out for delivery">Out for delivery</option>
-                  <option value="Delivered">Delivered</option>
-                </select>
+                {order.status === 'Delivered' ? (
+                  <div className='p-2 font-semibold border border-green-200 rounded bg-green-50 text-green-700 text-center'>
+                    Order delivered
+                  </div>
+                ) : (
+                  <select onChange={(event) => statusHandler(event, order._id)} value={order.status} className='p-2 font-semibold border border-gray-300 rounded outline-none cursor-pointer bg-gray-50'>
+                    <option value="Order Placed">Order Placed</option>
+                    <option value="Packing">Packing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Out for delivery">Out for delivery</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                )}
 
-                <button
-                  onClick={() => cancelOrderHandler(order._id)}
-                  className='bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded text-xs transition-all active:scale-95 cursor-pointer shadow-xs'
-                >
-                  Cancel Order
-                </button>
+                {order.status !== 'Delivered' && (
+                  <button
+                    onClick={() => cancelOrderHandler(order._id)}
+                    className='bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded text-xs transition-all active:scale-95 cursor-pointer shadow-xs'
+                  >
+                    Cancel Order
+                  </button>
+                )}
               </div>
 
             </div>
-          ))
+            )
+          })
         }
       </div>
     </div>

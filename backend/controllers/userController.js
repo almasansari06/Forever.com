@@ -1,7 +1,7 @@
 import userModel from "../models/userModel.js";
 import validator from "validator";
 import jwt from "jsonwebtoken";
-import { sendWelcomeEmail } from '../utils/emailService.js';
+import { sendWelcomeEmail, sendJobApplicationEmail, sendJobApplicationToAdmin } from '../utils/emailService.js';
 
 // Helper function to create JWT Token
 const createToken = (id) => {
@@ -184,6 +184,61 @@ const deleteUser = async (req, res) => {
     }
 }
 
+// Job Application Handler
+const applyJob = async (req, res) => {
+    try {
+        const { firstName, lastName, email, contact, state, city, address, aadharNumber, whyJoin } = req.body;
+        
+        // Validation
+        if (!firstName || !lastName || !email || !contact || !state || !city || !address || !aadharNumber || !whyJoin) {
+            return res.json({ success: false, message: 'All fields are required' });
+        }
+
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.json({ success: false, message: 'Invalid email address' });
+        }
+
+        // Get resume filename if uploaded
+        const resumeFileName = req.file ? req.file.filename : 'No resume uploaded';
+
+        // Send email to admin
+        try {
+            await sendJobApplicationToAdmin({
+                firstName,
+                lastName,
+                email,
+                contact,
+                state,
+                city,
+                address,
+                aadharNumber,
+                whyJoin,
+                resumeFileName
+            });
+        } catch (adminEmailError) {
+            console.log('Failed to send admin email:', adminEmailError.message);
+        }
+
+        // Send confirmation email to applicant
+        try {
+            await sendJobApplicationEmail({
+                to: email,
+                firstName,
+                lastName
+            });
+        } catch (applicantEmailError) {
+            console.log('Failed to send applicant email:', applicantEmailError.message);
+        }
+
+        res.json({ success: true, message: 'Application submitted successfully! We will review your profile.' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 
 export { 
     loginUser, 
@@ -193,5 +248,6 @@ export {
     updateProfile,
     getAllUsers, 
     toggleUserStatus, 
-    deleteUser 
+    deleteUser,
+    applyJob
 };

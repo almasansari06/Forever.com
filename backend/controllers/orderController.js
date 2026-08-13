@@ -162,14 +162,21 @@ const verifyRazorpay = async (req, res) => {
 // 6. All Orders data for Admin Panel
 const allOrders = async (req, res) => {
     try {
-        // Exclude orders that have been cancelled so admin main list doesn't show them
-        const orders = await orderModel.find({ status: { $ne: 'Cancelled' } });
+        const orders = await orderModel.find({
+            $or: [
+                { status: { $ne: 'Cancelled' } },
+                { cancellationRequested: true },
+                { returnRequested: true }
+            ]
+        });
         res.json({ success: true, orders });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
     }
 };
+
+
 
 // 7. User Order Data For Frontend
 const userOrders = async (req, res) => {
@@ -193,7 +200,21 @@ const updateStatus = async (req, res) => {
             return res.json({ success: false, message: 'Order not found' });
         }
 
-        await orderModel.findByIdAndUpdate(orderId, { status });
+        if (order.status === 'Delivered') {
+            return res.json({ success: false, message: 'This order has already been delivered and can no longer be changed.' });
+        }
+
+        if (status === 'Delivered') {
+            await orderModel.findByIdAndUpdate(orderId, {
+                status,
+                cancellationRequested: false,
+                cancellationConfirmed: false,
+                cancelledBy: '',
+                cancelledMessage: ''
+            });
+        } else {
+            await orderModel.findByIdAndUpdate(orderId, { status });
+        }
 
         const user = await userModel.findById(order.userId).select('name email');
         if (user && user.email && ['Packing', 'Shipped', 'Out for delivery', 'Delivered', 'Cancelled'].includes(status)) {
@@ -201,8 +222,9 @@ const updateStatus = async (req, res) => {
                 await sendOrderStatusEmail({
                     to: user.email,
                     name: user.name,
-                    order: order.toObject(),
-                    status
+                    order: { ...order.toObject(), status },
+                    status,
+                    customMessage: status === 'Delivered' ? 'Your order has been delivered successfully.' : undefined
                 });
             } catch (emailError) {
                 console.log('Order status email failed:', emailError.message);
@@ -225,13 +247,22 @@ const requestCancel = async (req, res) => {
             return res.json({ success: false, message: 'Order not found' });
         }
 
+        if (order.status === 'Delivered' || order.status === 'Cancelled') {
+            return res.json({ success: false, message: 'This order cannot be cancelled at this stage.' });
+        }
+
+        if (order.cancellationRequested) {
+            return res.json({ success: false, message: 'A cancellation request is already pending for this order.' });
+        }
+
         await orderModel.findByIdAndUpdate(orderId, {
+            status: order.status,
             cancellationRequested: true,
             cancellationReason: reason || '',
             cancellationRequestedAt: Date.now(),
-            status: 'Cancelled',
             cancelledBy: 'user',
-            cancelledMessage: 'Your order has been cancelled.'
+            cancelledMessage: "Let's verify your cancelling order.",
+            cancellationConfirmed: false
         });
 
         const updatedOrder = await orderModel.findById(orderId);
@@ -242,14 +273,15 @@ const requestCancel = async (req, res) => {
                     to: user.email,
                     name: user.name,
                     order: updatedOrder.toObject(),
-                    status: 'Cancelled'
+                    status: order.status,
+                    customMessage: 'Your cancellation request has been sent to the admin for review.'
                 });
             } catch (emailError) {
                 console.log('Cancellation request email failed:', emailError.message);
             }
         }
 
-        res.json({ success: true, message: 'Your order has been cancelled.' });
+        res.json({ success: true, message: 'Your cancellation request has been sent.' });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -265,7 +297,15 @@ const adminConfirmCancel = async (req, res) => {
             return res.json({ success: false, message: 'Order not found or already removed' });
         }
 
-        const cancelledBy = order.cancellationRequested ? 'user' : 'admin';
+        if ((order.status === 'Delivered' || order.status === 'Cancelled') && !order.cancellationRequested) {
+            return res.json({ success: false, message: 'This order cannot be cancelled at this stage.' });
+        }
+
+        const isUserRequested = !!order.cancellationRequested;
+        const cancelledBy = isUserRequested ? 'user' : 'admin';
+        const cancellationMessage = isUserRequested
+            ? 'Your order has been cancelled successfully.'
+            : 'Due to some technical issue, your order has been cancelled.';
 
         const cancelledDoc = new cancelledOrderModel({
             originalOrderId: order._id.toString(),
@@ -283,13 +323,13 @@ const adminConfirmCancel = async (req, res) => {
 
         await cancelledDoc.save();
 
-        // Keep the original order for user visibility but mark it cancelled
         await orderModel.findByIdAndUpdate(orderId, {
             status: 'Cancelled',
+            cancellationRequested: false,
             cancellationConfirmed: true,
             cancellationConfirmedAt: Date.now(),
-            cancelledBy: 'admin',
-            cancelledMessage: 'Your order has been cancelled due to a technical issue. We apologize for the inconvenience.'
+            cancelledBy,
+            cancelledMessage: cancellationMessage
         });
 
         const updatedOrder = await orderModel.findById(orderId);
@@ -300,7 +340,8 @@ const adminConfirmCancel = async (req, res) => {
                     to: user.email,
                     name: user.name,
                     order: updatedOrder.toObject(),
-                    status: 'Cancelled'
+                    status: 'Cancelled',
+                    customMessage: cancellationMessage
                 });
             } catch (emailError) {
                 console.log('Order cancellation email failed:', emailError.message);
@@ -337,6 +378,50 @@ const deleteCancelledOrder = async (req, res) => {
     }
 };
 
+// 13. Admin rejects cancellation request
+const rejectCancellation = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        const order = await orderModel.findById(orderId);
+        if (!order) {
+            return res.json({ success: false, message: 'Order not found' });
+        }
+
+        if ((order.status === 'Delivered' || order.status === 'Cancelled') && !order.cancellationRequested) {
+            return res.json({ success: false, message: 'This order cannot be updated right now.' });
+        }
+
+        await orderModel.findByIdAndUpdate(orderId, {
+            cancellationRequested: false,
+            cancellationConfirmed: false,
+            cancellationReason: '',
+            cancelledBy: '',
+            cancelledMessage: '',
+            status: order.status === 'Cancelled' ? 'Order Placed' : order.status
+        });
+
+        const updatedOrder = await orderModel.findById(orderId);
+        const user = await userModel.findById(order.userId).select('name email');
+        if (user && user.email) {
+            try {
+                await sendOrderStatusEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: updatedOrder.toObject(),
+                    status: updatedOrder.status,
+                    customMessage: 'Your cancellation request was reviewed and your order is continuing normally.'
+                });
+            } catch (emailError) {
+                console.log('Cancellation rejection email failed:', emailError.message);
+            }
+        }
+
+        res.json({ success: true, message: 'Cancellation request rejected' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
 export {
     placeOrder,
     placeOrderStripe,
@@ -347,6 +432,8 @@ export {
     verifyStripe,
     verifyRazorpay,
     requestCancel,
-    adminConfirmCancel
-    , allCancelledOrders, deleteCancelledOrder
+    adminConfirmCancel,
+    rejectCancellation,
+    allCancelledOrders, 
+    deleteCancelledOrder
 };

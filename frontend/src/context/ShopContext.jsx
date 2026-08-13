@@ -20,6 +20,7 @@ const ShopContextProvider = (props) => {
         }
     });
     const [products, setProducts] = useState([]);
+    const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -168,6 +169,8 @@ const ShopContextProvider = (props) => {
         setCartItems,
         products,
         setProducts,
+        search,
+        setSearch,
         showSearch,
         setShowSearch,
         theme,

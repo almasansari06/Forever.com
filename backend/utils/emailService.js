@@ -102,24 +102,24 @@ export const sendOrderEmail = async ({ to, name, order }) => {
   return sendMail({ to, subject, text, html });
 };
 
-export const sendOrderStatusEmail = async ({ to, name, order, status }) => {
+export const sendOrderStatusEmail = async ({ to, name, order, status, customMessage }) => {
   if (!to || !order) return { success: false, skipped: true };
 
-  const cancellationText = order.cancelledMessage ||
+  const cancellationText = customMessage || order.cancelledMessage ||
     (order.cancelledBy === 'admin'
-      ? 'Your order has been cancelled due to a technical issue. We apologize for the inconvenience.'
-      : 'Your order has been cancelled.');
+      ? 'Due to some technical issue, your order has been cancelled.'
+      : 'Your order has been cancelled successfully.');
 
   const statusMap = {
     Packing: 'Your order is being packed',
     Shipped: 'Your order has been shipped',
     'Out for delivery': 'Your order is out for delivery',
-    Delivered: 'Your order has been delivered',
+    Delivered: customMessage || 'Your order has been delivered successfully.',
     Cancelled: cancellationText,
     'Cancellation Requested': 'Your cancellation request has been received'
   };
 
-  const label = statusMap[status] || 'Your order status has been updated';
+  const label = statusMap[status] || customMessage || 'Your order status has been updated';
   const subject = `Forever: ${label}`;
   const text = `Hi ${name || 'there'},\n\n${label}.\nOrder ID: ${order._id || 'N/A'}\nCurrent Status: ${status || 'Updated'}\n\nThank you for shopping with Forever.\n\nRegards,\nForever Team`;
 
@@ -127,7 +127,7 @@ export const sendOrderStatusEmail = async ({ to, name, order, status }) => {
     <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6;">
       <h2 style="color: #111;">${label}</h2>
       <p>Hi ${name || 'there'},</p>
-      <p>Your order status has been updated.</p>
+      <p>${label}</p>
       <p><strong>Order ID:</strong> ${order._id || 'N/A'}</p>
       <p><strong>Current Status:</strong> ${status || 'Updated'}</p>
       <p>Thank you for shopping with Forever.</p>
@@ -136,4 +136,49 @@ export const sendOrderStatusEmail = async ({ to, name, order, status }) => {
   `;
 
   return sendMail({ to, subject, text, html });
+};
+
+export const sendJobApplicationEmail = async ({ to, firstName, lastName }) => {
+  if (!to || !firstName) return { success: false, skipped: true };
+
+  const subject = 'Application Received - Forever';
+  const text = `Thank you for applying to Forever!\n\nDear ${firstName} ${lastName || ''},\n\nWe appreciate your interest in joining the Forever family. We have received your application and will review it thoroughly.\n\nIf your profile matches our requirements, our HR team will get in touch with you within 5-7 business days.\n\nBest regards,\nForever Global Team`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6;">
+      <h2 style="color: #111;">Thank You for Applying to Forever!</h2>
+      <p>Dear ${firstName} ${lastName || ''},</p>
+      <p>We appreciate your interest in joining the Forever family. We have received your application and will review it thoroughly.</p>
+      <p>If your profile matches our requirements, our HR team will get in touch with you within 5-7 business days. We wish you the best and hope to connect with you soon!</p>
+      <br/>
+      <p>Best regards,<br/>Forever Global Team</p>
+    </div>
+  `;
+
+  return sendMail({ to, subject, text, html });
+};
+
+export const sendJobApplicationToAdmin = async ({ firstName, lastName, email, contact, state, city, address, aadharNumber, whyJoin, resumeFileName }) => {
+  const adminEmail = process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com';
+
+  const subject = `New Job Application from ${firstName} ${lastName}`;
+  const text = `New job application received.\n\nName: ${firstName} ${lastName}\nEmail: ${email}\nContact: ${contact}\nState: ${state}\nCity: ${city}\nAddress: ${address}\nAadhar: ${aadharNumber}\nWhy they want to join: ${whyJoin}\nResume: ${resumeFileName}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6;">
+      <h2 style="color: #111;">New Job Application Received</h2>
+      <p><strong>Name:</strong> ${firstName} ${lastName}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Contact:</strong> ${contact}</p>
+      <p><strong>State:</strong> ${state}</p>
+      <p><strong>City:</strong> ${city}</p>
+      <p><strong>Address:</strong> ${address}</p>
+      <p><strong>Aadhar Number:</strong> ${aadharNumber}</p>
+      <p><strong>Why they want to join:</strong> ${whyJoin}</p>
+      <p><strong>Resume:</strong> ${resumeFileName}</p>
+      <p><strong>Applied At:</strong> ${new Date().toLocaleString()}</p>
+    </div>
+  `;
+
+  return sendMail({ to: adminEmail, subject, text, html });
 };

@@ -51,7 +51,7 @@ const MyProfile = () => {
       <div className='flex flex-col gap-1'>
         {isEdit ? (
           <input
-            className='bg-gray-100 text-3xl font-medium max-w-60 p-1 rounded border'
+            className='bg-gray-100 text-3xl font-medium max-w-60 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
             type="text"
             value={userData.name || ''}
             onChange={(e) => {
@@ -60,24 +60,24 @@ const MyProfile = () => {
             }}
           />
         ) : (
-          <p className='font-medium text-3xl text-neutral-800 border-b pb-2'>
+          <p className='font-medium text-3xl text-neutral-800 dark:text-white border-b pb-2'>
             {userData.name}
           </p>
         )}
       </div>
 
-      <hr className='bg-zinc-200 h-[1px] border-none' />
+      <hr className='bg-zinc-200 dark:bg-slate-700 h-px border-none' />
 
       <div>
-        <p className='text-zinc-500 underline mt-3 font-semibold uppercase'>Contact Information</p>
-        <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700'>
+        <p className='text-zinc-500 dark:text-slate-400 underline mt-3 font-semibold uppercase'>Contact Information</p>
+        <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700 dark:text-slate-300'>
           <p className='font-medium'>Email id:</p>
           <p className='text-blue-500'>{userData.email}</p>
 
           <p className='font-medium'>Phone:</p>
           {isEdit ? (
             <input
-              className='bg-gray-100 max-w-52 p-1 rounded border'
+              className='bg-gray-100 max-w-52 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
               type="text"
               value={userData.phone || ''}
               onChange={(e) => {
@@ -86,14 +86,14 @@ const MyProfile = () => {
               }}
             />
           ) : (
-            <p className='text-blue-400'>{userData.phone || "No phone number"}</p>
+            <p className='text-blue-400 dark:text-blue-300'>{userData.phone || "No phone number"}</p>
           )}
 
           <p className='font-medium'>Address:</p>
           {isEdit ? (
             <div className='grid gap-2'>
               <input
-                className='bg-gray-100 p-1 rounded border'
+                className='bg-gray-100 dark:bg-slate-800 dark:text-white dark:border-slate-600 p-1 rounded border'
                 onChange={(e) => {
                   const val = e.target.value;
                   setUserData((prev) => ({
@@ -107,7 +107,7 @@ const MyProfile = () => {
               />
               <div className='grid grid-cols-2 gap-2'>
                 <input
-                  className='bg-gray-100 p-1 rounded border'
+                  className='bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
                   onChange={(e) => {
                     const val = e.target.value;
                     setUserData((prev) => ({
@@ -120,7 +120,7 @@ const MyProfile = () => {
                   placeholder="City"
                 />
                 <input
-                  className='bg-gray-100 p-1 rounded border'
+                  className='bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
                   onChange={(e) => {
                     const val = e.target.value;
                     setUserData((prev) => ({
@@ -135,7 +135,7 @@ const MyProfile = () => {
               </div>
               <div className='grid grid-cols-2 gap-2'>
                 <input
-                  className='bg-gray-100 p-1 rounded border'
+                  className='bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
                   onChange={(e) => {
                     const val = e.target.value;
                     setUserData((prev) => ({
@@ -148,7 +148,7 @@ const MyProfile = () => {
                   placeholder="Zipcode"
                 />
                 <input
-                  className='bg-gray-100 p-1 rounded border'
+                  className='bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
                   onChange={(e) => {
                     const val = e.target.value;
                     setUserData((prev) => ({
@@ -163,7 +163,7 @@ const MyProfile = () => {
               </div>
             </div>
           ) : (
-            <div className='text-gray-500'>
+            <div className='text-gray-500 dark:text-slate-300'>
               <p>{userData.address?.street || userData.address?.line1 || 'No address added'}</p>
               {userData.address?.city && <p>{userData.address?.city}</p>}
               {userData.address?.state && <p>{userData.address?.state}</p>}
@@ -175,12 +175,12 @@ const MyProfile = () => {
       </div>
 
       <div>
-        <p className='text-zinc-500 underline mt-3 font-semibold uppercase'>Basic Information</p>
-        <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700'>
+        <p className='text-zinc-500 dark:text-slate-400 underline mt-3 font-semibold uppercase'>Basic Information</p>
+        <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700 dark:text-slate-300'>
           <p className='font-medium'>Gender:</p>
           {isEdit ? (
             <select
-              className='max-w-28 bg-gray-100 p-1 rounded border'
+              className='max-w-28 bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
               onChange={(e) => {
                 const val = e.target.value;
                 setUserData((prev) => ({ ...prev, gender: val }));
@@ -192,13 +192,13 @@ const MyProfile = () => {
               <option value="Female">Female</option>
             </select>
           ) : (
-            <p className='text-gray-500'>{userData.gender || "Not Selected"}</p>
+            <p className='text-gray-500 dark:text-slate-300'>{userData.gender || "Not Selected"}</p>
           )}
 
           <p className='font-medium'>Birthday:</p>
           {isEdit ? (
             <input
-              className='max-w-36 bg-gray-100 p-1 rounded border'
+              className='max-w-36 bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
               type="date"
               onChange={(e) => {
                 const val = e.target.value;
@@ -207,7 +207,7 @@ const MyProfile = () => {
               value={userData.dob || ''}
             />
           ) : (
-            <p className='text-gray-500'>{userData.dob || "Not Selected"}</p>
+            <p className='text-gray-500 dark:text-slate-300'>{userData.dob || "Not Selected"}</p>
           )}
         </div>
       </div>
@@ -216,7 +216,7 @@ const MyProfile = () => {
         {isEdit ? (
           <button
             onClick={updateUserProfileData}
-            className='border border-black px-8 py-2 rounded-full hover:bg-black hover:text-white transition-all cursor-pointer'
+            className='border border-black dark:border-white px-8 py-2 rounded-full hover:bg-black hover:text-white dark:hover:bg-slate-700 transition-all cursor-pointer dark:text-white'
           >
             Save information
           </button>
@@ -229,7 +229,7 @@ const MyProfile = () => {
               }
               setIsEdit(true);
             }}
-            className='border border-black px-8 py-2 rounded-full hover:bg-black hover:text-white transition-all cursor-pointer'
+            className='border border-black dark:border-white px-8 py-2 rounded-full hover:bg-black hover:text-white dark:hover:bg-slate-700 transition-all cursor-pointer dark:text-white'
           >
             Edit
           </button>

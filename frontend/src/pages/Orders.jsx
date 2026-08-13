@@ -8,6 +8,14 @@ const Orders = () => {
 
   const { backendUrl, token, currency } = useContext(ShopContext);
 
+  const trackingSteps = ['Order Placed', 'Packing', 'Shipped', 'Out for delivery', 'Delivered'];
+
+  const getStatusIndex = (status) => {
+    if (!status) return 0;
+    const index = trackingSteps.indexOf(status);
+    return index >= 0 ? index : 0;
+  };
+
   const [orderData, setOrderData] = useState([])
 
   const loadOrderData = async () => {
@@ -33,7 +41,10 @@ const Orders = () => {
               status: order.status || 'Order Placed',
               payment: order.payment,
               paymentMethod: order.paymentMethod,
-              date: order.date
+              date: order.date,
+              cancelledBy: order.cancelledBy || '',
+              cancelledMessage: order.cancelledMessage || '',
+              cancellationRequested: !!order.cancellationRequested
             });
           });
         });
@@ -66,8 +77,6 @@ const Orders = () => {
 
       if (response.data.success) {
         toast.success(response.data.message || "Order Cancelled Successfully");
-        // State se turant filter karke hata dein taaki refresh par wapas na aaye
-        setOrderData(prevData => prevData.filter(item => item.orderId !== orderId));
         loadOrderData();
       } else {
         toast.error(response.data.message);
@@ -117,36 +126,69 @@ const Orders = () => {
 
               {/* Status and Buttons Container */}
               <div className='md:w-1/2 flex flex-col gap-3 justify-between'>
-                <div className='flex items-center gap-2'>
-                  <p className='min-w-2.5 h-2.5 rounded-full bg-green-500'></p>
-                  <p className='text-sm md:text-base font-medium text-gray-700'>
-                    {item.status}
-                  </p>
-                </div>
+                {item.status === 'Delivered' ? (
+                  <div className='rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700'>
+                    Your order has been delivered successfully.
+                  </div>
+                ) : item.status === 'Cancelled' || (item.cancellationRequested && item.cancelledBy === 'user') ? (
+                  <div className='cancelled-status-box px-3 py-2 text-sm rounded-sm'>
+                    {item.cancelledMessage || (item.cancelledBy === 'admin'
+                      ? 'Due to some technical issue, your order has been cancelled.'
+                      : 'Your order has been cancelled successfully.')}
+                  </div>
+                ) : (
+                  <div className='relative mt-1'>
+                    <div className='absolute left-0 right-0 top-3 h-[2px] bg-gray-200'></div>
+                    <div
+                      className='absolute left-0 top-3 h-[2px] bg-orange-400 transition-all duration-300'
+                      style={{ width: `${(getStatusIndex(item.status) / (trackingSteps.length - 1)) * 100}%` }}
+                    ></div>
 
-                <div className='flex flex-wrap items-center gap-2'>
-                  <button 
-                    onClick={loadOrderData} 
-                    className='border border-gray-300 px-4 py-2 text-sm font-medium rounded-sm hover:bg-gray-50 active:scale-95 transition-all cursor-pointer'
-                  >
-                    Refresh
-                  </button>
+                    <div className='relative flex justify-between gap-2'>
+                      {trackingSteps.map((step, stepIndex) => {
+                        const isDone = stepIndex <= getStatusIndex(item.status);
+                        const isCurrent = stepIndex === getStatusIndex(item.status);
 
-                  {item.status === 'Cancelled' ? (
-                    <div className='cancelled-status-box px-3 py-2 text-sm rounded-sm'>
-                      {item.cancelledMessage || (item.cancelledBy === 'admin'
-                        ? 'Your order has been cancelled due to a technical issue. We apologize for the inconvenience.'
-                        : 'Your order has been cancelled.')}
+                        return (
+                          <div key={step} className='flex w-1/5 min-w-0 flex-col items-center text-center'>
+                            <div
+                              className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                                isDone
+                                  ? 'border-orange-400 bg-orange-400 text-white'
+                                  : isCurrent
+                                    ? 'border-orange-300 bg-white text-orange-500'
+                                    : 'border-gray-300 bg-white text-gray-400'
+                              }`}
+                            >
+                              <span className='h-2 w-2 rounded-full bg-current'></span>
+                            </div>
+                            <p className={`mt-2 text-[10px] font-medium leading-tight ${isDone ? 'text-gray-700' : 'text-gray-400'}`}>
+                              {step}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ) : (
+                  </div>
+                )}
+
+                {!['Delivered', 'Cancelled'].includes(item.status) && !(item.cancellationRequested && item.cancelledBy === 'user') && (
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <button 
+                      onClick={loadOrderData} 
+                      className='border border-gray-300 px-4 py-2 text-sm font-medium rounded-sm hover:bg-gray-50 active:scale-95 transition-all cursor-pointer'
+                    >
+                      Refresh
+                    </button>
+
                     <button
                       onClick={() => cancelOrderHandler(item.orderId)}
                       className='bg-red-600 text-white hover:bg-red-700 px-3 py-2 text-sm font-medium rounded-sm active:scale-95 transition-all cursor-pointer shadow-xs'
                     >
                       Cancel Order
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
             </div>

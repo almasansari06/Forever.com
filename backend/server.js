@@ -8,10 +8,17 @@ import productRouter from './routes/productRoute.js';
 import productTypeRouter from './routes/productTypeRoute.js';
 import cartRouter from './routes/cartRoute.js';
 import orderRouter from './routes/orderRoute.js';
+import reviewRouter from './routes/reviewRoute.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // App Config
 const app = express();
 const port = process.env.PORT || 4000;
+
+// Get current directory for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // CORS setup (allowing all origins & headers safely)
 app.use(cors({
@@ -23,6 +30,9 @@ app.use(cors({
 
 // Middlewares
 app.use(express.json());
+
+// Serve static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database & Cloudinary Connection Middleware for Serverless
 let isConnected = false;
@@ -50,6 +60,7 @@ app.use('/api/product', productRouter);
 app.use('/api/product-type', productTypeRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
+app.use('/api/review', reviewRouter);
 
 if (!process.env.VERCEL) {
     app.listen(port, () => console.log('Server started on PORT : ' + port));

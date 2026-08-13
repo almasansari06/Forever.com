@@ -9,10 +9,20 @@ const SearchBar = () => {
   const navigate = useNavigate();
 
   const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearch(query);
+    setSearch(e.target.value);
+  };
 
-    if (query && !location.pathname.includes('collection')) {
+  const handleSearchSubmit = () => {
+    const query = search.trim();
+
+    if (!query) {
+      setShowSearch(false);
+      return;
+    }
+
+    setShowSearch(false);
+
+    if (!location.pathname.includes('collection')) {
       navigate('/collection');
     }
   };
@@ -25,12 +35,31 @@ const SearchBar = () => {
         <input
           value={search}
           onChange={handleSearchChange}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSearchSubmit();
+            }
+          }}
           className='flex-1 outline-none bg-transparent text-sm text-gray-800 placeholder-gray-400 dark:text-slate-100 dark:placeholder-slate-400'
           type="text"
           placeholder='Search products, categories...'
           autoFocus
         />
-        <img className='w-4 opacity-60 hover:opacity-100 transition-opacity' src={assets.search_icon} alt="Search Icon" />
+        {search && (
+          <button 
+            onClick={() => setSearch('')}
+            className='text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-300 mr-2 text-lg leading-none cursor-pointer'
+            aria-label='Clear search'
+          >
+            ×
+          </button>
+        )}
+        <img
+          onClick={handleSearchSubmit}
+          className='w-4 opacity-60 hover:opacity-100 transition-opacity cursor-pointer'
+          src={assets.search_icon}
+          alt="Search Icon"
+        />
       </div>
 
       <img

@@ -13,26 +13,60 @@
     @apply bg-gray-50 text-gray-900 transition-colors duration-300 antialiased dark:bg-slate-950 dark:text-slate-100;
   }
 
+  /* Comprehensive dark mode text styling */
+  html.dark {
+    color-scheme: dark;
+  }
+
   html.dark body,
   html.dark body * {
+    color: white !important;
+    border-color: inherit;
+  }
+
+  /* Override specific elements for dark mode */
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    background-color: #1e293b;
+    color: white;
+    border-color: #475569;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  html.dark input:focus,
+  html.dark textarea:focus,
+  html.dark select:focus {
+    border-color: #64748b;
+    background-color: #0f172a;
+  }
+
+  html.dark button {
     color: white;
   }
 
-  html.dark body a,
-  html.dark body button,
-  html.dark body input,
-  html.dark body textarea,
-  html.dark body select,
-  html.dark body label,
-  html.dark body p,
-  html.dark body span,
-  html.dark body div,
-  html.dark body h1,
-  html.dark body h2,
-  html.dark body h3,
-  html.dark body h4,
-  html.dark body h5,
-  html.dark body h6 {
+  html.dark a {
+    color: #60a5fa;
+  }
+
+  html.dark a:hover {
+    color: #93c5fd;
+  }
+
+  html.dark h1,
+  html.dark h2,
+  html.dark h3,
+  html.dark h4,
+  html.dark h5,
+  html.dark h6,
+  html.dark p,
+  html.dark span,
+  html.dark label,
+  html.dark div {
     color: white;
   }
 
