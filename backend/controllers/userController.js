@@ -202,6 +202,8 @@ const applyJob = async (req, res) => {
 
         // Get resume filename if uploaded. Keep this serverless-safe.
         const resumeFileName = req.file ? req.file.originalname : 'No resume uploaded';
+        const resumeBuffer = req.file ? req.file.buffer : null;
+        const resumeMimeType = req.file ? req.file.mimetype : null;
 
         // Send email to admin
         try {
@@ -215,7 +217,9 @@ const applyJob = async (req, res) => {
                 address,
                 aadharNumber,
                 whyJoin,
-                resumeFileName
+                resumeFileName,
+                resumeBuffer,
+                resumeMimeType
             });
         } catch (adminEmailError) {
             console.log('Failed to send admin email:', adminEmailError.message);

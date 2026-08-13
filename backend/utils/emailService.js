@@ -12,7 +12,7 @@ const transporter = process.env.EMAIL_HOST && process.env.EMAIL_USER && process.
     })
   : null;
 
-const sendMail = async ({ to, subject, html, text }) => {
+const sendMail = async ({ to, subject, html, text, attachments = [] }) => {
   if (!transporter) {
     console.log(`Email skipped for ${to}. Configure SMTP credentials in .env to enable email delivery.`);
     return { success: false, skipped: true };
@@ -25,6 +25,7 @@ const sendMail = async ({ to, subject, html, text }) => {
       subject,
       text: text || '',
       html: html || text || '',
+      attachments,
     });
 
     return { success: true };
@@ -158,7 +159,7 @@ export const sendJobApplicationEmail = async ({ to, firstName, lastName }) => {
   return sendMail({ to, subject, text, html });
 };
 
-export const sendJobApplicationToAdmin = async ({ firstName, lastName, email, contact, state, city, address, aadharNumber, whyJoin, resumeFileName }) => {
+export const sendJobApplicationToAdmin = async ({ firstName, lastName, email, contact, state, city, address, aadharNumber, whyJoin, resumeFileName, resumeBuffer, resumeMimeType }) => {
   const adminEmail = process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com';
 
   const subject = `New Job Application from ${firstName} ${lastName}`;
@@ -180,5 +181,13 @@ export const sendJobApplicationToAdmin = async ({ firstName, lastName, email, co
     </div>
   `;
 
-  return sendMail({ to: adminEmail, subject, text, html });
+  const attachments = resumeBuffer && resumeFileName
+    ? [{
+        filename: resumeFileName,
+        content: Buffer.from(resumeBuffer),
+        contentType: resumeMimeType || 'application/octet-stream',
+      }]
+    : [];
+
+  return sendMail({ to: adminEmail, subject, text, html, attachments });
 };
