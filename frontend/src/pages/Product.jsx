@@ -10,6 +10,8 @@ const Product = () => {
   const { productId } = useParams();
   const { products, currency, addToCart, backendUrl } = useContext(ShopContext);
   const [productData, setProductData] = useState(null);
+  const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  const footwearSizes = ['6', '7', '8', '9', '10'];
   const [image, setImage] = useState('');
   const [size, setSize] = useState('');
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -22,8 +24,9 @@ const Product = () => {
   const imageRef = useRef(null);
 
   useEffect(() => {
-    // Jab bhi new product page open ho, page auto top par scroll ho jaye
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
     if (!products || products.length === 0) return;
 
@@ -172,6 +175,23 @@ const Product = () => {
     return <div className="text-center py-10 text-gray-500">Loading Product...</div>;
   }
 
+  const reviewCount = reviews.length;
+  const averageRating = reviewCount > 0
+    ? reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / reviewCount
+    : 0;
+  const roundedAverageRating = Math.round(averageRating);
+
+  const orderedSizes = [...(productData.sizes || [])].sort((a, b) => {
+    const clothingOrder = clothingSizes.indexOf(a) >= 0 ? clothingSizes.indexOf(a) : Number.MAX_SAFE_INTEGER;
+    const footwearOrder = footwearSizes.indexOf(a) >= 0 ? footwearSizes.indexOf(a) : Number.MAX_SAFE_INTEGER;
+    const clothingOrderB = clothingSizes.indexOf(b) >= 0 ? clothingSizes.indexOf(b) : Number.MAX_SAFE_INTEGER;
+    const footwearOrderB = footwearSizes.indexOf(b) >= 0 ? footwearSizes.indexOf(b) : Number.MAX_SAFE_INTEGER;
+
+    const orderA = clothingOrder !== Number.MAX_SAFE_INTEGER ? clothingOrder : footwearOrder;
+    const orderB = clothingOrderB !== Number.MAX_SAFE_INTEGER ? clothingOrderB : footwearOrderB;
+    return orderA - orderB;
+  });
+
   return (
     <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
 
@@ -191,21 +211,58 @@ const Product = () => {
 
         {/* Details */}
         <div className='flex-1'>
-          <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
+          <h1
+            className='font-medium text-2xl mt-2'
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              wordBreak: 'break-word',
+            }}
+          >
+            {productData.name}
+          </h1>
           <div className='flex items-center gap-1 mt-2'>
-            {[...Array(4)].map((_, i) => <img src={assets.star_icon} alt="" key={i} className="w-3.5" />)}
-            <img src={assets.star_dull_icon} alt="" className="w-3.5" />
-            <p className='pl-2'>(122)</p>
+            {[...Array(5)].map((_, i) => (
+              <img
+                src={i < roundedAverageRating ? assets.star_icon : assets.star_dull_icon}
+                alt=""
+                key={i}
+                className="w-3.5"
+              />
+            ))}
+            <p className='pl-2'>({reviewCount})</p>
           </div>
           <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
-          <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
+          <p
+            className='mt-5 text-gray-500 md:w-4/5'
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {productData.description}
+          </p>
+
+          {productData.outOfStock && (
+            <div className='mt-5 inline-block rounded bg-red-100 text-red-700 px-3 py-2 text-sm font-medium'>
+              Out of stock
+            </div>
+          )}
 
           {/* Render Size Section ONLY if sizes exist */}
-          {productData.sizes && productData.sizes.length > 0 && (
+          {!productData.outOfStock && orderedSizes.length > 0 && (
             <div className='flex flex-col gap-4 my-8'>
               <p>Select Size</p>
               <div className='flex gap-2 flex-wrap'>
-                {productData.sizes.map((item, index) => (
+                {orderedSizes.map((item, index) => (
                   <button 
                     onClick={() => setSize(item)} 
                     className={`border py-2 px-4 bg-gray-100 ${item === size ? 'border-orange-500 bg-orange-50 font-semibold' : ''}`} 
@@ -218,21 +275,30 @@ const Product = () => {
             </div>
           )}
 
-          <button 
-            onClick={() => {
-              const hasSizeOptions = productData.sizes && productData.sizes.length > 0;
+          {!productData.outOfStock ? (
+            <button 
+              onClick={() => {
+                const hasSizeOptions = productData.sizes && productData.sizes.length > 0;
 
-              if (hasSizeOptions && !size) {
-                toast.error('Please select the size');
-                return;
-              }
+                if (hasSizeOptions && !size) {
+                  toast.error('Please select the size');
+                  return;
+                }
 
-              addToCart(productData._id, hasSizeOptions ? size : 'default');
-            }} 
-            className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 mt-6 cursor-pointer'
-          >
-            ADD TO CART
-          </button>
+                addToCart(productData._id, hasSizeOptions ? size : 'default');
+              }} 
+              className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 mt-6 cursor-pointer'
+            >
+              ADD TO CART
+            </button>
+          ) : (
+            <button 
+              disabled
+              className='bg-gray-300 text-gray-600 px-8 py-3 text-sm mt-6 cursor-not-allowed'
+            >
+              Out of Stock
+            </button>
+          )}
           
           <hr className='mt-8 sm:w-4/5' />
           <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
@@ -250,7 +316,7 @@ const Product = () => {
           <p className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>Reviews ({reviews.length})</p>
         </div>
         <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
-          <p>{productData.description}</p>
+          <p className='whitespace-pre-wrap break-words max-h-[260px] overflow-y-auto pr-2'>{productData.description}</p>
         </div>
       </div>
 

@@ -23,9 +23,20 @@ const Add = ({ token }) => {
     const [subCategory, setSubCategory] = useState('');
     const [bestseller, setBestseller] = useState(false);
     const [newArrival, setNewArrival] = useState(false);
+    const [outOfStock, setOutOfStock] = useState(false);
     const [sizes, setSizes] = useState([]);
     const [productTypes, setProductTypes] = useState([]);
     const [newType, setNewType] = useState('');
+    const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const footwearSizes = ['6', '7', '8', '9', '10'];
+    const selectedSizeGroup = sizes.some((size) => clothingSizes.includes(size)) ? 'clothing' : sizes.some((size) => footwearSizes.includes(size)) ? 'footwear' : null;
+
+    const getOrderedSizes = (nextSizes) => {
+        const unique = [...new Set(nextSizes.filter(Boolean))];
+        const clothing = clothingSizes.filter((size) => unique.includes(size));
+        const footwear = footwearSizes.filter((size) => unique.includes(size));
+        return [...clothing, ...footwear];
+    };
 
     const fetchProductTypes = async () => {
         try {
@@ -100,9 +111,23 @@ const Add = ({ token }) => {
     };
 
     const toggleSize = (size) => {
-        setSizes((prev) => 
-            prev.includes(size) ? prev.filter((item) => item !== size) : [...prev, size]
-        );
+        setSizes((prev) => {
+            const sizeGroup = clothingSizes.includes(size) ? 'clothing' : footwearSizes.includes(size) ? 'footwear' : null;
+
+            if (!sizeGroup) return prev;
+
+            const next = prev.includes(size)
+                ? prev.filter((item) => item !== size)
+                : [...prev, size];
+
+            const filtered = sizeGroup === 'clothing'
+                ? next.filter((item) => !footwearSizes.includes(item))
+                : sizeGroup === 'footwear'
+                    ? next.filter((item) => !clothingSizes.includes(item))
+                    : next;
+
+            return getOrderedSizes(filtered);
+        });
     };
 
     const onSubmitHandler = async (e) => {
@@ -118,6 +143,7 @@ const Add = ({ token }) => {
             formData.append('subCategory', subCategory);
             formData.append('bestseller', bestseller);
             formData.append('newArrival', newArrival);
+            formData.append('outOfStock', outOfStock);
             // Agar clothing ya footwear nahi hai (jaise Makeup ya Jewelry), to empty array bhejega
             formData.append('sizes', JSON.stringify(hasSizeSelection ? sizes : []));
 
@@ -148,6 +174,7 @@ const Add = ({ token }) => {
                 setSubCategory(productTypes[0] || '');
                 setBestseller(false);
                 setNewArrival(false);
+                setOutOfStock(false);
                 setSizes([]);
             } else {
                 toast.error(response.data.message);
@@ -185,7 +212,7 @@ const Add = ({ token }) => {
 
             <div className="w-full max-w-[500px]">
                 <p className="mb-2">Product Description</p>
-                <textarea onChange={(e) => setDescription(e.target.value)} value={description} className="w-full max-w-[500px] px-3 py-2" placeholder="Write content here" required />
+                <textarea onChange={(e) => setDescription(e.target.value)} value={description} rows="6" className="w-full max-w-[500px] px-3 py-2 min-h-[140px] max-h-[260px] resize-y" placeholder="Write content here" required />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:gap-8">
@@ -244,30 +271,34 @@ const Add = ({ token }) => {
                 <div className="w-full max-w-[500px]">
                     <p className="mb-2">Product Sizes</p>
                     <div className="flex flex-col gap-3">
-                        <div>
-                            <p className="mb-1 text-sm font-medium">Clothing / Apparel</p>
-                            <div className="flex gap-3 flex-wrap">
-                                {['S', 'M', 'L', 'XL', 'XXL'].map((item) => (
-                                    <div key={item} onClick={() => toggleSize(item)}>
-                                        <p className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}>
-                                            {item}
-                                        </p>
-                                    </div>
-                                ))}
+                        {selectedSizeGroup !== 'footwear' && (
+                            <div>
+                                <p className="mb-1 text-sm font-medium">Clothing / Apparel</p>
+                                <div className="flex gap-3 flex-wrap">
+                                    {clothingSizes.map((item) => (
+                                        <div key={item} onClick={() => toggleSize(item)}>
+                                            <p className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}>
+                                                {item}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <p className="mb-1 text-sm font-medium">Footwear</p>
-                            <div className="flex gap-3 flex-wrap">
-                                {['6', '7', '8', '9', '10'].map((item) => (
-                                    <div key={item} onClick={() => toggleSize(item)}>
-                                        <p className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}>
-                                            {item}
-                                        </p>
-                                    </div>
-                                ))}
+                        )}
+                        {selectedSizeGroup !== 'clothing' && (
+                            <div>
+                                <p className="mb-1 text-sm font-medium">Footwear</p>
+                                <div className="flex gap-3 flex-wrap">
+                                    {footwearSizes.map((item) => (
+                                        <div key={item} onClick={() => toggleSize(item)}>
+                                            <p className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}>
+                                                {item}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -280,6 +311,10 @@ const Add = ({ token }) => {
                 <div className="flex gap-2">
                     <input onChange={() => setNewArrival((prev) => !prev)} checked={newArrival} type="checkbox" id="newArrival" />
                     <label className="cursor-pointer" htmlFor="newArrival">Add to new arrival</label>
+                </div>
+                <div className="flex gap-2">
+                    <input onChange={() => setOutOfStock((prev) => !prev)} checked={outOfStock} type="checkbox" id="outOfStock" />
+                    <label className="cursor-pointer" htmlFor="outOfStock">Mark as out of stock</label>
                 </div>
             </div>
 

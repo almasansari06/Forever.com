@@ -1,5 +1,5 @@
 import express from 'express';
-import { addProduct, listProduct, removeProduct, singleProduct } from '../controllers/productController.js';
+import { addProduct, listProduct, removeProduct, singleProduct, updateProduct } from '../controllers/productController.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
 
@@ -20,6 +20,7 @@ productRouter.post('/add', adminAuth, upload.fields([
 
 productRouter.post('/remove', adminAuth, removeProduct);
 productRouter.post('/single', singleProduct);
+productRouter.post('/update', adminAuth, updateProduct);
 productRouter.get('/list', listProduct);
 
 export default productRouter;

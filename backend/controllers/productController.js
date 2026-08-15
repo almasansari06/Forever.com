@@ -2,10 +2,23 @@ import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
 import productTypeModel from "../models/productTypeModel.js";
 
+const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+const footwearSizes = ['6', '7', '8', '9', '10'];
+
+const normalizeSizes = (sizes = []) => {
+    const raw = Array.isArray(sizes) ? sizes : [];
+    const unique = [...new Set(raw.map((size) => String(size).trim()).filter(Boolean))];
+
+    const clothing = clothingSizes.filter((size) => unique.includes(size));
+    const footwear = footwearSizes.filter((size) => unique.includes(size));
+
+    return [...clothing, ...footwear];
+};
+
 // Function for add product
 const addProduct = async (req, res) => {
     try {
-        const { name, description, price, category, subCategory, sizes, bestseller, newArrival } = req.body;
+        const { name, description, price, category, subCategory, sizes, bestseller, newArrival, outOfStock } = req.body;
 
         const normalizedSubCategory = String(subCategory || '').trim();
         if (!normalizedSubCategory) {
@@ -35,7 +48,8 @@ const addProduct = async (req, res) => {
             subCategory: normalizedSubCategory,
             bestseller: bestseller === "true" ? true : false,
             newArrival: newArrival === "true" ? true : false,
-            sizes: JSON.parse(sizes),
+            outOfStock: outOfStock === "true" ? true : false,
+            sizes: normalizeSizes(JSON.parse(sizes || '[]')),
             image: imagesUrl,
             date: Date.now()
         };
@@ -173,4 +187,35 @@ const getAllProductTypes = async () => {
     return [...new Set([...typeNames, ...productTypesFromProducts])].sort((a, b) => a.localeCompare(b));
 };
 
-export { listProduct, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType };
+const updateProduct = async (req, res) => {
+    try {
+        const { id, price, sizes, outOfStock } = req.body;
+
+        if (!id) {
+            return res.json({ success: false, message: 'Product ID is required.' });
+        }
+
+        const product = await productModel.findById(id);
+        if (!product) {
+            return res.json({ success: false, message: 'Product not found.' });
+        }
+
+        const parsedSizes = Array.isArray(sizes)
+            ? sizes.map((size) => String(size).trim()).filter(Boolean)
+            : typeof sizes === 'string'
+                ? sizes.split(',').map((size) => size.trim()).filter(Boolean)
+                : product.sizes || [];
+
+        product.price = Number(price ?? product.price);
+        product.sizes = normalizeSizes(parsedSizes);
+        product.outOfStock = Boolean(outOfStock);
+        await product.save();
+
+        res.json({ success: true, message: 'Product updated successfully.' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export { listProduct, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType, updateProduct };

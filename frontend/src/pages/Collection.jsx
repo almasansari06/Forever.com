@@ -140,6 +140,12 @@ const Collection = () => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [category, subCategory, search, products, sortType]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [currentPage]);
+
   return (
     <div className='flex flex-col md:flex-row gap-6 md:gap-10 pt-8 border-t border-gray-100 max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 dark:border-slate-800'>
 
@@ -259,6 +265,7 @@ const Collection = () => {
                   id={item._id} 
                   price={item.price} 
                   image={item.image} 
+                  outOfStock={Boolean(item.outOfStock)}
                 />
               ))}
             </div>
