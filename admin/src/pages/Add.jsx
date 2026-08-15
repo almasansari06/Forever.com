@@ -19,7 +19,10 @@ const Add = ({ token }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
+    const defaultCategoryOptions = ['Men', 'Women', 'Kids'];
     const [category, setCategory] = useState('Men');
+    const [categoryOptions, setCategoryOptions] = useState(defaultCategoryOptions);
+    const [newCategory, setNewCategory] = useState('');
     const [subCategory, setSubCategory] = useState('');
     const [bestseller, setBestseller] = useState(false);
     const [newArrival, setNewArrival] = useState(false);
@@ -43,9 +46,14 @@ const Add = ({ token }) => {
             const response = await axios.get(backendUrl + '/api/product-type/list');
             if (response.data.success) {
                 const types = response.data.productTypes || [];
+                const categories = response.data.productCategories || defaultCategoryOptions;
                 setProductTypes(types);
+                setCategoryOptions(categories);
                 if (types.length > 0 && !subCategory) {
                     setSubCategory(types[0]);
+                }
+                if (!categories.includes(category)) {
+                    setCategory(categories[0] || 'Men');
                 }
             }
         } catch (error) {
@@ -63,6 +71,30 @@ const Add = ({ token }) => {
         const selectedValue = e.target.value;
         setSubCategory(selectedValue);
         setSizes([]);
+    };
+
+    const handleAddCategory = () => {
+        const trimmed = newCategory.trim();
+        if (!trimmed) {
+            toast.error('Category name required');
+            return;
+        }
+
+        setCategoryOptions((prev) => {
+            const exists = prev.some((item) => item.toLowerCase() === trimmed.toLowerCase());
+            if (exists) {
+                setCategory(trimmed);
+                setNewCategory('');
+                toast.info('Category already exists');
+                return prev;
+            }
+
+            const next = [...prev, trimmed];
+            setCategory(trimmed);
+            setNewCategory('');
+            toast.success('Category added');
+            return next;
+        });
     };
 
     const handleAddType = async () => {
@@ -170,7 +202,7 @@ const Add = ({ token }) => {
                 setImage9(false);
                 setImage10(false);
                 setPrice('');
-                setCategory('Men');
+                setCategory(categoryOptions[0] || 'Men');
                 setSubCategory(productTypes[0] || '');
                 setBestseller(false);
                 setNewArrival(false);
@@ -216,13 +248,25 @@ const Add = ({ token }) => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:gap-8">
-                <div>
+                <div className="w-full">
                     <p className="mb-2">Product Category</p>
-                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2">
-                        <option value="Men">Men</option>
-                        <option value="Women">Women</option>
-                        <option value="Kids">Kids</option>
-                    </select>
+                    <div className="flex flex-col gap-2">
+                        <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2">
+                            {categoryOptions.map((item) => (
+                                <option key={item} value={item}>{item}</option>
+                            ))}
+                        </select>
+                        <div className="flex gap-2">
+                            <input
+                                value={newCategory}
+                                onChange={(e) => setNewCategory(e.target.value)}
+                                className="w-full px-3 py-2 border"
+                                type="text"
+                                placeholder="Add new category e.g. Kids"
+                            />
+                            <button type="button" onClick={handleAddCategory} className="px-3 py-2 bg-black text-white cursor-pointer">Add</button>
+                        </div>
+                    </div>
                 </div>
                 <div className="w-full">
                     <p className="mb-2">Product Type</p>

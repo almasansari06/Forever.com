@@ -9,6 +9,7 @@ const Collection = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
+  const [categories, setCategories] = useState(['Men', 'Women', 'Kids']);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   const [category, setCategory] = useState(() => {
@@ -126,6 +127,7 @@ const Collection = () => {
         const data = await response.json();
         if (data.success) {
           setProductTypes(data.productTypes || []);
+          setCategories(data.productCategories || ['Men', 'Women', 'Kids']);
         }
       } catch (error) {
         console.log(error);
@@ -185,7 +187,7 @@ const Collection = () => {
               )}
             </div>
             <div className='space-y-2.5 text-sm font-medium text-gray-600 dark:text-slate-300'>
-              {['Men', 'Women', 'Kids'].map((cat) => (
+              {categories.map((cat) => (
                 <label key={cat} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
                   <input 
                     className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 

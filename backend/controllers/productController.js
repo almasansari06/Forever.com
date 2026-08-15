@@ -116,7 +116,11 @@ const getProductTypes = async (req, res) => {
         const productTypesFromProducts = await productModel.distinct('subCategory');
         const uniqueTypes = [...new Set([...typeNames, ...productTypesFromProducts])].sort((a, b) => a.localeCompare(b));
 
-        res.json({ success: true, productTypes: uniqueTypes });
+        const productCategoriesFromProducts = await productModel.distinct('category');
+        const defaultCategories = ['Men', 'Women', 'Kids'];
+        const uniqueCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts])].sort((a, b) => a.localeCompare(b));
+
+        res.json({ success: true, productTypes: uniqueTypes, productCategories: uniqueCategories });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });

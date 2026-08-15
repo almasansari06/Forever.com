@@ -10,6 +10,10 @@ const SizeEditor = ({ item, onUpdate }) => {
   const selectedSizes = Array.isArray(item.sizes) ? item.sizes : [];
   const [selectedOption, setSelectedOption] = useState({ clothing: '', footwear: '' });
 
+  if (selectedSizes.length === 0) {
+    return null;
+  }
+
   const hasClothingSizes = selectedSizes.some((size) => clothingSizes.includes(size));
   const hasFootwearSizes = selectedSizes.some((size) => footwearSizes.includes(size));
   const activeGroup = hasClothingSizes ? 'clothing' : hasFootwearSizes ? 'footwear' : null;
@@ -97,7 +101,9 @@ const List = ({token}) => {
 
   const [list,setList]= useState([])
   const [productTypes,setProductTypes] = useState([])
+  const [categoryOptions,setCategoryOptions] = useState(['Men','Women','Kids'])
   const [selectedType,setSelectedType] = useState('All')
+  const [selectedCategory,setSelectedCategory] = useState('All')
 
   const fetchList = async () => {
     try {
@@ -119,6 +125,7 @@ const List = ({token}) => {
       const response = await axios.get(backendUrl + '/api/product-type/list')
       if (response.data.success) {
         setProductTypes(response.data.productTypes || [])
+        setCategoryOptions(response.data.productCategories || ['Men', 'Women', 'Kids'])
       }
     } catch (error) {
       console.log(error)
@@ -162,23 +169,41 @@ const List = ({token}) => {
     fetchProductTypes()
   },[])
 
-  const filteredList = selectedType === 'All'
-    ? list
-    : list.filter((item) => (item.subCategory || item.category || '').toLowerCase() === selectedType.toLowerCase())
+  const filteredList = list.filter((item) => {
+    const matchesCategory = selectedCategory === 'All' || (item.category || '').toLowerCase() === selectedCategory.toLowerCase();
+    const matchesType = selectedType === 'All' || (item.subCategory || item.category || '').toLowerCase() === selectedType.toLowerCase();
+    return matchesCategory && matchesType;
+  })
 
   const renderFilter = () => (
-    <div className='mb-4 flex flex-col sm:flex-row gap-2 items-center justify-between'>
-      <label className='text-sm font-medium'>Filter by Product Type</label>
-      <select
-        value={selectedType}
-        onChange={(e) => setSelectedType(e.target.value)}
-        className='px-3 py-2 border rounded min-w-[200px]'
-      >
-        <option value='All'>All Products</option>
-        {productTypes.map((type) => (
-          <option key={type} value={type}>{type}</option>
-        ))}
-      </select>
+    <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+      <div className='flex flex-col gap-2'>
+        <label className='text-sm font-medium'>Filter by Product Category</label>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className='px-3 py-2 border rounded min-w-[200px]'
+        >
+          <option value='All'>All Categories</option>
+          {categoryOptions.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className='flex flex-col gap-2'>
+        <label className='text-sm font-medium'>Filter by Product Type</label>
+        <select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          className='px-3 py-2 border rounded min-w-[200px]'
+        >
+          <option value='All'>All Products</option>
+          {productTypes.map((type) => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+      </div>
     </div>
   )
 
@@ -231,7 +256,11 @@ const List = ({token}) => {
                   className='w-full max-w-[80px] border rounded px-2 py-1'
                 />
                 <div className='w-full max-w-[170px]'>
-                  <SizeEditor item={item} onUpdate={(payload) => updateProduct(item._id, payload)} />
+                  {Array.isArray(item.sizes) && item.sizes.length > 0 ? (
+                    <SizeEditor item={item} onUpdate={(payload) => updateProduct(item._id, payload)} />
+                  ) : (
+                    <span className='text-[10px] text-gray-400'>No sizes</span>
+                  )}
                 </div>
                 <label className='flex items-center gap-2 justify-center'>
                   <input
