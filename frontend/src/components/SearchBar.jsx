@@ -2,9 +2,11 @@ import React, { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { translations } from '../data/translations';
 
 const SearchBar = () => {
-  const { search, setSearch, showSearch, setShowSearch } = useContext(ShopContext);
+  const { search, setSearch, showSearch, setShowSearch, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -42,7 +44,7 @@ const SearchBar = () => {
           }}
           className='flex-1 outline-none bg-transparent text-sm text-gray-800 placeholder-gray-400 dark:text-slate-100 dark:placeholder-slate-400'
           type="text"
-          placeholder='Search products, categories...'
+          placeholder={t.searchPlaceholder}
           autoFocus
         />
         {search && (

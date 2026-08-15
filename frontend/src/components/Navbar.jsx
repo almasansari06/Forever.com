@@ -2,11 +2,13 @@ import React, { useContext, useState } from 'react';
 import { assets } from '../assets/assets';
 import { Link, NavLink } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
+import { translations } from '../data/translations';
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
 
-  const { setShowSearch, getCartCount, navigate, token, setToken, setCartItems, theme, setTheme } = useContext(ShopContext);
+  const { setShowSearch, getCartCount, navigate, token, setToken, setCartItems, theme, setTheme, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
 
   const logout = () => {
     navigate('/login');
@@ -28,19 +30,19 @@ const Navbar = () => {
 
       <ul className='hidden sm:flex gap-6 text-sm text-gray-700 dark:text-slate-200'>
         <NavLink to='/' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>HOME</p>
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>{t.home}</p>
           <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
         <NavLink to='/collection' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>COLLECTION</p>
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>{t.collection}</p>
           <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
         <NavLink to='/about' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>ABOUT</p>
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>{t.about}</p>
           <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
         <NavLink to='/contact' className='flex flex-col items-center gap-1 group'>
-          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>CONTACT</p>
+          <p className='group-hover:text-black transition-colors dark:group-hover:text-white'>{t.contact}</p>
           <hr className='w-0 group-hover:w-full border-none h-[1.5px] bg-gray-800 transition-all duration-300 dark:bg-white' />
         </NavLink>
       </ul>
@@ -74,13 +76,13 @@ const Navbar = () => {
             <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4 z-50 transition-all duration-200 transform origin-top-right'>
               <div className='flex flex-col gap-2 w-40 py-3 px-5 bg-white text-gray-600 rounded-xl shadow-xl border border-gray-100 text-sm dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700'>
                 <p onClick={() => navigate('/profile')} className='cursor-pointer hover:text-black hover:translate-x-1 transition-all duration-150 dark:hover:text-white'>
-                  My Profile
+                  {t.myProfile}
                 </p>
                 <p onClick={() => navigate('/orders')} className='cursor-pointer hover:text-black hover:translate-x-1 transition-all duration-150 dark:hover:text-white'>
-                  Orders
+                  {t.orders}
                 </p>
                 <p onClick={logout} className='cursor-pointer hover:text-red-600 hover:translate-x-1 transition-all duration-150 font-medium'>
-                  Logout
+                  {t.logout}
                 </p>
               </div>
             </div>
@@ -110,15 +112,15 @@ const Navbar = () => {
         <div className='flex flex-col h-full'>
           <div onClick={() => setVisible(false)} className='flex items-center gap-4 p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'>
             <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="Back" />
-            <p className='text-gray-700 font-medium dark:text-slate-200'>Back</p>
+            <p className='text-gray-700 font-medium dark:text-slate-200'>{t.back}</p>
           </div>
 
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/'>HOME</NavLink>
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/collection'>COLLECTION</NavLink>
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/about'>ABOUT</NavLink>
-          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/contact'>CONTACT</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/'>{t.home}</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/collection'>{t.collection}</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/about'>{t.about}</NavLink>
+          <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-700' to='/contact'>{t.contact}</NavLink>
           {token && (
-            <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-black font-semibold hover:bg-gray-50 transition-colors dark:text-white dark:hover:bg-slate-800' to='/profile'>MY PROFILE</NavLink>
+            <NavLink onClick={() => setVisible(false)} className='py-3.5 px-6 text-black font-semibold hover:bg-gray-50 transition-colors dark:text-white dark:hover:bg-slate-800' to='/profile'>{t.myProfile}</NavLink>
           )}
         </div>
       </div>

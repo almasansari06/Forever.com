@@ -2,43 +2,38 @@ import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { assets } from '../assets/assets'
 
+const navItems = [
+  { to: '/add', label: 'Add Items', icon: assets.add_icon },
+  { to: '/list', label: 'List Items', icon: assets.list_icon },
+  { to: '/orders', label: 'Orders', icon: assets.parcel_icon },
+  { to: '/cancelled', label: 'Cancelled', icon: assets.cross_icon },
+  { to: '/users', label: 'Users', icon: assets.user_icon },
+]
+
 const Sidebar = () => {
   return (
-    <div className='w-[18%] min-h-screen border-r-2 border-gray-200 text-[15px]'>
-      <div className='flex flex-col gap-4 pt-6 pl-[20%]'>
-
-        {/* Add Items Link */}
-        <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/add">
-          <img className='w-5 h-5' src={assets.add_icon} alt="" />
-          <p className='hidden md:block font-medium'>Add Items</p>
-        </NavLink>
-
-        {/* List Items Link */}
-        <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/list">
-          <img className='w-5 h-5' src={assets.list_icon} alt="" />
-          <p className='hidden md:block font-medium'>List Items</p>
-        </NavLink>
-
-        {/* Orders Link */}
-        <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/orders">
-          <img className='w-5 h-5' src={assets.parcel_icon} alt="" />
-          <p className='hidden md:block font-medium'>Orders</p>
-        </NavLink>
-
-        {/* Cancelled Orders Link */}
-        <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/cancelled">
-          <img className='w-5 h-5' src={assets.cross_icon} alt="" />
-          <p className='hidden md:block font-medium'>Cancelled</p>
-        </NavLink>
-
-        {/* Users Management Link (Naya Option) */}
-        <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer' to="/users">
-          <img className='w-5 h-5' src={assets.user_icon} alt="" />
-          <p className='hidden md:block font-medium'>Users</p>
-        </NavLink>
-
+    <aside className='lg:w-72'>
+      <div className='rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] lg:min-h-[calc(100vh-8rem)]'>
+        <p className='mb-4 px-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400'>Navigation</p>
+        <nav className='space-y-2'>
+          {navItems.map(({ to, label, icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-all ${
+                  isActive
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-md'
+                    : 'border-transparent bg-slate-50 text-slate-700 hover:border-slate-200 hover:bg-slate-100'
+                }`}
+            >
+              <img className='h-4 w-4 object-contain' src={icon} alt='' />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
       </div>
-    </div>
+    </aside>
   )
 }
 

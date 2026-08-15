@@ -1,8 +1,13 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { assets } from '../assets/assets'
 import { Link } from 'react-router-dom'
+import { ShopContext } from '../context/ShopContext';
+import { translations } from '../data/translations';
 
 const Footer = () => {
+  const { language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
+
   return (
     <div className='transition-colors duration-300'>
       <div className='flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 mt-40 text-sm'>
@@ -14,21 +19,21 @@ const Footer = () => {
         </div>
 
         <div>
-          <p className='text-xl font-medium mb-5 text-gray-800 dark:text-slate-100'>COMPANY</p>
+          <p className='text-xl font-medium mb-5 text-gray-800 dark:text-slate-100'>{t.company}</p>
           <ul className='flex flex-col gap-2 text-gray-600 dark:text-slate-300'>
             <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>
-              <Link to='/'>Home</Link>
+              <Link to='/'>{t.home}</Link>
             </li>
             <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>
-              <Link to='/about'>About Us</Link>
+              <Link to='/about'>{t.about}</Link>
             </li>
-            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>Delivery & Returns</li>
-            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>Privacy Policy</li>
+            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>{t.deliveryReturns}</li>
+            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>{t.privacyPolicy}</li>
           </ul>
         </div>
 
         <div>
-          <p className='text-xl font-medium mb-5 text-gray-800 dark:text-slate-100'>GET IN TOUCH</p>
+          <p className='text-xl font-medium mb-5 text-gray-800 dark:text-slate-100'>{t.getInTouch}</p>
           <ul className='flex flex-col gap-2 text-gray-600 dark:text-slate-300'>
             <li className='hover:text-black transition-colors dark:hover:text-white'>+91 999915299</li>
             <li className='hover:text-black transition-colors dark:hover:text-white'>+976 50-523-4444</li>
@@ -42,7 +47,7 @@ const Footer = () => {
       <div>
         <hr className='border-gray-200 dark:border-slate-700' />
         <p className='py-5 text-sm text-center text-gray-500 dark:text-slate-400'>
-          Copyright {new Date().getFullYear()} @ forever.com - All Rights Reserved.
+          {t.rightsReserved.replace('{year}', new Date().getFullYear())}
         </p>
       </div>
     </div>

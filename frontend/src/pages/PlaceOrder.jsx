@@ -1,12 +1,14 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { countryCodes } from '../data/countryCodes';
+import { translations } from '../data/translations';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const PlaceOrder = () => {
     const [method, setMethod] = useState('cod'); // Default COD
-    const { backendUrl, token, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData } = useContext(ShopContext);
+    const { backendUrl, token, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
+    const t = translations[language] || translations.en;
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
     const [countrySearch, setCountrySearch] = useState('');
     const [filteredCountries, setFilteredCountries] = useState(countryCodes);
@@ -20,18 +22,37 @@ const PlaceOrder = () => {
         if (userData) {
             const addr = userData.address || {};
             const nameParts = (userData.name || '').split(' ');
+            const savedCountryCode = addr.countryCode || '+1';
+            const savedPhone = (userData.phone || '').replace(/\D/g, '');
+            const phoneWithoutCountry = (() => {
+                if (!userData.phone) return '';
+                const explicitCode = (addr.countryCode || '').replace(/\D/g, '');
+                const phoneDigits = userData.phone.replace(/\D/g, '');
+                if (explicitCode && phoneDigits.startsWith(explicitCode)) {
+                    return phoneDigits.slice(explicitCode.length);
+                }
+                const matchedCountry = countryCodes.find((country) => {
+                    const codeDigits = country.code.replace(/\D/g, '');
+                    return codeDigits && phoneDigits.startsWith(codeDigits);
+                });
+                if (matchedCountry) {
+                    return phoneDigits.slice(matchedCountry.code.replace(/\D/g, '').length);
+                }
+                return phoneDigits;
+            })();
+
             setFormData((prev) => ({
                 ...prev,
                 firstName: nameParts[0] || prev.firstName,
                 lastName: nameParts.slice(1).join(' ') || prev.lastName,
                 email: userData.email || prev.email,
-                phone: userData.phone || prev.phone,
+                phone: phoneWithoutCountry || prev.phone,
                 street: addr.street || addr.line1 || prev.street,
                 city: addr.city || prev.city,
                 state: addr.state || prev.state,
                 zipcode: addr.zipcode || prev.zipcode,
                 country: addr.country || prev.country,
-                countryCode: addr.countryCode || '+1'
+                countryCode: savedCountryCode || '+1'
             }));
         }
     }, [userData]);
@@ -132,17 +153,17 @@ const PlaceOrder = () => {
         <form onSubmit={onSubmitHandler} className='flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t'>
             {/* Form Fields */}
             <div className='flex flex-col gap-4 w-full sm:max-w-[480px]'>
-                <input required onChange={onChangeHandler} name='firstName' value={formData.firstName} placeholder='First name' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
-                <input required onChange={onChangeHandler} name='lastName' value={formData.lastName} placeholder='Last name' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
-                <input required onChange={onChangeHandler} name='email' value={formData.email} placeholder='Email address' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="email" />
-                <input required onChange={onChangeHandler} name='street' value={formData.street} placeholder='Street' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                <input required onChange={onChangeHandler} name='firstName' value={formData.firstName} placeholder={t.firstName} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                <input required onChange={onChangeHandler} name='lastName' value={formData.lastName} placeholder={t.lastName} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                <input required onChange={onChangeHandler} name='email' value={formData.email} placeholder={t.emailAddress} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="email" />
+                <input required onChange={onChangeHandler} name='street' value={formData.street} placeholder={t.street} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
-                    <input required onChange={onChangeHandler} name='city' value={formData.city} placeholder='City' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
-                    <input required onChange={onChangeHandler} name='state' value={formData.state} placeholder='State' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                    <input required onChange={onChangeHandler} name='city' value={formData.city} placeholder={t.city} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                    <input required onChange={onChangeHandler} name='state' value={formData.state} placeholder={t.state} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
                 </div>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
-                    <input required onChange={onChangeHandler} name='zipcode' value={formData.zipcode} placeholder='Zipcode' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
-                    <input required onChange={onChangeHandler} name='country' value={formData.country} placeholder='Country' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                    <input required onChange={onChangeHandler} name='zipcode' value={formData.zipcode} placeholder={t.zipcode} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
+                    <input required onChange={onChangeHandler} name='country' value={formData.country} placeholder={t.country} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
                 </div>
 
                 {/* Phone Number with Country Code */}
@@ -162,7 +183,7 @@ const PlaceOrder = () => {
                             <div className='absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto'>
                                 <input
                                     type='text'
-                                    placeholder='Search country...'
+                                    placeholder={t.searchCountry}
                                     value={countrySearch}
                                     onChange={(e) => setCountrySearch(e.target.value)}
                                     className='w-full border-b border-gray-300 px-3 py-2 text-sm sticky top-0 bg-white'
@@ -182,7 +203,7 @@ const PlaceOrder = () => {
                                             </button>
                                         ))
                                     ) : (
-                                        <div className='px-3 py-2 text-sm text-gray-500'>No countries found</div>
+                                        <div className='px-3 py-2 text-sm text-gray-500'>{t.noCountriesFound}</div>
                                     )}
                                 </div>
                             </div>
@@ -194,7 +215,7 @@ const PlaceOrder = () => {
                         onChange={onChangeHandler} 
                         name='phone' 
                         value={formData.phone} 
-                        placeholder='Phone number' 
+                        placeholder={t.phoneNumber} 
                         className='flex-1 border border-gray-300 rounded py-1.5 px-3.5 w-full' 
                         type="text" 
                     />
@@ -206,16 +227,16 @@ const PlaceOrder = () => {
                 <div className='flex gap-3 flex-col lg:flex-row'>
                     <div onClick={() => setMethod('stripe')} className={`flex items-center gap-3 border p-2 px-3 cursor-pointer ${method === 'stripe' ? 'border-green-400' : ''}`}>
                         <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'stripe' ? 'bg-green-400' : ''}`}></p>
-                        <p className='text-gray-500 text-sm font-medium mx-4'>STRIPE</p>
+                        <p className='text-gray-500 text-sm font-medium mx-4'>{t.stripe}</p>
                     </div>
                     <div onClick={() => setMethod('cod')} className={`flex items-center gap-3 border p-2 px-3 cursor-pointer ${method === 'cod' ? 'border-green-400' : ''}`}>
                         <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
-                        <p className='text-gray-500 text-sm font-medium mx-4'>CASH ON DELIVERY</p>
+                        <p className='text-gray-500 text-sm font-medium mx-4'>{t.cashOnDelivery}</p>
                     </div>
                 </div>
 
                 <div className='w-full text-end mt-8'>
-                    <button type='submit' className='bg-black text-white px-16 py-3 text-sm'>PLACE ORDER</button>
+                    <button type='submit' className='bg-black text-white px-16 py-3 text-sm'>{t.placeOrder}</button>
                 </div>
             </div>
         </form>

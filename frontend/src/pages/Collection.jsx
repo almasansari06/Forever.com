@@ -3,9 +3,11 @@ import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
+import { translations } from '../data/translations';
 
 const Collection = () => {
-  const { products, search, showSearch } = useContext(ShopContext);
+  const { products, search, showSearch, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
@@ -67,15 +69,22 @@ const Collection = () => {
   const applyFilter = () => {
     let productsCopy = products.slice(0);
 
-    // Search Filter
     if (search && search.trim()) {
       const term = search.trim().toLowerCase();
+
       productsCopy = productsCopy.filter(item => {
         const name = (item.name || '').toLowerCase();
-        const category = (item.category || '').toLowerCase();
-        const subCategory = (item.subCategory || '').toLowerCase();
+        const categoryName = (item.category || '').toLowerCase();
+        const subCategoryName = (item.subCategory || '').toLowerCase();
+        const combinedText = `${name} ${categoryName} ${subCategoryName}`.toLowerCase();
 
-        return name.includes(term) || category.includes(term) || subCategory.includes(term);
+        if (combinedText.includes(term)) return true;
+
+        return (
+          name.includes(term) ||
+          categoryName.includes(term) ||
+          subCategoryName.includes(term)
+        );
       });
     }
 
@@ -159,7 +168,7 @@ const Collection = () => {
           className='md:hidden flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer shadow-sm active:scale-[0.99] transition-all duration-300 dark:bg-slate-900 dark:border-slate-700'
         >
           <div className='flex items-center gap-2.5'>
-            <span className='font-semibold text-gray-800 text-base tracking-wide dark:text-slate-100'>FILTERS</span>
+            <span className='font-semibold text-gray-800 text-base tracking-wide dark:text-slate-100'>{t.filters}</span>
             {(category.length > 0 || subCategory.length > 0) && (
               <span className='bg-black text-white text-xs px-2 py-0.5 rounded-full font-medium'>
                 {category.length + subCategory.length}
@@ -179,10 +188,10 @@ const Collection = () => {
           {/* Categories Filter Box */}
           <div className='bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-slate-900 dark:border-slate-700'>
             <div className='flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-slate-700'>
-              <p className='text-xs font-bold text-gray-900 tracking-wider uppercase dark:text-slate-100'>Categories</p>
+              <p className='text-xs font-bold text-gray-900 tracking-wider uppercase dark:text-slate-100'>{t.categories}</p>
               {category.length > 0 && (
                 <button onClick={() => setCategory([])} className='text-[11px] text-gray-400 hover:text-black font-medium transition-colors cursor-pointer dark:hover:text-white'>
-                  Clear
+                  {t.clear}
                 </button>
               )}
             </div>
@@ -205,16 +214,16 @@ const Collection = () => {
           {/* SubCategory Filter Box */}
           <div className='bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-slate-900 dark:border-slate-700'>
             <div className='flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-slate-700'>
-              <p className='text-xs font-bold text-gray-900 tracking-wider uppercase dark:text-slate-100'>Product Type</p>
+              <p className='text-xs font-bold text-gray-900 tracking-wider uppercase dark:text-slate-100'>{t.productType}</p>
               {subCategory.length > 0 && (
                 <button onClick={() => setSubCategory([])} className='text-[11px] text-gray-400 hover:text-black font-medium transition-colors cursor-pointer dark:hover:text-white'>
-                  Clear
+                  {t.clear}
                 </button>
               )}
             </div>
             <div className='space-y-2 text-sm font-medium text-gray-600 dark:text-slate-300'>
               {productTypes.length === 0 ? (
-                <p className='text-xs text-gray-400 dark:text-slate-400'>No product types available yet.</p>
+                <p className='text-xs text-gray-400 dark:text-slate-400'>{t.noProductTypes}</p>
               ) : (
                 productTypes.map((type) => (
                   <label key={type} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
@@ -240,18 +249,18 @@ const Collection = () => {
 
         {/* Top Header & Sort Control */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-gray-50/60 p-4 sm:p-5 rounded-2xl border border-gray-100 transition-all duration-300 dark:bg-slate-900/80 dark:border-slate-700'>
-          <Title text1={'ALL'} text2={'COLLECTIONS'} />
+          <Title text1={t.allCollections.split(' ')[0] || 'ALL'} text2={t.allCollections.split(' ').slice(1).join(' ') || 'COLLECTIONS'} />
           
           <div className='flex items-center gap-2 self-end sm:self-auto'>
-            <span className='hidden sm:inline text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-slate-300'>Sort:</span>
+            <span className='hidden sm:inline text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-slate-300'>{t.sort}:</span>
             <select 
               value={sortType}
               onChange={(e) => setSortType(e.target.value)} 
               className='bg-white border border-gray-200 hover:border-gray-400 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl outline-none cursor-pointer transition-all shadow-xs focus:ring-2 focus:ring-black/5 dark:bg-slate-950 dark:border-slate-600 dark:text-slate-100'
             >
-              <option value="relavent">Sort by: Relevant</option>
-              <option value="low-high">Price: Low to High</option>
-              <option value="high-low">Price: High to Low</option>
+              <option value="relavent">{t.relevant}</option>
+              <option value="low-high">{t.lowToHigh}</option>
+              <option value="high-low">{t.highToLow}</option>
             </select>
           </div>
         </div>
@@ -311,13 +320,13 @@ const Collection = () => {
           </>
         ) : (
           <div className='flex flex-col items-center justify-center py-20 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 text-center px-4 dark:bg-slate-900/60 dark:border-slate-700'>
-            <p className='text-gray-500 font-medium text-lg mb-1 dark:text-slate-300'>No products match your filters</p>
-            <p className='text-gray-400 text-sm mb-4 dark:text-slate-400'>Try clearing some filters to see available products.</p>
+            <p className='text-gray-500 font-medium text-lg mb-1 dark:text-slate-300'>{t.noProductsMatch}</p>
+            <p className='text-gray-400 text-sm mb-4 dark:text-slate-400'>{t.tryClearingFilters}</p>
             <button 
               onClick={() => { setCategory([]); setSubCategory([]); setSortType('relavent'); }} 
               className='px-5 py-2 bg-black text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm cursor-pointer'
             >
-              Reset Filters
+              {t.resetFilters}
             </button>
           </div>
         )}

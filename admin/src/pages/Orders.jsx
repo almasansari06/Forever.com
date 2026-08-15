@@ -7,27 +7,21 @@ import { toast } from 'react-toastify'
 import { assets } from '../assets/assets'
 
 const Orders = ({ token }) => {
-
   const [orders, setOrders] = useState([])
+  const displayStatus = (status) => status || 'Order Placed';
 
   const fetchAllOrders = async () => {
-
-    if (!token) {
-      return null;
-    }
+    if (!token) return null;
     try {
-
       const response = await axios.post(backendUrl + '/api/order/list', {}, { headers: { token } })
       if (response.data.success) {
         setOrders(response.data.orders.reverse())
       } else {
         toast.error(response.data.message)
       }
-
     } catch (error) {
       toast.error(error.message)
     }
-
   }
 
   const statusHandler = async (event, orderId) => {
@@ -42,9 +36,8 @@ const Orders = ({ token }) => {
     }
   }
 
-  // Admin Cancel & Remove Order Handler
   const cancelOrderHandler = async (orderId) => {
-    if (!window.confirm("Are you sure you want to cancel and remove this order?")) {
+    if (!window.confirm('Are you sure you want to cancel and remove this order?')) {
       return;
     }
 
@@ -56,7 +49,7 @@ const Orders = ({ token }) => {
       )
 
       if (response.data.success) {
-        toast.success(response.data.message || "Order Cancelled Successfully")
+        toast.success(response.data.message || 'Order Cancelled Successfully')
         await fetchAllOrders()
       } else {
         toast.error(response.data.message)
@@ -67,9 +60,8 @@ const Orders = ({ token }) => {
     }
   }
 
-  // Confirm user-requested cancellation
   const confirmCancellationHandler = async (orderId) => {
-    if (!window.confirm("Confirm cancellation for this order?")) return;
+    if (!window.confirm('Confirm cancellation for this order?')) return;
     try {
       const response = await axios.post(
         backendUrl + '/api/order/admin-cancel',
@@ -88,7 +80,6 @@ const Orders = ({ token }) => {
     }
   }
 
-  // Reject cancellation request
   const rejectCancellationHandler = async (orderId) => {
     try {
       const response = await axios.post(
@@ -113,95 +104,104 @@ const Orders = ({ token }) => {
   }, [token])
 
   return (
-    <div>
-      <h3 className='text-lg font-semibold mb-3'>Order Page</h3>
-      <div>
-        {
-          orders.map((order, index) => {
-            return (
-            <div className='grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] lg:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-sm text-gray-700 rounded-lg bg-white shadow-xs' key={index}>
-              <img className='w-12' src={assets.parcel_icon} alt="" />
-              <div>
-                <div>
-                  {order.items.map((item, index) => {
-                    if (index === order.items.length - 1) {
-                      return <p className='py-0.5' key={index}>{item.name} x {item.quantity} <span>{item.size}</span> </p>
-                    }
-                    else {
-                      return <p className='py-0.5' key={index}>{item.name} x {item.quantity} <span>{item.size}</span> ,</p>
-                    }
-                  })}
-                </div>
+    <div className='space-y-4'>
+      <div className='mb-4 flex items-center justify-between'>
+        <div>
+          <p className='text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400'>Management</p>
+          <h3 className='mt-1 text-2xl font-bold text-slate-900'>Orders</h3>
+        </div>
+        <span className='rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600'>Total: {orders.length}</span>
+      </div>
 
-                <p className='mt-3 mb-2 font-medium'>{order.address.firstName + " " + order.address.lastName}</p>
-                <div>
-                  <p>{order.address.street + ","}</p>
-                  <p>{order.address.city + ", " + order.address.state + ", " + order.address.country + ", " + order.address.zipcode}</p>
-                </div>
-                <p>{order.address.phone}</p>
-
+      {orders.length === 0 ? (
+        <div className='rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500'>No orders found.</div>
+      ) : (
+        orders.map((order, index) => (
+          <div key={order._id || `order-${index}`} className='rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5'>
+            <div className='grid grid-cols-1 gap-4 lg:grid-cols-[0.5fr_2.2fr_1.2fr_1fr_1.2fr] lg:items-start'>
+              <div className='flex items-center justify-center rounded-xl bg-slate-100 p-3 lg:min-h-[90px]'>
+                <img className='w-12' src={assets.parcel_icon} alt='' />
               </div>
-              <div>
-                <p className='text-sm sm:text-[15px]'>Items : {order.items.length}</p>
-                <p className='mt-3'>Method : {order.paymentMethod}</p>
-                <p>Payment : {order.payment ? 'Done' : 'Pending'}</p>
-                <p>Date : {new Date(order.date).toLocaleDateString()}</p>
-              </div>
-              <p className='text-sm sm:text-[15px] font-bold'>{currency} {order.amount}</p>
 
-              {/* Cancellation request banner */}
-              {order.cancellationRequested && !order.cancellationConfirmed && (
-                <div className='col-span-full p-4 rounded border-2 border-yellow-400 bg-yellow-50 text-yellow-900 shadow-sm'>
-                  <p className='font-bold text-lg mb-1'>⚠️ User Requested Order Cancellation</p>
-                  {order.cancellationReason && <p className='text-sm mb-3'>Reason: {order.cancellationReason}</p>}
-                  <div className='flex gap-3 flex-wrap'>
-                    <button 
-                      onClick={() => confirmCancellationHandler(order._id)} 
-                      className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium transition-all active:scale-95'
-                    >
-                      Confirm this order
-                    </button>
-                    <button 
-                      onClick={() => rejectCancellationHandler(order._id)} 
-                      className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium transition-all active:scale-95'
-                    >
-                      Not cancel
-                    </button>
-                  </div>
+              <div className='space-y-2'>
+                <div className='rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500'>
+                  Order ID: <span className='text-slate-700'>{order._id}</span>
                 </div>
-              )}
+                <div className='space-y-1'>
+                  {order.items.map((item, itemIndex) => (
+                    <p key={itemIndex} className='text-sm text-slate-700'>
+                      {item.name} <span className='font-medium text-slate-500'>x {item.quantity}</span>
+                      {item.size && <span className='ml-1 text-slate-400'>({item.size})</span>}
+                    </p>
+                  ))}
+                </div>
 
-              {/* Status Select & Cancel Button */}
-              <div className='flex flex-col gap-2'>
+                <div className='mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600'>
+                  <p className='mb-1 font-semibold text-slate-800'>{order.address.firstName + ' ' + order.address.lastName}</p>
+                  <p>{order.address.street}</p>
+                  <p>{order.address.city + ', ' + order.address.state + ', ' + order.address.country + ', ' + order.address.zipcode}</p>
+                  <p className='mt-1 text-slate-500'>{order.address.phone}</p>
+                </div>
+              </div>
+
+              <div className='space-y-2 text-sm text-slate-600'>
+                <p><span className='font-semibold text-slate-800'>Items</span>: {order.items.length}</p>
+                <p><span className='font-semibold text-slate-800'>Method</span>: {order.paymentMethod}</p>
+                <p><span className='font-semibold text-slate-800'>Payment</span>: {order.payment ? 'Done' : 'Pending'}</p>
+                <p><span className='font-semibold text-slate-800'>Date</span>: {new Date(order.date).toLocaleDateString()}</p>
+              </div>
+
+              <div className='flex items-center lg:justify-center'>
+                <p className='text-xl font-bold text-slate-900'>{currency} {order.amount}</p>
+              </div>
+
+              <div className='flex flex-col gap-2 lg:items-end'>
                 {order.status === 'Delivered' ? (
-                  <div className='p-2 font-semibold border border-green-200 rounded bg-green-50 text-green-700 text-center'>
-                    Order delivered
+                  <div className='rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-700'>
+                    {displayStatus('Delivered')}
                   </div>
                 ) : (
-                  <select onChange={(event) => statusHandler(event, order._id)} value={order.status} className='p-2 font-semibold border border-gray-300 rounded outline-none cursor-pointer bg-gray-50'>
-                    <option value="Order Placed">Order Placed</option>
-                    <option value="Packing">Packing</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Out for delivery">Out for delivery</option>
-                    <option value="Delivered">Delivered</option>
+                  <select
+                    onChange={(event) => statusHandler(event, order._id)}
+                    value={order.status}
+                    className='w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none ring-0 transition focus:border-slate-400 lg:max-w-[180px]'
+                  >
+                    <option value='Order Placed'>{displayStatus('Order Placed')}</option>
+                    <option value='Packing'>{displayStatus('Packing')}</option>
+                    <option value='Shipped'>{displayStatus('Shipped')}</option>
+                    <option value='Out for delivery'>{displayStatus('Out for delivery')}</option>
+                    <option value='Delivered'>{displayStatus('Delivered')}</option>
                   </select>
                 )}
 
                 {order.status !== 'Delivered' && (
                   <button
                     onClick={() => cancelOrderHandler(order._id)}
-                    className='bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded text-xs transition-all active:scale-95 cursor-pointer shadow-xs'
+                    className='w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 lg:max-w-[180px]'
                   >
                     Cancel Order
                   </button>
                 )}
               </div>
-
             </div>
-            )
-          })
-        }
-      </div>
+
+            {order.cancellationRequested && !order.cancellationConfirmed && (
+              <div className='mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900'>
+                <p className='mb-1 text-lg font-bold'>⚠️ User Requested Order Cancellation</p>
+                {order.cancellationReason && <p className='mb-3 text-sm'>Reason: {order.cancellationReason}</p>}
+                <div className='flex flex-wrap gap-3'>
+                  <button onClick={() => confirmCancellationHandler(order._id)} className='rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700'>
+                    Confirm this order
+                  </button>
+                  <button onClick={() => rejectCancellationHandler(order._id)} className='rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700'>
+                    Not cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))
+      )}
     </div>
   )
 }

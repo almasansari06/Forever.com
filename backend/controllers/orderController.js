@@ -190,6 +190,25 @@ const userOrders = async (req, res) => {
     }
 };
 
+const orderDetails = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        if (!orderId) {
+            return res.json({ success: false, message: 'Order ID is required' });
+        }
+
+        const order = await orderModel.findOne({ _id: orderId, userId: req.userId });
+        if (!order) {
+            return res.json({ success: false, message: 'Order not found for this account' });
+        }
+
+        res.json({ success: true, order });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 // 8. Update Order Status from Admin Panel
 const updateStatus = async (req, res) => {
     try {
@@ -428,12 +447,13 @@ export {
     placeOrderRazorpay,
     allOrders,
     userOrders,
+    orderDetails,
     updateStatus,
     verifyStripe,
     verifyRazorpay,
     requestCancel,
     adminConfirmCancel,
     rejectCancellation,
-    allCancelledOrders, 
+    allCancelledOrders,
     deleteCancelledOrder
 };

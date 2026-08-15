@@ -1,11 +1,37 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
+import { countryCodes } from '../data/countryCodes';
+import { translations } from '../data/translations';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const MyProfile = () => {
-  const { userData, setUserData, token, backendUrl, loadUserProfileData } = useContext(ShopContext);
+  const { userData, setUserData, token, backendUrl, loadUserProfileData, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
   const [isEdit, setIsEdit] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [filteredCountries, setFilteredCountries] = useState(countryCodes);
+
+  useEffect(() => {
+    const filtered = countryCodes.filter((country) =>
+      country.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+      country.code.includes(countrySearch)
+    );
+    setFilteredCountries(filtered);
+  }, [countrySearch]);
+
+  const handleCountryCodeSelect = (countryData) => {
+    setUserData((prev) => ({
+      ...prev,
+      address: {
+        ...(prev?.address || {}),
+        countryCode: countryData.code,
+      },
+    }));
+    setCountrySearch('');
+    setShowCountryDropdown(false);
+  };
 
   const updateUserProfileData = async () => {
     if (userData && (userData.status === 'disabled' || userData.status === 'deleted')) {
@@ -41,7 +67,7 @@ const MyProfile = () => {
   if (!userData) {
     return (
       <div className='min-h-[50vh] flex items-center justify-center text-gray-500 font-medium'>
-        Loading profile data...
+        {t.loadingProfile}
       </div>
     );
   }
@@ -69,27 +95,73 @@ const MyProfile = () => {
       <hr className='bg-zinc-200 dark:bg-slate-700 h-px border-none' />
 
       <div>
-        <p className='text-zinc-500 dark:text-slate-400 underline mt-3 font-semibold uppercase'>Contact Information</p>
+        <p className='text-zinc-500 dark:text-slate-400 underline mt-3 font-semibold uppercase'>{t.contactInformation}</p>
         <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700 dark:text-slate-300'>
-          <p className='font-medium'>Email id:</p>
+          <p className='font-medium'>{t.emailId}</p>
           <p className='text-blue-500'>{userData.email}</p>
 
-          <p className='font-medium'>Phone:</p>
+          <p className='font-medium'>{t.phone}</p>
           {isEdit ? (
-            <input
-              className='bg-gray-100 max-w-52 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
-              type="text"
-              value={userData.phone || ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                setUserData((prev) => ({ ...prev, phone: val }));
-              }}
-            />
+            <div className='flex gap-2 max-w-72'>
+              <div className='relative flex-shrink-0 w-28'>
+                <button
+                  type='button'
+                  onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                  className='w-full border border-gray-300 rounded bg-white text-left text-sm font-medium flex items-center justify-between px-2 py-1.5 dark:bg-slate-800 dark:border-slate-600 dark:text-white hover:border-gray-400 transition-colors'
+                >
+                  <span>{userData.address?.countryCode || '+1'}</span>
+                  <span className='text-xs'>▼</span>
+                </button>
+
+                {showCountryDropdown && (
+                  <div className='absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto dark:bg-slate-800 dark:border-slate-600'>
+                    <input
+                      type='text'
+                      placeholder='Search country...'
+                      value={countrySearch}
+                      onChange={(e) => setCountrySearch(e.target.value)}
+                      className='w-full border-b border-gray-300 px-3 py-2 text-sm sticky top-0 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white'
+                    />
+                    <div className='max-h-56 overflow-y-auto'>
+                      {filteredCountries.length > 0 ? (
+                        filteredCountries.map((country) => (
+                          <button
+                            key={country.code}
+                            type='button'
+                            onClick={() => handleCountryCodeSelect(country)}
+                            className='w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 dark:hover:bg-slate-700 dark:text-white'
+                          >
+                            <span>{country.flag}</span>
+                            <span>{country.name}</span>
+                            <span className='ml-auto text-gray-500'>{country.code}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className='px-3 py-2 text-sm text-gray-500 dark:text-slate-300'>No countries found</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <input
+                className='bg-gray-100 flex-1 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
+                type="text"
+                value={userData.phone || ''}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setUserData((prev) => ({ ...prev, phone: val }));
+                }}
+                placeholder={t.phoneNumber}
+              />
+            </div>
           ) : (
-            <p className='text-blue-400 dark:text-blue-300'>{userData.phone || "No phone number"}</p>
+            <p className='text-blue-400 dark:text-blue-300'>
+              {userData.phone ? `${userData.address?.countryCode || '+1'}${userData.phone}` : t.noPhoneNumber}
+            </p>
           )}
 
-          <p className='font-medium'>Address:</p>
+          <p className='font-medium'>{t.address}</p>
           {isEdit ? (
             <div className='grid gap-2'>
               <input
@@ -103,7 +175,7 @@ const MyProfile = () => {
                 }}
                 value={userData.address?.street || userData.address?.line1 || ''}
                 type="text"
-                placeholder="Street / Address Line"
+                placeholder={t.streetAddress}
               />
               <div className='grid grid-cols-2 gap-2'>
                 <input
@@ -117,7 +189,7 @@ const MyProfile = () => {
                   }}
                   value={userData.address?.city || ''}
                   type="text"
-                  placeholder="City"
+                  placeholder={t.city}
                 />
                 <input
                   className='bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
@@ -130,7 +202,7 @@ const MyProfile = () => {
                   }}
                   value={userData.address?.state || ''}
                   type="text"
-                  placeholder="State"
+                  placeholder={t.state}
                 />
               </div>
               <div className='grid grid-cols-2 gap-2'>
@@ -145,7 +217,7 @@ const MyProfile = () => {
                   }}
                   value={userData.address?.zipcode || ''}
                   type="text"
-                  placeholder="Zipcode"
+                  placeholder={t.zipcode}
                 />
                 <input
                   className='bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
@@ -158,7 +230,7 @@ const MyProfile = () => {
                   }}
                   value={userData.address?.country || ''}
                   type="text"
-                  placeholder="Country"
+                  placeholder={t.country}
                 />
               </div>
             </div>
@@ -175,9 +247,9 @@ const MyProfile = () => {
       </div>
 
       <div>
-        <p className='text-zinc-500 dark:text-slate-400 underline mt-3 font-semibold uppercase'>Basic Information</p>
+        <p className='text-zinc-500 dark:text-slate-400 underline mt-3 font-semibold uppercase'>{t.basicInformation}</p>
         <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700 dark:text-slate-300'>
-          <p className='font-medium'>Gender:</p>
+          <p className='font-medium'>{t.gender}</p>
           {isEdit ? (
             <select
               className='max-w-28 bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
@@ -187,15 +259,15 @@ const MyProfile = () => {
               }}
               value={userData.gender || 'Not Selected'}
             >
-              <option value="Not Selected">Not Selected</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
+              <option value="Not Selected">{t.notSelected}</option>
+              <option value="Male">{t.male}</option>
+              <option value="Female">{t.female}</option>
             </select>
           ) : (
-            <p className='text-gray-500 dark:text-slate-300'>{userData.gender || "Not Selected"}</p>
+            <p className='text-gray-500 dark:text-slate-300'>{userData.gender || t.notSelected}</p>
           )}
 
-          <p className='font-medium'>Birthday:</p>
+          <p className='font-medium'>{t.birthday}</p>
           {isEdit ? (
             <input
               className='max-w-36 bg-gray-100 p-1 rounded border dark:bg-slate-800 dark:text-white dark:border-slate-600'
@@ -207,7 +279,7 @@ const MyProfile = () => {
               value={userData.dob || ''}
             />
           ) : (
-            <p className='text-gray-500 dark:text-slate-300'>{userData.dob || "Not Selected"}</p>
+            <p className='text-gray-500 dark:text-slate-300'>{userData.dob || t.notSelected}</p>
           )}
         </div>
       </div>
@@ -218,7 +290,7 @@ const MyProfile = () => {
             onClick={updateUserProfileData}
             className='border border-black dark:border-white px-8 py-2 rounded-full hover:bg-black hover:text-white dark:hover:bg-slate-700 transition-all cursor-pointer dark:text-white'
           >
-            Save information
+            {t.saveInformation}
           </button>
         ) : (
           <button
@@ -231,7 +303,7 @@ const MyProfile = () => {
             }}
             className='border border-black dark:border-white px-8 py-2 rounded-full hover:bg-black hover:text-white dark:hover:bg-slate-700 transition-all cursor-pointer dark:text-white'
           >
-            Edit
+            {t.edit}
           </button>
         )}
       </div>

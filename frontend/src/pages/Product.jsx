@@ -5,10 +5,12 @@ import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProduct from '../components/RelatedProduct';
 import { toast } from 'react-toastify';
+import { translations } from '../data/translations';
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart, backendUrl } = useContext(ShopContext);
+  const { products, currency, addToCart, backendUrl, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
   const [productData, setProductData] = useState(null);
   const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
   const footwearSizes = ['6', '7', '8', '9', '10'];
@@ -208,7 +210,7 @@ const Product = () => {
   };
 
   if (!products || !productData) {
-    return <div className="text-center py-10 text-gray-500">Loading Product...</div>;
+    return <div className="text-center py-10 text-gray-500">{t.loadingProduct}</div>;
   }
 
   const reviewCount = reviews.length;
@@ -296,7 +298,7 @@ const Product = () => {
           {/* Render Size Section ONLY if sizes exist */}
           {!productData.outOfStock && orderedSizes.length > 0 && (
             <div className='flex flex-col gap-4 my-8'>
-              <p>Select Size</p>
+              <p>{t.selectSize}</p>
               <div className='flex gap-2 flex-wrap'>
                 {orderedSizes.map((item, index) => (
                   <button 
@@ -325,22 +327,22 @@ const Product = () => {
               }} 
               className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 mt-6 cursor-pointer'
             >
-              ADD TO CART
+              {t.addToCart}
             </button>
           ) : (
             <button 
               disabled
               className='bg-gray-300 text-gray-600 px-8 py-3 text-sm mt-6 cursor-not-allowed'
             >
-              Out of Stock
+              {t.outOfStock}
             </button>
           )}
           
           <hr className='mt-8 sm:w-4/5' />
           <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
-            <p>100% Original products.</p>
-            <p>Cash on delivery is available on this product.</p>
-            <p>Easy return and exchange policy within 7 days.</p>
+            <p>{t.originalProducts}</p>
+            <p>{t.codAvailable}</p>
+            <p>{t.easyReturn}</p>
           </div>
         </div>
       </div>
@@ -348,8 +350,8 @@ const Product = () => {
       {/* Description */}
       <div className='mt-20'>
         <div className='flex'>
-          <b className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>Description</b>
-          <p className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>Reviews ({reviews.length})</p>
+          <b className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>{t.description}</b>
+          <p className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>{t.reviews} ({reviews.length})</p>
         </div>
         <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
           <p className='whitespace-pre-wrap break-words max-h-[260px] overflow-y-auto pr-2'>{productData.description}</p>
@@ -359,12 +361,12 @@ const Product = () => {
       {/* Reviews Section */}
       <div className='mt-10 mb-20'>
         <div className='flex items-center justify-between mb-6'>
-          <h3 className='text-xl font-semibold'>Customer Reviews</h3>
+          <h3 className='text-xl font-semibold'>{t.customerReviews}</h3>
           <button
             onClick={() => setShowReviewForm(!showReviewForm)}
             className='bg-black text-white px-6 py-2 text-sm rounded cursor-pointer hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600'
           >
-            {showReviewForm ? 'Cancel' : 'Write a Review'}
+            {showReviewForm ? t.cancel : t.writeReview}
           </button>
         </div>
 
@@ -372,7 +374,7 @@ const Product = () => {
         {showReviewForm && (
           <form onSubmit={handleReviewSubmit} className='border rounded-lg p-6 mb-6 bg-gray-50 dark:bg-slate-900 dark:border-slate-700'>
             <div className='mb-4'>
-              <label className='block text-sm font-medium mb-2'>Rating</label>
+              <label className='block text-sm font-medium mb-2'>{t.rating}</label>
               <div className='flex gap-2'>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -388,18 +390,18 @@ const Product = () => {
             </div>
 
             <div className='mb-4'>
-              <label className='block text-sm font-medium mb-2'>Your Review</label>
+              <label className='block text-sm font-medium mb-2'>{t.yourReview}</label>
               <textarea
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
-                placeholder='Share your experience with this product...'
+                placeholder={t.shareExperience}
                 className='w-full border rounded-lg p-3 text-sm outline-none focus:border-black dark:bg-slate-800 dark:border-slate-600 dark:text-white'
                 rows='4'
               />
             </div>
 
             <div className='mb-4'>
-              <label className='block text-sm font-medium mb-2'>Upload Photos (Max 3)</label>
+              <label className='block text-sm font-medium mb-2'>{t.uploadPhotos}</label>
               <input
                 type='file'
                 multiple

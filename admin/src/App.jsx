@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import Navbar from './components/NavBar' // <--- Yaha 'Navbar' ko 'NavBar' kar diya hai
+import Navbar from './components/NavBar'
 import Sidebar from './components/SideBar'
 import { Routes, Route } from 'react-router-dom'
 import Add from './pages/Add'
@@ -15,8 +15,6 @@ export const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:
 export const currency = '$'
 
 const App = () => {
-
-  // Validate token format (simple check for JWT: three parts separated by dots)
   const storedToken = localStorage.getItem('token');
   const isTokenValidFormat = (t) => typeof t === 'string' && t.split('.').length === 3;
   const initialToken = isTokenValidFormat(storedToken) ? storedToken : '';
@@ -32,26 +30,27 @@ const App = () => {
   }, [token])
 
   return (
-    <div className='bg-gray-50 min-h-screen'>
-      <ToastContainer />
+    <div className='min-h-screen bg-slate-100 text-slate-800'>
+      <ToastContainer position='top-right' autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover theme='colored' />
       {token === ""
         ? <Login setToken={setToken} />
         : <>
-          <Navbar setToken={setToken} />
-          <hr />
-          <div className='flex w-full'>
-            <Sidebar />
-            <div className='w-[70%] mx-auto ml-[max(5vw,25px)] my-8 text-gray-600 text-base'>
-              <Routes>
-                <Route path='/add' element={<Add token={token} />} />
-                <Route path='/list' element={<List token={token} />} />
-                <Route path='/orders' element={<Orders token={token} />} />
-                <Route path='/cancelled' element={<CancelledOrders token={token} />} />
-                <Route path='/users' element={<Users token={token} />} />
-              </Routes>
+            <Navbar setToken={setToken} />
+            <div className='mx-auto max-w-[1600px] px-4 py-6 lg:px-6'>
+              <div className='flex flex-col gap-6 lg:flex-row'>
+                <Sidebar />
+                <main className='flex-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:p-6'>
+                  <Routes>
+                    <Route path='/add' element={<Add token={token} />} />
+                    <Route path='/list' element={<List token={token} />} />
+                    <Route path='/orders' element={<Orders token={token} />} />
+                    <Route path='/cancelled' element={<CancelledOrders token={token} />} />
+                    <Route path='/users' element={<Users token={token} />} />
+                  </Routes>
+                </main>
+              </div>
             </div>
-          </div>
-        </>
+          </>
       }
     </div>
   )

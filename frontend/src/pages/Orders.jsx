@@ -3,12 +3,14 @@ import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { translations } from '../data/translations';
 
 const Orders = () => {
 
-  const { backendUrl, token, currency } = useContext(ShopContext);
+  const { backendUrl, token, currency, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
 
-  const trackingSteps = ['Order Placed', 'Packing', 'Shipped', 'Out for delivery', 'Delivered'];
+  const trackingSteps = [t.orderPlaced, t.packing, t.shipped, t.outForDelivery, t.delivered];
 
   const getStatusIndex = (status) => {
     if (!status) return 0;
@@ -95,12 +97,12 @@ const Orders = () => {
     <div className='border-t pt-16 min-h-[60vh]'>
 
       <div className='text-2xl'>
-        <Title text1={'MY '} text2={'ORDERS'} />
+        <Title text1={t.myOrders.split(' ')[0] || 'MY'} text2={t.myOrders.split(' ').slice(1).join(' ') || 'ORDERS'} />
       </div>
 
       <div>
         {orderData.length === 0 ? (
-          <div className='py-12 text-center text-gray-500'>No orders found yet. Place an order and it will appear here.</div>
+          <div className='py-12 text-center text-gray-500'>{t.noOrdersFound}</div>
         ) : (
           orderData.map((item, index) => (
             <div key={index} className='py-4 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
@@ -109,17 +111,20 @@ const Orders = () => {
               <div className='flex items-start gap-6 text-sm'>
                 <img className='w-16 sm:w-20 rounded object-cover' src={item.image[0]} alt={item.name} />
                 <div>
+                  <div className='mb-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500'>
+                    {t.orderId}: <span className='text-slate-700'>{item.orderId || 'N/A'}</span>
+                  </div>
                   <p className='sm:text-base font-medium text-gray-900'>{item.name}</p>
                   <div className='flex items-center gap-3 mt-1 text-base text-gray-700'>
                     <p>{currency}{item.price}</p>
-                    <p>Quantity: {item.quantity}</p>
-                    <p>Size: {item.size}</p>
+                    <p>{t.quantity}: {item.quantity}</p>
+                    <p>{t.size}: {item.size}</p>
                   </div>
                   <p className='mt-1 text-xs text-gray-500'>
-                    Date: <span className='text-gray-400'>{new Date(item.date).toDateString()}</span>
+                    {t.date}: <span className='text-gray-400'>{new Date(item.date).toDateString()}</span>
                   </p>
                   <p className='mt-1 text-xs text-gray-500'>
-                    Payment: <span className='text-gray-400 uppercase'>{item.paymentMethod}</span>
+                    {t.payment}: <span className='text-gray-400 uppercase'>{item.paymentMethod}</span>
                   </p>
                 </div>
               </div>
@@ -128,7 +133,7 @@ const Orders = () => {
               <div className='md:w-1/2 flex flex-col gap-3 justify-between'>
                 {item.status === 'Delivered' ? (
                   <div className='rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700'>
-                    Your order has been delivered successfully.
+                    {t.orderStatusDelivered}
                   </div>
                 ) : item.status === 'Cancelled' || (item.cancellationRequested && item.cancelledBy === 'user') ? (
                   <div className='cancelled-status-box px-3 py-2 text-sm rounded-sm'>
@@ -178,14 +183,14 @@ const Orders = () => {
                       onClick={loadOrderData} 
                       className='border border-gray-300 px-4 py-2 text-sm font-medium rounded-sm hover:bg-gray-50 active:scale-95 transition-all cursor-pointer'
                     >
-                      Refresh
+                      {t.refresh}
                     </button>
 
                     <button
                       onClick={() => cancelOrderHandler(item.orderId)}
                       className='bg-red-600 text-white hover:bg-red-700 px-3 py-2 text-sm font-medium rounded-sm active:scale-95 transition-all cursor-pointer shadow-xs'
                     >
-                      Cancel Order
+                      {t.cancelOrder}
                     </button>
                   </div>
                 )}

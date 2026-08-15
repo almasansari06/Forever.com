@@ -35,6 +35,46 @@ const sendMail = async ({ to, subject, html, text, attachments = [] }) => {
   }
 };
 
+export const sendLoginOtpEmail = async ({ to, otp, name }) => {
+  if (!to || !otp) return { success: false, skipped: true };
+
+  const subject = 'Your Forever login verification code';
+  const text = `Hi ${name || 'there'},\n\nYour one-time login verification code is: ${otp}\n\nThis code is valid for 5 minutes. Please enter it to complete your login.\n\nRegards,\nForever Team`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6;">
+      <h2 style="color: #111;">Your Forever login verification code</h2>
+      <p>Hi ${name || 'there'},</p>
+      <p>Your one-time login verification code is:</p>
+      <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px; margin: 18px 0;">${otp}</p>
+      <p>This code is valid for 5 minutes. Please enter it to complete your login.</p>
+      <p>Regards,<br />Forever Team</p>
+    </div>
+  `;
+
+  return sendMail({ to, subject, text, html });
+};
+
+export const sendPasswordResetOtpEmail = async ({ to, otp, name }) => {
+  if (!to || !otp) return { success: false, skipped: true };
+
+  const subject = 'Your Forever password reset code';
+  const text = `Hi ${name || 'there'},\n\nYour password reset code is: ${otp}\n\nUse this code to verify your identity and set a new password. This code is valid for 5 minutes.\n\nRegards,\nForever Team`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6;">
+      <h2 style="color: #111;">Reset your Forever password</h2>
+      <p>Hi ${name || 'there'},</p>
+      <p>Your password reset code is:</p>
+      <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px; margin: 18px 0;">${otp}</p>
+      <p>Use this code to verify your identity and set a new password. This code is valid for 5 minutes.</p>
+      <p>Regards,<br />Forever Team</p>
+    </div>
+  `;
+
+  return sendMail({ to, subject, text, html });
+};
+
 export const sendWelcomeEmail = async ({ to, name }) => {
   if (!to) return { success: false, skipped: true };
 

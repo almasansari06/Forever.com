@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 import NewsletterBox from '../components/NewsletterBox';
 import { countryCodes } from '../data/countryCodes';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { ShopContext } from '../context/ShopContext';
+import { translations } from '../data/translations';
 
 const Contact = () => {
+  const { language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
   const [showJobForm, setShowJobForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -162,7 +166,7 @@ const Contact = () => {
   return (
     <div className='transition-opacity duration-500 ease-in opacity-100'>
       <div className='text-center text-2xl pt-10 border-t'>
-        <Title text1={'CONTACT '} text2={'US'} />
+        <Title text1={language === 'en' ? 'CONTACT ' : t.contactTitle.slice(0, 4).toUpperCase()} text2={language === 'en' ? 'US' : t.contactTitle.slice(4)} />
       </div>
 
       <div className='my-10 flex flex-col justify-center md:flex-row gap-10 mb-28 items-center'>
@@ -174,7 +178,7 @@ const Contact = () => {
         />
 
         <div className='flex flex-col justify-center items-start gap-6'>
-          <p className='font-semibold text-xl text-gray-700 dark:text-slate-200 uppercase tracking-wide'>Corporate Head Office</p>
+          <p className='font-semibold text-xl text-gray-700 dark:text-slate-200 uppercase tracking-wide'>{t.corporateHeadOffice}</p>
 
           <p className='text-gray-500 dark:text-slate-400 leading-relaxed'>
             Al Wahda St - Industrial Area 4 - <br />
@@ -187,14 +191,14 @@ const Contact = () => {
             <p><span className='font-medium text-gray-700 dark:text-slate-300'>Email:</span> <a href='mailto:foreverglobal.new@gmail.com' className='text-blue-600 dark:text-blue-400 hover:underline'>foreverglobal.new@gmail.com</a></p>
           </div>
 
-          <p className='font-semibold text-xl text-gray-700 dark:text-slate-200 uppercase tracking-wide mt-2'>Careers at Forever</p>
+          <p className='font-semibold text-xl text-gray-700 dark:text-slate-200 uppercase tracking-wide mt-2'>{t.careers}</p>
           <p className='text-gray-500 dark:text-slate-400'>Learn more about our teams and job openings.</p>
 
           <button 
             onClick={() => setShowJobForm(true)}
             className='border border-black dark:border-white px-8 py-4 text-sm font-medium transition-all duration-200 hover:bg-black hover:text-white dark:hover:bg-slate-700 active:scale-95 cursor-pointer rounded-sm shadow-xs dark:text-white'
           >
-            Explore Jobs
+            {t.exploreJobs}
           </button>
         </div>
       </div>

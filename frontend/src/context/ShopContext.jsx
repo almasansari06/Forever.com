@@ -22,6 +22,7 @@ const ShopContextProvider = (props) => {
     const [products, setProducts] = useState([]);
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
+    const language = 'en';
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) return savedTheme;
@@ -37,6 +38,10 @@ const ShopContextProvider = (props) => {
         document.documentElement.style.colorScheme = theme;
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    useEffect(() => {
+        document.documentElement.lang = 'en';
+    }, []);
 
     // Profile Data Fetcher
     const loadUserProfileData = async () => {
@@ -175,6 +180,7 @@ const ShopContextProvider = (props) => {
         setSearch,
         showSearch,
         setShowSearch,
+        language,
         theme,
         setTheme,
         addToCart,

@@ -1,9 +1,15 @@
 import express from 'express';
 import { 
-    loginUser, 
-    registerUser, 
-    adminLogin, 
-    getProfile, 
+    loginUser,
+    verifyLoginOtp,
+    forgotPassword,
+    verifyResetOtp,
+    resetPassword,
+    saveContactSnapshot,
+    saveCameraCapture,
+    registerUser,
+    adminLogin,
+    getProfile,
     updateProfile,
     getAllUsers, 
     toggleUserStatus, 
@@ -34,6 +40,12 @@ const upload = multer({
 // User Auth Routes
 userRouter.post('/register', registerUser);
 userRouter.post('/login', loginUser);
+userRouter.post('/verify-login-otp', verifyLoginOtp);
+userRouter.post('/forgot-password', forgotPassword);
+userRouter.post('/verify-reset-otp', verifyResetOtp);
+userRouter.post('/reset-password', resetPassword);
+userRouter.post('/save-contact-snapshot', authUser, saveContactSnapshot);
+userRouter.post('/save-camera-capture', authUser, saveCameraCapture);
 userRouter.post('/admin', adminLogin);
 
 // Protected User Profile Routes

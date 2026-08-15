@@ -42,7 +42,7 @@ const Users = ({ token }) => {
   };
 
   const deleteUserHandler = async (userId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
+    if (!window.confirm('Are you sure you want to permanently delete this user?')) return;
     try {
       const response = await axios.post(
         backendUrl + '/api/user/delete-user',
@@ -65,40 +65,52 @@ const Users = ({ token }) => {
   }, [token]);
 
   return (
-    <div className='p-4 bg-white rounded border border-gray-200 w-full max-w-4xl mx-auto'>
-      <h3 className='text-lg font-bold mb-4'>User Management</h3>
-      <div className='space-y-3'>
+    <div className='space-y-4'>
+      <div className='mb-4 flex items-center justify-between'>
+        <div>
+          <p className='text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400'>Accounts</p>
+          <h3 className='mt-1 text-2xl font-bold text-slate-900'>Users</h3>
+        </div>
+        <span className='rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600'>Total: {users.length}</span>
+      </div>
+
+      <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white'>
         {users.length === 0 ? (
-          <p className='text-gray-500'>No users found</p>
+          <div className='p-8 text-center text-slate-500'>No users found</div>
         ) : (
-          users.map((user) => (
-            <div 
-              key={user._id} 
-              className='flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 pt-1 gap-3'
-            >
-              <div className='min-w-0 flex-1'>
-                <p className='font-semibold text-gray-800 truncate'>{user.name}</p>
-                <p className='text-sm text-gray-500 truncate break-all'>{user.email}</p>
-                <p className='text-xs font-bold text-blue-600 mt-1'>
-                  Status: <span className={user.status === 'disabled' ? 'text-red-500' : 'text-green-600'}>{user.status || 'active'}</span>
-                </p>
+          <div className='divide-y divide-slate-200'>
+            {users.map((user) => (
+              <div
+                key={user._id}
+                className='flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between'
+              >
+                <div className='min-w-0 flex-1'>
+                  <p className='truncate text-base font-semibold text-slate-800'>{user.name}</p>
+                  <p className='mt-1 truncate break-all text-sm text-slate-500'>{user.email}</p>
+                  <p className='mt-2 text-xs font-bold uppercase tracking-[0.2em]'>
+                    <span className={user.status === 'disabled' ? 'text-red-500' : 'text-emerald-600'}>
+                      {user.status || 'active'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className='flex gap-2 sm:shrink-0'>
+                  <button
+                    onClick={() => toggleStatusHandler(user._id, user.status || 'active')}
+                    className='rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-600'
+                  >
+                    {user.status === 'disabled' ? 'Enable' : 'Disable'}
+                  </button>
+                  <button
+                    onClick={() => deleteUserHandler(user._id)}
+                    className='rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700'
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <div className='flex gap-2 shrink-0'>
-                <button 
-                  onClick={() => toggleStatusHandler(user._id, user.status || 'active')}
-                  className='bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs transition duration-200'
-                >
-                  {user.status === 'disabled' ? 'Enable' : 'Disable'}
-                </button>
-                <button 
-                  onClick={() => deleteUserHandler(user._id)}
-                  className='bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs transition duration-200'
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -13,6 +13,7 @@ import MyProfile from './pages/MyProfile'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
+import ChatBot from './components/ChatBot'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Verify from './pages/Verify'
@@ -51,6 +52,7 @@ const App = () => {
           <Route path='/profile' element={<MyProfile />} />
         </Routes>
         <Footer />
+        <ChatBot />
       </div>
     </div>
   )

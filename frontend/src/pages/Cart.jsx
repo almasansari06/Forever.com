@@ -3,10 +3,12 @@ import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 import CartTotal from '../components/CartTotal';
+import { translations } from '../data/translations';
 
 const Cart = () => {
 
-  const { products, currency, cartItems, updateQuantity, navigate } = useContext(ShopContext);
+  const { products, currency, cartItems, updateQuantity, navigate, language } = useContext(ShopContext);
+  const t = translations[language] || translations.en;
 
   const [cartData, setCartData] = useState([]);
 
@@ -32,7 +34,7 @@ const Cart = () => {
     <div className='border-t pt-14 '>
 
       <div className='text-2xl mb-3'>
-        <Title text1={'YOUR'} text2={'CART'} />
+        <Title text1={t.yourCart.split(' ')[0] || 'YOUR'} text2={t.yourCart.split(' ').slice(1).join(' ') || 'CART'} />
       </div>
 
       <div>
@@ -54,7 +56,7 @@ const Cart = () => {
 
                     <div className='flex items-center gap-5 mt-2'>
                       <p>{currency}{productData.price}</p>
-                      <p className='text-sm sm:text-base text-gray-700 dark:text-gray-200'>Size: {item.size}</p>
+                      <p className='text-sm sm:text-base text-gray-700 dark:text-gray-200'>{t.size}: {item.size}</p>
                     </div>
                   </div>
                 </div>
@@ -82,7 +84,7 @@ const Cart = () => {
           <CartTotal />
           <div className='w-full text-end'>
             <button onClick={() => navigate('/place-order')} className='bg-black text-white text-sm my-8 px-8 py-3 cursor-pointer'>
-              PROCEED TO CHECKOUT
+              {t.proceedToCheckout}
             </button>
           </div>
         </div>
