@@ -6,6 +6,49 @@ import { toast } from 'react-toastify'
 const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
 const footwearSizes = ['6', '7', '8', '9', '10'];
 
+const PriceEditor = ({ value, onUpdate }) => {
+  const [draft, setDraft] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    setDraft(String(value ?? 0));
+  }, [value]);
+
+  const commit = () => {
+    const normalized = (draft === '' ? '0' : draft).replace(/[^\d.]/g, '');
+    const safeValue = Number.isFinite(Number(normalized)) ? Number(normalized) : 0;
+    const nextValue = String(safeValue);
+    setDraft(nextValue);
+
+    if (safeValue !== Number(value ?? 0)) {
+      onUpdate(safeValue);
+    }
+  };
+
+  return (
+    <input
+      type='text'
+      inputMode='numeric'
+      pattern='[0-9]*'
+      value={draft}
+      onFocus={(e) => {
+        const input = e.currentTarget;
+        input.setSelectionRange(0, input.value.length);
+      }}
+      onChange={(e) => setDraft(e.target.value.replace(/[^\d.]/g, ''))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === 'NumpadEnter') {
+          e.preventDefault();
+          commit();
+          e.currentTarget.blur();
+        }
+      }}
+      className='w-full max-w-[80px] border rounded px-2 py-1 text-center'
+      aria-label='Price'
+    />
+  );
+};
+
 const SizeEditor = ({ item, onUpdate }) => {
   const selectedSizes = Array.isArray(item.sizes) ? item.sizes : [];
   const [selectedOption, setSelectedOption] = useState({ clothing: '', footwear: '' });
@@ -231,11 +274,14 @@ const List = ({token}) => {
           <div className='border p-3 text-sm text-gray-500'>No products found for this filter.</div>
         ) : (
           filteredList.map((item,index)=>(
-            <div className='grid grid-cols-[0.4fr_1fr_2fr_1fr] md:grid-cols-[0.5fr_0.8fr_2.6fr_1fr_1.1fr_1.3fr_1fr_0.8fr] items-center gap-2 py-2 px-2 border text-sm' key={item._id || index}>
+            <div
+              className='flex flex-col gap-3 border py-2 px-2 text-sm md:grid md:grid-cols-[0.5fr_0.8fr_2.6fr_1fr_1.1fr_1.3fr_1fr_0.8fr] md:items-center md:gap-2'
+              key={item._id || index}
+            >
                 <p className='font-medium'>{index + 1}</p>
-                <img className='w-12 ' src={item.image[0]} alt="" />
+                <img className='w-12 h-12 object-cover rounded' src={item.image[0]} alt='' />
                 <p
-                  className='max-w-full'
+                  className='max-w-full min-w-0'
                   style={{
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
@@ -248,13 +294,9 @@ const List = ({token}) => {
                   {item.name}
                 </p>
                 <p className='break-all overflow-hidden'>{item.category}</p>
-                <input
-                  type='number'
-                  min='0'
-                  value={item.price ?? 0}
-                  onChange={(e) => updateProduct(item._id, { price: Number(e.target.value) || 0 })}
-                  className='w-full max-w-[80px] border rounded px-2 py-1'
-                />
+                <div className='w-full max-w-[80px]'>
+                  <PriceEditor value={item.price ?? 0} onUpdate={(price) => updateProduct(item._id, { price })} />
+                </div>
                 <div className='w-full max-w-[170px]'>
                   {Array.isArray(item.sizes) && item.sizes.length > 0 ? (
                     <SizeEditor item={item} onUpdate={(payload) => updateProduct(item._id, payload)} />
@@ -274,8 +316,6 @@ const List = ({token}) => {
             </div>
           ))
         )}
-
-        {renderFilter()}
       </div>
     </>
   )
