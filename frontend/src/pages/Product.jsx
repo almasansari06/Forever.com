@@ -21,6 +21,7 @@ const Product = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewFiles, setReviewFiles] = useState([]);
+  const dragStartXRef = useRef(null);
   const imageRef = useRef(null);
 
   useEffect(() => {
@@ -57,6 +58,36 @@ const Product = () => {
     }
   }, [productId]);
 
+  useEffect(() => {
+    if (!viewerOpen) return;
+
+    const handlePointerMoveWindow = (event) => {
+      if (dragStartXRef.current === null) return;
+      const diff = dragStartXRef.current - event.clientX;
+
+      if (Math.abs(diff) > 70) {
+        if (diff > 0) {
+          showNextImage();
+        } else {
+          showPreviousImage();
+        }
+        dragStartXRef.current = event.clientX;
+      }
+    };
+
+    const handlePointerUpWindow = () => {
+      dragStartXRef.current = null;
+    };
+
+    window.addEventListener('pointermove', handlePointerMoveWindow);
+    window.addEventListener('pointerup', handlePointerUpWindow);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMoveWindow);
+      window.removeEventListener('pointerup', handlePointerUpWindow);
+    };
+  }, [viewerOpen, productData, currentImageIndex]);
+
   const openImageViewer = (index) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
     setCurrentImageIndex(index);
@@ -64,38 +95,43 @@ const Product = () => {
     setViewerOpen(true);
   };
 
-  const showNextImage = () => {
+  const changeImageByDirection = (direction) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
-    const nextIndex = (currentImageIndex + 1) % productData.image.length;
-    setCurrentImageIndex(nextIndex);
-    setImage(productData.image[nextIndex]);
+
+    setCurrentImageIndex((prevIndex) => {
+      const nextIndex = direction === 'next'
+        ? (prevIndex + 1) % productData.image.length
+        : (prevIndex - 1 + productData.image.length) % productData.image.length;
+
+      setImage(productData.image[nextIndex]);
+      return nextIndex;
+    });
+  };
+
+  const showNextImage = () => {
+    changeImageByDirection('next');
   };
 
   const showPreviousImage = () => {
-    if (!productData || !productData.image || productData.image.length === 0) return;
-    const prevIndex = (currentImageIndex - 1 + productData.image.length) % productData.image.length;
-    setCurrentImageIndex(prevIndex);
-    setImage(productData.image[prevIndex]);
+    changeImageByDirection('prev');
   };
 
-  const handleTouchStart = (event) => {
-    setTouchStartX(event.touches[0].clientX);
+  const handlePointerDown = (event) => {
+    dragStartXRef.current = event.clientX;
   };
 
-  const handleTouchEnd = (event) => {
-    if (touchStartX === null) return;
-    const touchEndX = event.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
+  const handlePointerUp = () => {
+    dragStartXRef.current = null;
+  };
 
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
+  const handleWheelNavigation = (event) => {
+    if (Math.abs(event.deltaX) > 25 || Math.abs(event.deltaY) > 25) {
+      if (event.deltaX < 0 || event.deltaY < 0) {
         showNextImage();
       } else {
         showPreviousImage();
       }
     }
-
-    setTouchStartX(null);
   };
 
   const handleReviewFileChange = (e) => {
@@ -433,7 +469,14 @@ const Product = () => {
 
       {viewerOpen && (
         <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4' onClick={() => setViewerOpen(false)}>
-          <div className='relative w-full max-w-4xl' onClick={(event) => event.stopPropagation()} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          <div
+            className='relative w-full max-w-4xl'
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onWheel={handleWheelNavigation}
+          >
             <button
               type='button'
               className='absolute -top-12 right-0 text-white text-3xl leading-none cursor-pointer'
@@ -442,25 +485,17 @@ const Product = () => {
             >
               ×
             </button>
-            <button
-              type='button'
-              className='absolute left-3 top-1/2 -translate-y-1/2 bg-white/20 text-white text-3xl w-12 h-12 rounded-full backdrop-blur-sm cursor-pointer'
-              onClick={showPreviousImage}
-              aria-label='Previous image'
-            >
-              ‹
-            </button>
-            <img src={productData.image[currentImageIndex]} alt='Product view' className='max-h-[85vh] w-full object-contain rounded-lg shadow-2xl' />
-            <button
-              type='button'
-              className='absolute right-3 top-1/2 -translate-y-1/2 bg-white/20 text-white text-3xl w-12 h-12 rounded-full backdrop-blur-sm cursor-pointer'
-              onClick={showNextImage}
-              aria-label='Next image'
-            >
-              ›
-            </button>
-            <div className='mt-4 text-center text-white text-sm'>
-              {currentImageIndex + 1} / {productData.image.length}
+            <img
+              src={productData.image[currentImageIndex]}
+              alt='Product view'
+              className='max-h-[85vh] w-full object-contain rounded-lg shadow-2xl cursor-grab active:cursor-grabbing select-none'
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+            />
+            <div className='mt-4 flex items-center justify-between text-white text-sm'>
+              <span className='opacity-75'>Drag or scroll to browse</span>
+              <span>{currentImageIndex + 1} / {productData.image.length}</span>
             </div>
           </div>
         </div>
