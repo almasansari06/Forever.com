@@ -492,10 +492,13 @@ const Product = () => {
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
+              onClick={(event) => {
+                event.stopPropagation();
+                showNextImage();
+              }}
             />
-            <div className='mt-4 flex items-center justify-between text-white text-sm'>
-              <span className='opacity-75'>Drag or scroll to browse</span>
-              <span>{currentImageIndex + 1} / {productData.image.length}</span>
+            <div className='mt-4 text-center text-white text-sm'>
+              {currentImageIndex + 1} / {productData.image.length}
             </div>
           </div>
         </div>
