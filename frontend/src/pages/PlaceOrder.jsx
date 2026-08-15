@@ -1,14 +1,18 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { ShopContext } from '../context/ShopContext';
+import { countryCodes } from '../data/countryCodes';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const PlaceOrder = () => {
     const [method, setMethod] = useState('cod'); // Default COD
     const { backendUrl, token, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData } = useContext(ShopContext);
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const [countrySearch, setCountrySearch] = useState('');
+    const [filteredCountries, setFilteredCountries] = useState(countryCodes);
 
     const [formData, setFormData] = useState({
-        firstName: '', lastName: '', email: '', street: '', city: '', state: '', zipcode: '', country: '', phone: ''
+        firstName: '', lastName: '', email: '', street: '', city: '', state: '', zipcode: '', country: '', phone: '', countryCode: '+1'
     });
 
     // Autofill formData from saved user profile address when available
@@ -27,14 +31,44 @@ const PlaceOrder = () => {
                 state: addr.state || prev.state,
                 zipcode: addr.zipcode || prev.zipcode,
                 country: addr.country || prev.country,
+                countryCode: addr.countryCode || '+1'
             }));
         }
     }, [userData]);
 
+    // Filter countries based on search
+    useEffect(() => {
+        const filtered = countryCodes.filter(c =>
+            c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+            c.code.includes(countrySearch)
+        );
+        setFilteredCountries(filtered);
+    }, [countrySearch]);
+
     const onChangeHandler = (event) => {
         const name = event.target.name;
-        const value = event.target.value;
+        let value = event.target.value;
+        
+        // Allow only numbers for zipcode
+        if (name === 'zipcode') {
+            value = value.replace(/\D/g, '');
+        }
+        
+        // Allow only numbers for phone
+        if (name === 'phone') {
+            value = value.replace(/\D/g, '');
+        }
+
         setFormData(data => ({ ...data, [name]: value }));
+    };
+
+    const handleCountryCodeSelect = (countryData) => {
+        setFormData(prev => ({
+            ...prev,
+            countryCode: countryData.code
+        }));
+        setCountrySearch('');
+        setShowCountryDropdown(false);
     };
 
     const onSubmitHandler = async (event) => {
@@ -59,8 +93,14 @@ const PlaceOrder = () => {
                 }
             }
 
+            // Combine country code with phone number
+            const fullPhone = formData.countryCode + formData.phone;
+
             let orderData = {
-                address: formData,
+                address: {
+                    ...formData,
+                    phone: fullPhone
+                },
                 items: orderItems,
                 amount: getCartAmount() + delivery_fee
             };
@@ -104,7 +144,61 @@ const PlaceOrder = () => {
                     <input required onChange={onChangeHandler} name='zipcode' value={formData.zipcode} placeholder='Zipcode' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
                     <input required onChange={onChangeHandler} name='country' value={formData.country} placeholder='Country' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" />
                 </div>
-                <input required onChange={onChangeHandler} name='phone' value={formData.phone} placeholder='Phone' className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="number" />
+
+                {/* Phone Number with Country Code */}
+                <div className='flex gap-2'>
+                    <div className='relative flex-shrink-0 w-32'>
+                        <button
+                            type='button'
+                            onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                            className='w-full border border-gray-300 rounded py-1.5 px-3.5 bg-white text-left text-sm font-medium flex items-center justify-between hover:border-gray-400 transition-colors'
+                        >
+                            <span>{formData.countryCode}</span>
+                            <span className='text-xs'>▼</span>
+                        </button>
+
+                        {/* Country Code Dropdown */}
+                        {showCountryDropdown && (
+                            <div className='absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto'>
+                                <input
+                                    type='text'
+                                    placeholder='Search country...'
+                                    value={countrySearch}
+                                    onChange={(e) => setCountrySearch(e.target.value)}
+                                    className='w-full border-b border-gray-300 px-3 py-2 text-sm sticky top-0 bg-white'
+                                />
+                                <div className='max-h-56 overflow-y-auto'>
+                                    {filteredCountries.length > 0 ? (
+                                        filteredCountries.map((country) => (
+                                            <button
+                                                key={country.code}
+                                                type='button'
+                                                onClick={() => handleCountryCodeSelect(country)}
+                                                className='w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2'
+                                            >
+                                                <span>{country.flag}</span>
+                                                <span>{country.name}</span>
+                                                <span className='ml-auto text-gray-500'>{country.code}</span>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className='px-3 py-2 text-sm text-gray-500'>No countries found</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <input 
+                        required 
+                        onChange={onChangeHandler} 
+                        name='phone' 
+                        value={formData.phone} 
+                        placeholder='Phone number' 
+                        className='flex-1 border border-gray-300 rounded py-1.5 px-3.5 w-full' 
+                        type="text" 
+                    />
+                </div>
             </div>
 
             {/* Payment Method Selection */}

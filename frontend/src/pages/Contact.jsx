@@ -2,17 +2,23 @@ import React, { useState } from 'react';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 import NewsletterBox from '../components/NewsletterBox';
+import { countryCodes } from '../data/countryCodes';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const Contact = () => {
   const [showJobForm, setShowJobForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [filteredCountries, setFilteredCountries] = useState(countryCodes);
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     contact: '',
+    countryCode: '+91',
     state: '',
     city: '',
     address: '',
@@ -21,12 +27,42 @@ const Contact = () => {
     resume: null,
   });
 
+  // Filter countries based on search
+  React.useEffect(() => {
+    const filtered = countryCodes.filter(c =>
+      c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+      c.code.includes(countrySearch)
+    );
+    setFilteredCountries(filtered);
+  }, [countrySearch]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let newValue = value;
+    
+    // Allow only numbers for contact
+    if (name === 'contact') {
+      newValue = value.replace(/\D/g, '');
+    }
+    
+    // Allow only numbers for aadharNumber
+    if (name === 'aadharNumber') {
+      newValue = value.replace(/\D/g, '');
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: newValue
     }));
+  };
+
+  const handleCountryCodeSelect = (countryData) => {
+    setFormData(prev => ({
+      ...prev,
+      countryCode: countryData.code
+    }));
+    setCountrySearch('');
+    setShowCountryDropdown(false);
   };
 
   const handleFileChange = (e) => {
@@ -80,7 +116,7 @@ const Contact = () => {
       formDataToSend.append('firstName', formData.firstName);
       formDataToSend.append('lastName', formData.lastName);
       formDataToSend.append('email', formData.email);
-      formDataToSend.append('contact', formData.contact);
+      formDataToSend.append('contact', formData.countryCode + formData.contact);
       formDataToSend.append('state', formData.state);
       formDataToSend.append('city', formData.city);
       formDataToSend.append('address', formData.address);
@@ -104,6 +140,7 @@ const Contact = () => {
           lastName: '',
           email: '',
           contact: '',
+          countryCode: '+91',
           state: '',
           city: '',
           address: '',
@@ -225,15 +262,59 @@ const Contact = () => {
                 {/* Contact Number */}
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1'>Contact Number *</label>
-                  <input
-                    type='tel'
-                    name='contact'
-                    value={formData.contact}
-                    onChange={handleInputChange}
-                    placeholder='10-digit phone number'
-                    className='w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg px-4 py-2 outline-none focus:border-black dark:focus:border-slate-400'
-                    required
-                  />
+                  <div className='flex gap-2'>
+                    <div className='relative flex-shrink-0 w-24'>
+                      <button
+                        type='button'
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className='w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg py-2 px-2 bg-white text-left text-sm font-medium flex items-center justify-between hover:border-gray-400 transition-colors'
+                      >
+                        <span className='text-xs'>{formData.countryCode}</span>
+                        <span className='text-xs'>▼</span>
+                      </button>
+
+                      {/* Country Code Dropdown */}
+                      {showCountryDropdown && (
+                        <div className='absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded shadow-lg z-10 max-h-64 overflow-y-auto'>
+                          <input
+                            type='text'
+                            placeholder='Search...'
+                            value={countrySearch}
+                            onChange={(e) => setCountrySearch(e.target.value)}
+                            className='w-full border-b border-gray-300 dark:border-slate-600 px-2 py-1 text-xs sticky top-0 bg-white dark:bg-slate-800 dark:text-white'
+                          />
+                          <div className='max-h-56 overflow-y-auto'>
+                            {filteredCountries.length > 0 ? (
+                              filteredCountries.map((country) => (
+                                <button
+                                  key={country.code}
+                                  type='button'
+                                  onClick={() => handleCountryCodeSelect(country)}
+                                  className='w-full text-left px-2 py-1 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1 dark:text-white'
+                                >
+                                  <span>{country.flag}</span>
+                                  <span className='truncate'>{country.name}</span>
+                                  <span className='ml-auto text-gray-500 dark:text-slate-400 flex-shrink-0'>{country.code}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className='px-2 py-1 text-xs text-gray-500'>No countries found</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <input
+                      type='text'
+                      name='contact'
+                      value={formData.contact}
+                      onChange={handleInputChange}
+                      placeholder='10-digit phone number'
+                      className='flex-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg px-4 py-2 outline-none focus:border-black dark:focus:border-slate-400 text-sm'
+                      required
+                    />
+                  </div>
                 </div>
 
                 {/* State */}

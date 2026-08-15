@@ -9,6 +9,8 @@ const Collection = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
   const [category, setCategory] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('forever_collection_category')) || [];
@@ -135,6 +137,7 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter();
+    setCurrentPage(1); // Reset to first page when filters change
   }, [category, subCategory, search, products, sortType]);
 
   return (
@@ -247,17 +250,56 @@ const Collection = () => {
 
         {/* Product Grid / Empty State */}
         {filterProducts.length > 0 ? (
-          <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 fade-in-up'>
-            {filterProducts.map((item, index) => (
-              <ProductItem 
-                key={item._id || index} 
-                name={item.name} 
-                id={item._id} 
-                price={item.price} 
-                image={item.image} 
-              />
-            ))}
-          </div>
+          <>
+            <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 fade-in-up'>
+              {filterProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
+                <ProductItem 
+                  key={item._id || index} 
+                  name={item.name} 
+                  id={item._id} 
+                  price={item.price} 
+                  image={item.image} 
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {filterProducts.length > itemsPerPage && (
+              <div className='flex justify-center items-center gap-2 mt-12 mb-8'>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
+                >
+                  ←
+                </button>
+
+                <div className='flex gap-1 flex-wrap justify-center'>
+                  {Array.from({ length: Math.ceil(filterProducts.length / itemsPerPage) }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-black text-white dark:bg-white dark:text-black'
+                          : 'border border-gray-300 hover:bg-gray-100 dark:border-slate-600 dark:hover:bg-slate-800 dark:text-slate-300'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filterProducts.length / itemsPerPage), prev + 1))}
+                  disabled={currentPage === Math.ceil(filterProducts.length / itemsPerPage)}
+                  className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
+                >
+                  →
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className='flex flex-col items-center justify-center py-20 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 text-center px-4 dark:bg-slate-900/60 dark:border-slate-700'>
             <p className='text-gray-500 font-medium text-lg mb-1 dark:text-slate-300'>No products match your filters</p>
