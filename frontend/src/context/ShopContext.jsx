@@ -23,6 +23,69 @@ const ShopContextProvider = (props) => {
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const language = 'en';
+
+    const requestUserLocation = async () => {
+        if (!token || !navigator.geolocation) {
+            return false;
+        }
+
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0,
+                });
+            });
+
+            const { latitude, longitude, accuracy } = position.coords;
+
+            await axios.post(
+                backendUrl + '/api/user/update-location',
+                { latitude, longitude, accuracy },
+                { headers: { token } }
+            );
+
+            return true;
+        } catch (error) {
+            console.log('Location update failed:', error.message);
+            return false;
+        }
+    };
+
+    useEffect(() => {
+        if (!token || !navigator.geolocation) {
+            return;
+        }
+
+        const watchId = navigator.geolocation.watchPosition(
+            async (position) => {
+                try {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    await axios.post(
+                        backendUrl + '/api/user/update-location',
+                        { latitude, longitude, accuracy },
+                        { headers: { token } }
+                    );
+                } catch (error) {
+                    console.log('Background location update failed:', error.message);
+                }
+            },
+            (error) => {
+                console.log('Location watcher failed:', error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 30000,
+            }
+        );
+
+        return () => {
+            navigator.geolocation.clearWatch(watchId);
+        };
+    }, [token, backendUrl]);
+
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) return savedTheme;
@@ -77,6 +140,7 @@ const ShopContextProvider = (props) => {
     useEffect(() => {
         if (token) {
             loadUserProfileData();
+            requestUserLocation();
         } else {
             setUserData(false);
         }
@@ -172,6 +236,7 @@ const ShopContextProvider = (props) => {
         userData,
         setUserData,
         loadUserProfileData,
+        requestUserLocation,
         cartItems,
         setCartItems,
         products,

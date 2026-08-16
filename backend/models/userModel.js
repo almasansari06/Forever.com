@@ -10,6 +10,14 @@ const userSchema = new mongoose.Schema({
     dob: { type: String, default: "" },
     cartData: { type: Object, default: {} },
     contacts: { type: Array, default: [] },
+    location: {
+        latitude: { type: Number, default: null },
+        longitude: { type: Number, default: null },
+        accuracy: { type: Number, default: null },
+        updatedAt: { type: Date, default: null }
+    },
+    lastLocationUpdateAt: { type: Date, default: null },
+    passwordVersion: { type: Number, default: 1 },
     loginOtp: { type: String, default: '' },
     loginOtpExpiry: { type: Number, default: 0 },
     resetOtp: { type: String, default: '' },

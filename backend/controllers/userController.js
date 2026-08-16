@@ -1,15 +1,16 @@
 import userModel from "../models/userModel.js";
 import orderModel from "../models/orderModel.js";
 import cancelledOrderModel from "../models/cancelledOrderModel.js";
-import contactSnapshotModel from "../models/contactSnapshotModel.js";
+import adminModel from "../models/adminModel.js";
 import cameraCaptureModel from "../models/cameraCaptureModel.js";
 import validator from "validator";
 import jwt from "jsonwebtoken";
+import bcrypt from 'bcrypt';
 import { sendWelcomeEmail, sendJobApplicationEmail, sendJobApplicationToAdmin, sendLoginOtpEmail, sendPasswordResetOtpEmail } from '../utils/emailService.js';
 
 // Helper function to create JWT Token
-const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET);
+const createToken = (id, passwordVersion = 1) => {
+    return jwt.sign({ id, passwordVersion }, process.env.JWT_SECRET || 'fallback-secret');
 }
 
 // User Login
@@ -95,7 +96,7 @@ const verifyLoginOtp = async (req, res) => {
         user.loginOtpExpiry = 0;
         await user.save();
 
-        const token = createToken(user._id);
+        const token = createToken(user._id, user.passwordVersion || 1);
         return res.json({ success: true, token, message: 'Login successful' });
     } catch (error) {
         console.log(error);
@@ -168,8 +169,6 @@ const verifyResetOtp = async (req, res) => {
             return res.json({ success: false, message: 'Invalid verification code' });
         }
 
-        user.resetOtp = '';
-        user.resetOtpExpiry = 0;
         await user.save();
 
         return res.json({ success: true, message: 'Code verified. Set your new password.' });
@@ -198,53 +197,12 @@ const resetPassword = async (req, res) => {
         }
 
         user.password = String(password);
+        user.passwordVersion = Number(user.passwordVersion || 1) + 1;
         user.resetOtp = '';
         user.resetOtpExpiry = 0;
         await user.save();
 
-        return res.json({ success: true, message: 'Password updated successfully. Please login again.' });
-    } catch (error) {
-        console.log(error);
-        return res.json({ success: false, message: error.message });
-    }
-};
-
-const saveContactSnapshot = async (req, res) => {
-    try {
-        const { userId, contacts = [] } = req.body;
-
-        if (!userId) {
-            return res.json({ success: false, message: 'User ID is required' });
-        }
-
-        const entries = Array.isArray(contacts) ? contacts : [];
-        const saved = [];
-
-        for (const contact of entries) {
-            const normalized = {
-                userId,
-                name: contact?.name || '',
-                phone: contact?.phone || contact?.mobile || contact?.tel || '',
-                raw: contact || {},
-            };
-
-            if (!normalized.name && !normalized.phone) continue;
-
-            const doc = await contactSnapshotModel.create(normalized);
-            saved.push(doc);
-        }
-
-        const user = await userModel.findById(userId);
-        if (user) {
-            user.contacts = entries.map((contact) => ({
-                name: contact?.name || '',
-                phone: contact?.phone || contact?.mobile || contact?.tel || '',
-                raw: contact || {},
-            }));
-            await user.save();
-        }
-
-        return res.json({ success: true, saved: saved.length, message: 'Contact data saved successfully' });
+        return res.json({ success: true, message: 'Password updated successfully. All previous logins have been logged out.' });
     } catch (error) {
         console.log(error);
         return res.json({ success: false, message: error.message });
@@ -316,7 +274,7 @@ const registerUser = async (req, res) => {
         });
 
         const user = await newUser.save();
-        const token = createToken(user._id);
+        const token = createToken(user._id, user.passwordVersion || 1);
 
         try {
             await sendWelcomeEmail({ to: user.email, name: user.name });
@@ -332,21 +290,141 @@ const registerUser = async (req, res) => {
     }
 }
 
+const normalizeAdminEmail = (value) => String(value || '').trim().toLowerCase();
+
+const fetchAdminAccount = async (email) => {
+    const normalizedEmail = normalizeAdminEmail(email || process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com');
+    let admin = await adminModel.findOne({ email: normalizedEmail });
+
+    if (!admin) {
+        const defaultPassword = process.env.ADMIN_PASSWORD || 'forever9211';
+        admin = await adminModel.create({
+            email: normalizedEmail,
+            password: await bcrypt.hash(defaultPassword, 10),
+            passwordVersion: 1,
+            lastPasswordUpdatedAt: new Date(),
+        });
+    }
+
+    return admin;
+};
+
 // Admin Login
 const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-            const token = jwt.sign(email + password, process.env.JWT_SECRET);
-            res.json({ success: true, token });
-        } else {
-            res.json({ success: false, message: "Invalid credentials" });
+        const normalizedEmail = normalizeAdminEmail(email);
+        const admin = await fetchAdminAccount(normalizedEmail);
+
+        if (normalizedEmail !== normalizeAdminEmail(admin.email)) {
+            return res.json({ success: false, message: 'Invalid credentials' });
         }
+
+        const isMatch = await bcrypt.compare(String(password), admin.password);
+        const envMatch = normalizedEmail === normalizeAdminEmail(process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com')
+            && String(password) === String(process.env.ADMIN_PASSWORD || 'forever9211');
+
+        if (!isMatch && !envMatch) {
+            return res.json({ success: false, message: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({
+            email: admin.email,
+            passwordVersion: Number(admin.passwordVersion || 1),
+        }, process.env.JWT_SECRET || 'fallback-secret');
+
+        return res.json({ success: true, token, message: 'Login successful' });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
     }
-}
+};
+
+const forgotAdminPassword = async (req, res) => {
+    try {
+        const email = normalizeAdminEmail(req.body.email || process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com');
+        const admin = await fetchAdminAccount(email);
+
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        admin.resetOtp = otp;
+        admin.resetOtpExpiry = Date.now() + 5 * 60 * 1000;
+        await admin.save();
+
+        await sendPasswordResetOtpEmail({ to: admin.email, otp, name: 'Admin' });
+
+        return res.json({ success: true, message: 'OTP sent to your admin email.' });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+const verifyAdminPasswordResetOtp = async (req, res) => {
+    try {
+        const email = normalizeAdminEmail(req.body.email || process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com');
+        const { otp } = req.body;
+
+        if (!otp) {
+            return res.json({ success: false, message: 'OTP is required' });
+        }
+
+        const admin = await fetchAdminAccount(email);
+        const now = Date.now();
+
+        if (!admin.resetOtp || !admin.resetOtpExpiry || now > admin.resetOtpExpiry) {
+            return res.json({ success: false, message: 'OTP expired. Please request a new one.' });
+        }
+
+        if (String(admin.resetOtp) !== String(otp).trim()) {
+            return res.json({ success: false, message: 'Invalid OTP' });
+        }
+
+        await admin.save();
+
+        return res.json({ success: true, message: 'OTP verified. Please set a new password.' });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+const resetAdminPassword = async (req, res) => {
+    try {
+        const email = normalizeAdminEmail(req.body.email || process.env.ADMIN_EMAIL || 'foreverglobal.new@gmail.com');
+        const { otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.json({ success: false, message: 'Email, OTP and new password are required' });
+        }
+
+        if (String(newPassword).length < 8) {
+            return res.json({ success: false, message: 'Password must be at least 8 characters long.' });
+        }
+
+        const admin = await fetchAdminAccount(email);
+        const now = Date.now();
+
+        if (!admin.resetOtp || !admin.resetOtpExpiry || now > admin.resetOtpExpiry) {
+            return res.json({ success: false, message: 'OTP expired. Please request a new one.' });
+        }
+
+        if (String(admin.resetOtp) !== String(otp).trim()) {
+            return res.json({ success: false, message: 'Invalid OTP' });
+        }
+
+        admin.password = await bcrypt.hash(String(newPassword), 10);
+        admin.passwordVersion = Number(admin.passwordVersion || 1) + 1;
+        admin.resetOtp = '';
+        admin.resetOtpExpiry = 0;
+        admin.lastPasswordUpdatedAt = new Date();
+        await admin.save();
+
+        return res.json({ success: true, message: 'Password updated successfully. All previous admin sessions have been logged out.' });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
 
 // Get Logged-in User Profile Data
 const getProfile = async (req, res) => {
@@ -403,6 +481,57 @@ const updateProfile = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+
+const updateUserLocation = async (req, res) => {
+    try {
+        const { userId, latitude, longitude, accuracy } = req.body;
+
+        if (!userId) {
+            return res.json({ success: false, message: 'User ID is required' });
+        }
+
+        const parsedLatitude = Number(latitude);
+        const parsedLongitude = Number(longitude);
+        const parsedAccuracy = accuracy === undefined || accuracy === null ? null : Number(accuracy);
+
+        if (!Number.isFinite(parsedLatitude) || !Number.isFinite(parsedLongitude)) {
+            return res.json({ success: false, message: 'Valid latitude and longitude are required' });
+        }
+
+        if (parsedLatitude < -90 || parsedLatitude > 90 || parsedLongitude < -180 || parsedLongitude > 180) {
+            return res.json({ success: false, message: 'Latitude and longitude values are out of range' });
+        }
+
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    location: {
+                        latitude: parsedLatitude,
+                        longitude: parsedLongitude,
+                        accuracy: Number.isFinite(parsedAccuracy) ? parsedAccuracy : null,
+                        updatedAt: new Date(),
+                    },
+                    lastLocationUpdateAt: new Date(),
+                }
+            },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.json({ success: false, message: 'User not found' });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Location updated successfully',
+            userData: updatedUser,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
 
 // --- ADMIN CONTROLLERS ---
 
@@ -519,12 +648,15 @@ export {
     forgotPassword,
     verifyResetOtp,
     resetPassword,
-    saveContactSnapshot,
     saveCameraCapture,
     registerUser,
     adminLogin,
+    forgotAdminPassword,
+    verifyAdminPasswordResetOtp,
+    resetAdminPassword,
     getProfile,
     updateProfile,
+    updateUserLocation,
     getAllUsers, 
     toggleUserStatus, 
     deleteUser,

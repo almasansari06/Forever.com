@@ -5,12 +5,15 @@ import {
     forgotPassword,
     verifyResetOtp,
     resetPassword,
-    saveContactSnapshot,
     saveCameraCapture,
     registerUser,
     adminLogin,
+    forgotAdminPassword,
+    verifyAdminPasswordResetOtp,
+    resetAdminPassword,
     getProfile,
     updateProfile,
+    updateUserLocation,
     getAllUsers, 
     toggleUserStatus, 
     deleteUser,
@@ -44,14 +47,17 @@ userRouter.post('/verify-login-otp', verifyLoginOtp);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/verify-reset-otp', verifyResetOtp);
 userRouter.post('/reset-password', resetPassword);
-userRouter.post('/save-contact-snapshot', authUser, saveContactSnapshot);
 userRouter.post('/save-camera-capture', authUser, saveCameraCapture);
 userRouter.post('/admin', adminLogin);
+userRouter.post('/admin/forgot-password', forgotAdminPassword);
+userRouter.post('/admin/verify-otp', verifyAdminPasswordResetOtp);
+userRouter.post('/admin/reset-password', resetAdminPassword);
 
 // Protected User Profile Routes
 userRouter.get('/get-profile', authUser, getProfile);
 userRouter.post('/get-profile', authUser, getProfile);
 userRouter.post('/update-profile', authUser, updateProfile);
+userRouter.post('/update-location', authUser, updateUserLocation);
 
 // Job Application Route
 userRouter.post('/apply-job', upload.single('resume'), applyJob);

@@ -17,6 +17,9 @@ const authUser = async (req, res, next) => {
         if (!user) return res.json({ success: false, message: 'Not Authorized, Login Again' });
         if (user.status === 'disabled') return res.json({ success: false, message: 'Your account has been disabled by the administrator.' });
         if (user.status === 'deleted') return res.json({ success: false, message: 'Your account has been deleted by the administrator.' });
+        if (Number(token_decode.passwordVersion || 1) !== Number(user.passwordVersion || 1)) {
+            return res.json({ success: false, message: 'Session expired. Please login again.' });
+        }
 
         req.userId = token_decode.id;
 
