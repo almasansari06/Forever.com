@@ -36,6 +36,26 @@ const Orders = ({ token }) => {
     }
   }
 
+  const approvePaymentHandler = async (orderId) => {
+    try {
+      const response = await axios.post(
+        backendUrl + '/api/order/approve-payment',
+        { orderId },
+        { headers: { token } }
+      );
+
+      if (response.data.success) {
+        toast.success('Payment approved. Order is now confirmed and placed.');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  }
+
   const cancelOrderHandler = async (orderId) => {
     if (!window.confirm('Are you sure you want to cancel and remove this order?')) {
       return;
@@ -128,6 +148,7 @@ const Orders = ({ token }) => {
                   Order ID: <span className='text-slate-700'>{order._id}</span>
                 </div>
                 <div className='space-y-1'>
+                  <p className='text-sm font-semibold text-slate-800'>Customer: {order.userName || 'Unknown User'}</p>
                   {order.items.map((item, itemIndex) => (
                     <p key={itemIndex} className='text-sm text-slate-700'>
                       {item.name} <span className='font-medium text-slate-500'>x {item.quantity}</span>
@@ -156,7 +177,11 @@ const Orders = ({ token }) => {
               </div>
 
               <div className='flex flex-col gap-2 lg:items-end'>
-                {order.status === 'Delivered' ? (
+                {order.status === 'Payment Pending' ? (
+                  <div className='rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-700'>
+                    Payment Pending
+                  </div>
+                ) : order.status === 'Delivered' ? (
                   <div className='rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-700'>
                     {displayStatus('Delivered')}
                   </div>
@@ -174,7 +199,16 @@ const Orders = ({ token }) => {
                   </select>
                 )}
 
-                {order.status !== 'Delivered' && (
+                {order.status === 'Payment Pending' && (
+                  <button
+                    onClick={() => approvePaymentHandler(order._id)}
+                    className='w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 lg:max-w-[180px]'
+                  >
+                    Approve Payment
+                  </button>
+                )}
+
+                {order.status !== 'Delivered' && order.status !== 'Payment Pending' && (
                   <button
                     onClick={() => cancelOrderHandler(order._id)}
                     className='w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 lg:max-w-[180px]'

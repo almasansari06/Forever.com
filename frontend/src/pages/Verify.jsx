@@ -38,6 +38,7 @@ const Verify = () => {
 
             if (response.data.success) {
                 setCartItems({});
+                toast.info('Payment received. Your order is being processed and will be confirmed shortly.');
                 navigate('/orders');
             } else {
                 navigate('/cart');

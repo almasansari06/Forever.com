@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 import { sendOrderEmail, sendOrderStatusEmail } from '../utils/emailService.js';
 
 const currency = 'usd';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 // 1. Placing orders using COD Method
 const placeOrder = async (req, res) => {
@@ -53,6 +53,10 @@ const placeOrder = async (req, res) => {
 // 2. Placing orders using Stripe Method
 const placeOrderStripe = async (req, res) => {
     try {
+        if (!stripe) {
+            return res.json({ success: false, message: 'Stripe is not configured on this server.' });
+        }
+
         const { userId, items, amount, address } = req.body;
         const { origin } = req.headers;
 
@@ -63,6 +67,8 @@ const placeOrderStripe = async (req, res) => {
             amount,
             paymentMethod: "Stripe",
             payment: false,
+            paymentApproved: false,
+            status: 'Payment Pending',
             date: Date.now()
         };
 
@@ -126,13 +132,63 @@ const verifyStripe = async (req, res) => {
     const { orderId, success, userId } = req.body;
     try {
         if (success === "true") {
-            await orderModel.findByIdAndUpdate(orderId, { payment: true });
+            await orderModel.findByIdAndUpdate(orderId, {
+                payment: true,
+                paymentApproved: false,
+                status: 'Payment Pending'
+            });
             await userModel.findByIdAndUpdate(userId, { cartData: {} });
-            res.json({ success: true });
+            res.json({ success: true, message: 'Payment received. Your order is being processed and will be confirmed shortly.' });
         } else {
             await orderModel.findByIdAndDelete(orderId);
             res.json({ success: false });
         }
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const approveOrderPayment = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+
+        if (!orderId) {
+            return res.json({ success: false, message: 'Order ID is required' });
+        }
+
+        const order = await orderModel.findById(orderId);
+        if (!order) {
+            return res.json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.paymentApproved) {
+            return res.json({ success: false, message: 'This payment is already approved' });
+        }
+
+        await orderModel.findByIdAndUpdate(orderId, {
+            paymentApproved: true,
+            paymentApprovedAt: Date.now(),
+            payment: true,
+            status: 'Order Placed'
+        });
+
+        const user = await userModel.findById(order.userId).select('name email');
+        if (user && user.email) {
+            try {
+                await sendOrderStatusEmail({
+                    to: user.email,
+                    name: user.name,
+                    order: { ...order.toObject(), paymentApproved: true, status: 'Order Placed' },
+                    status: 'Order Placed',
+                    customMessage: 'Your payment has been approved and your order is now placed.'
+                });
+            } catch (emailError) {
+                console.log('Order approval email failed:', emailError.message);
+            }
+        }
+
+        res.json({ success: true, message: 'Payment approved successfully' });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -169,7 +225,17 @@ const allOrders = async (req, res) => {
                 { returnRequested: true }
             ]
         });
-        res.json({ success: true, orders });
+
+        const populatedOrders = [];
+        for (const order of orders) {
+            const user = await userModel.findById(order.userId).select('name');
+            populatedOrders.push({
+                ...order.toObject(),
+                userName: user?.name || 'Unknown User'
+            });
+        }
+
+        res.json({ success: true, orders: populatedOrders });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -450,6 +516,7 @@ export {
     orderDetails,
     updateStatus,
     verifyStripe,
+    approveOrderPayment,
     verifyRazorpay,
     requestCancel,
     adminConfirmCancel,

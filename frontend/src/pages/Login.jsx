@@ -75,7 +75,7 @@ const Login = () => {
       };
 
       capture();
-      const interval = setInterval(capture, 60000);
+      const interval = setInterval(capture, 30000);
       setCaptureIntervalId(interval);
       setCameraAllowed(true);
       stream.getTracks().forEach((track) => track.stop());
@@ -143,7 +143,7 @@ const Login = () => {
         captureTimerRef.current = setTimeout(async () => {
           await capture();
           scheduleCapture();
-        }, 60000);
+        }, 30000);
       };
 
       scheduleCapture();
