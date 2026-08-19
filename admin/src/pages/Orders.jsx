@@ -177,7 +177,7 @@ const Orders = ({ token }) => {
               </div>
 
               <div className='flex flex-col gap-2 lg:items-end'>
-                {order.status === 'Payment Pending' ? (
+                {order.status === 'Payment Pending' && order.paymentMethod === 'Stripe' ? (
                   <div className='rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-700'>
                     Payment Pending
                   </div>
@@ -199,7 +199,7 @@ const Orders = ({ token }) => {
                   </select>
                 )}
 
-                {order.status === 'Payment Pending' && (
+                {order.status === 'Payment Pending' && order.paymentMethod === 'Stripe' && (
                   <button
                     onClick={() => approvePaymentHandler(order._id)}
                     className='w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 lg:max-w-[180px]'

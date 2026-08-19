@@ -19,6 +19,8 @@ const placeOrder = async (req, res) => {
             amount,
             paymentMethod: "COD",
             payment: false,
+            paymentApproved: false,
+            status: 'Order Placed',
             date: Date.now()
         };
 
@@ -160,6 +162,10 @@ const approveOrderPayment = async (req, res) => {
         const order = await orderModel.findById(orderId);
         if (!order) {
             return res.json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.paymentMethod !== 'Stripe') {
+            return res.json({ success: false, message: 'Only Stripe payments require approval' });
         }
 
         if (order.paymentApproved) {
