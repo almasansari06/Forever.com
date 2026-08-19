@@ -27,8 +27,12 @@ const Footer = () => {
             <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>
               <Link to='/about'>{t.about}</Link>
             </li>
-            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>{t.deliveryReturns}</li>
-            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>{t.privacyPolicy}</li>
+            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>
+              <Link to='/delivery-returns'>{t.deliveryReturns}</Link>
+            </li>
+            <li className='hover:text-black cursor-pointer transition-colors dark:hover:text-white'>
+              <Link to='/privacy-policy'>{t.privacyPolicy}</Link>
+            </li>
           </ul>
         </div>
 

@@ -86,11 +86,7 @@ const ShopContextProvider = (props) => {
         };
     }, [token, backendUrl]);
 
-    const [theme, setTheme] = useState(() => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) return savedTheme;
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    });
+    const [theme, setTheme] = useState('light');
 
     useEffect(() => {
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
@@ -178,6 +174,7 @@ const ShopContextProvider = (props) => {
         }
         updatedCart[itemId][cartSize] += 1;
         setCartItems(updatedCart);
+        toast.success('Product added to cart');
     };
 
     const updateQuantity = async (itemId, size, quantity) => {

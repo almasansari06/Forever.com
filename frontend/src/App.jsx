@@ -1,9 +1,11 @@
-import React, { useContext } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import React, { useContext, useEffect } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import DeliveryReturns from './pages/DeliveryReturns'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import Product from './pages/Product'
 import Cart from './pages/Cart'
 import Login from './pages/Login'
@@ -21,6 +23,11 @@ import { ShopContext } from './context/ShopContext'
 
 const App = () => {
   const { theme } = useContext(ShopContext)
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [pathname])
 
   return (
     <div className={`${theme === 'dark' ? 'dark' : ''} min-h-screen bg-gray-50 text-gray-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100`}>
@@ -43,6 +50,8 @@ const App = () => {
           <Route path='/collection' element={<Collection />} />
           <Route path='/about' element={<About />} />
           <Route path='/contact' element={<Contact />} />
+          <Route path='/delivery-returns' element={<DeliveryReturns />} />
+          <Route path='/privacy-policy' element={<PrivacyPolicy />} />
           <Route path='/product/:productId' element={<Product />} />
           <Route path='/cart' element={<Cart />} />
           <Route path='/login' element={<Login />} />

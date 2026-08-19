@@ -15,6 +15,7 @@ const Add = ({ token }) => {
     const [image8, setImage8] = useState(false);
     const [image9, setImage9] = useState(false);
     const [image10, setImage10] = useState(false);
+    const imageSetters = [setImage1, setImage2, setImage3, setImage4, setImage5, setImage6, setImage7, setImage8, setImage9, setImage10];
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -162,6 +163,11 @@ const Add = ({ token }) => {
         });
     };
 
+    const handleImageChange = (files, startIndex) => {
+        const selectedImages = Array.from(files).slice(0, 10 - startIndex);
+        selectedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+    };
+
     const onSubmitHandler = async (e) => {
         e.preventDefault();
 
@@ -225,12 +231,11 @@ const Add = ({ token }) => {
                 <div className="flex flex-wrap gap-2">
                     {[image1, image2, image3, image4, image5, image6, image7, image8, image9, image10].map((image, index) => {
                         const inputId = `image${index + 1}`;
-                        const setter = [setImage1, setImage2, setImage3, setImage4, setImage5, setImage6, setImage7, setImage8, setImage9, setImage10][index];
 
                         return (
                             <label key={inputId} htmlFor={inputId} aria-label={`Upload Image ${index + 1}`}>
                                 <img className="w-20" src={!image ? assets.upload_area : URL.createObjectURL(image)} alt={`Upload Area ${index + 1}`} />
-                                <input onChange={(e) => setter(e.target.files[0])} type="file" id={inputId} hidden />
+                                <input onChange={(e) => handleImageChange(e.target.files, index)} multiple accept="image/*" type="file" id={inputId} hidden />
                             </label>
                         );
                     })}
