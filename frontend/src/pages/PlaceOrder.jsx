@@ -80,6 +80,20 @@ const PlaceOrder = () => {
             value = value.replace(/\D/g, '');
         }
 
+        if (name === 'country') {
+            const normalizedCountry = value.trim().toLowerCase().replace(/\s+/g, ' ');
+            const matchedCountry = countryCodes.find((country) => (
+                country.name.toLowerCase().replace(/\s+/g, ' ') === normalizedCountry
+            ));
+
+            setFormData(data => ({
+                ...data,
+                country: value,
+                ...(matchedCountry ? { countryCode: matchedCountry.code } : {})
+            }));
+            return;
+        }
+
         setFormData(data => ({ ...data, [name]: value }));
     };
 
