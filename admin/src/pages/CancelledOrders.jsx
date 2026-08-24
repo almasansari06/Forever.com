@@ -6,6 +6,8 @@ import { assets } from '../assets/assets'
 
 const CancelledOrders = ({ token }) => {
   const [cancelled, setCancelled] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   const fetchCancelled = async () => {
     if (!token) return;
@@ -40,10 +42,17 @@ const CancelledOrders = ({ token }) => {
     fetchCancelled()
   }, [token])
 
+  const totalPages = Math.ceil(cancelled.length / itemsPerPage)
+  const paginatedCancelled = cancelled.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages || 1))
+  }, [totalPages])
+
   return (
     <div>
       <h3 className='text-lg font-semibold mb-3'>Cancelled Orders</h3>
-      {cancelled.map((c, idx) => (
+      {paginatedCancelled.map((c, idx) => (
         <div key={idx} className='grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 my-3 rounded bg-white'>
           <img className='w-12' src={assets.parcel_icon} alt="" />
           <div>
@@ -68,6 +77,17 @@ const CancelledOrders = ({ token }) => {
           </div>
         </div>
       ))}
+      {totalPages > 1 && (
+        <div className='flex flex-wrap items-center justify-center gap-2 py-4'>
+          <button type='button' onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className='rounded border px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'>Previous</button>
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+            <button type='button' key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`min-w-8 rounded border px-2 py-1.5 text-sm ${currentPage === pageNumber ? 'border-black bg-black text-white' : 'hover:bg-gray-100'}`}>
+              {pageNumber}
+            </button>
+          ))}
+          <button type='button' onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} className='rounded border px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'>Next</button>
+        </div>
+      )}
       {cancelled.length === 0 && <div className='py-12 text-center text-gray-500'>No cancelled orders yet.</div>}
     </div>
   )

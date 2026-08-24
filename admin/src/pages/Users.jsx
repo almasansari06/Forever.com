@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 
 const Users = ({ token }) => {
   const [users, setUsers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const fetchUsers = async () => {
     try {
@@ -64,6 +66,13 @@ const Users = ({ token }) => {
     if (token) fetchUsers();
   }, [token]);
 
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const paginatedUsers = users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages || 1));
+  }, [totalPages]);
+
   return (
     <div className='space-y-4'>
       <div className='mb-4 flex items-center justify-between'>
@@ -79,7 +88,7 @@ const Users = ({ token }) => {
           <div className='p-8 text-center text-slate-500'>No users found</div>
         ) : (
           <div className='divide-y divide-slate-200'>
-            {users.map((user) => (
+            {paginatedUsers.map((user) => (
               <div
                 key={user._id}
                 className='flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between'
@@ -113,6 +122,18 @@ const Users = ({ token }) => {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className='flex flex-wrap items-center justify-center gap-2 py-4'>
+          <button type='button' onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className='rounded border px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'>Previous</button>
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+            <button type='button' key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`min-w-8 rounded border px-2 py-1.5 text-sm ${currentPage === pageNumber ? 'border-black bg-black text-white' : 'hover:bg-gray-100'}`}>
+              {pageNumber}
+            </button>
+          ))}
+          <button type='button' onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} className='rounded border px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'>Next</button>
+        </div>
+      )}
     </div>
   );
 };
