@@ -9,7 +9,7 @@ import { translations } from '../data/translations';
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart, backendUrl, language } = useContext(ShopContext);
+  const { products, currency, addToCart, backendUrl, language, token, navigate } = useContext(ShopContext);
   const t = translations[language] || translations.en;
   const [productData, setProductData] = useState(null);
   const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -18,13 +18,20 @@ const Product = () => {
   const [size, setSize] = useState('');
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [descriptionHasMore, setDescriptionHasMore] = useState(false);
+  const [detailDescriptionExpanded, setDetailDescriptionExpanded] = useState(false);
+  const [detailDescriptionHasMore, setDetailDescriptionHasMore] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [activeInfoTab, setActiveInfoTab] = useState('description');
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewFiles, setReviewFiles] = useState([]);
   const dragStartXRef = useRef(null);
   const imageRef = useRef(null);
+  const viewerDescriptionRef = useRef(null);
+  const detailDescriptionRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -39,6 +46,9 @@ const Product = () => {
       setImage(product.image[0]);
       setCurrentImageIndex(0);
       setViewerOpen(false);
+      setDescriptionExpanded(false);
+      setDetailDescriptionExpanded(false);
+      setActiveInfoTab('description');
       setSize(''); // Reset selected size on product change
     } else {
       setProductData(null);
@@ -90,10 +100,25 @@ const Product = () => {
     };
   }, [viewerOpen, productData, currentImageIndex]);
 
+  useEffect(() => {
+    if (!viewerOpen || !viewerDescriptionRef.current) return;
+
+    const descriptionElement = viewerDescriptionRef.current;
+    setDescriptionHasMore(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
+  }, [viewerOpen, productData]);
+
+  useEffect(() => {
+    if (!productData || !detailDescriptionRef.current) return;
+
+    const descriptionElement = detailDescriptionRef.current;
+    setDetailDescriptionHasMore(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
+  }, [productData]);
+
   const openImageViewer = (index) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
     setCurrentImageIndex(index);
     setImage(productData.image[index]);
+    setDescriptionExpanded(false);
     setViewerOpen(true);
   };
 
@@ -168,6 +193,12 @@ const Product = () => {
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
+    if (!token) {
+      toast.error('Please login to write a review');
+      navigate('/login');
+      return;
+    }
+
     if (!reviewComment.trim()) {
       toast.error('Please write a review');
       return;
@@ -191,7 +222,7 @@ const Product = () => {
         images: imageUrls
       };
 
-      const response = await axios.post(backendUrl + '/api/review/add', payload);
+      const response = await axios.post(backendUrl + '/api/review/add', payload, { headers: { token } });
 
       if (response.data.success) {
         setReviewComment('');
@@ -275,10 +306,11 @@ const Product = () => {
           </div>
           <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
           <p
-            className='mt-5 text-gray-500 md:w-4/5'
-            style={{
+            ref={detailDescriptionRef}
+            className='mt-5 w-full max-w-full break-all text-gray-500 md:w-4/5'
+            style={detailDescriptionExpanded ? undefined : {
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -288,6 +320,15 @@ const Product = () => {
           >
             {productData.description}
           </p>
+          {detailDescriptionHasMore && (
+            <button
+              type='button'
+              onClick={() => setDetailDescriptionExpanded((expanded) => !expanded)}
+              className='mt-2 block max-w-full text-left text-sm font-medium text-orange-600 underline cursor-pointer'
+            >
+              {detailDescriptionExpanded ? 'Read less' : 'Read more'}
+            </button>
+          )}
 
           {productData.outOfStock && (
             <div className='mt-5 inline-block rounded bg-red-100 text-red-700 px-3 py-2 text-sm font-medium'>
@@ -350,28 +391,49 @@ const Product = () => {
       {/* Description */}
       <div className='mt-20'>
         <div className='flex'>
-          <b className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>{t.description}</b>
-          <p className='border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800'>{t.reviews} ({reviews.length})</p>
-        </div>
-        <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
-          <p className='whitespace-pre-wrap break-words max-h-[260px] overflow-y-auto pr-2'>{productData.description}</p>
-        </div>
-      </div>
-
-      {/* Reviews Section */}
-      <div className='mt-10 mb-20'>
-        <div className='flex items-center justify-between mb-6'>
-          <h3 className='text-xl font-semibold'>{t.customerReviews}</h3>
           <button
-            onClick={() => setShowReviewForm(!showReviewForm)}
-            className='bg-black text-white px-6 py-2 text-sm rounded cursor-pointer hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600'
+            type='button'
+            onClick={() => setActiveInfoTab('description')}
+            className={`border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 ${activeInfoTab === 'description' ? 'font-semibold' : ''}`}
           >
-            {showReviewForm ? t.cancel : t.writeReview}
+            {t.description}
+          </button>
+          <button
+            type='button'
+            onClick={() => setActiveInfoTab('reviews')}
+            className={`border px-5 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 ${activeInfoTab === 'reviews' ? 'font-semibold' : ''}`}
+          >
+            {t.reviews} ({reviews.length})
           </button>
         </div>
+        {activeInfoTab === 'description' ? (
+          <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
+            <p className='whitespace-pre-wrap break-words max-h-[260px] overflow-y-auto pr-2'>{productData.description}</p>
+          </div>
+        ) : (
+          <div className='border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
+            <div className='flex items-center justify-between mb-6'>
+              <h3 className='text-xl font-semibold'>{t.customerReviews}</h3>
+              {token ? (
+                <button
+                  onClick={() => setShowReviewForm(!showReviewForm)}
+                  className='bg-black text-white px-6 py-2 text-sm rounded cursor-pointer hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600'
+                >
+                  {showReviewForm ? t.cancel : t.writeReview}
+                </button>
+              ) : (
+                <button
+                  type='button'
+                  onClick={() => navigate('/login')}
+                  className='bg-black text-white px-6 py-2 text-sm rounded cursor-pointer hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600'
+                >
+                  Login to write a review
+                </button>
+              )}
+            </div>
 
-        {/* Review Form */}
-        {showReviewForm && (
+            {/* Review Form */}
+            {showReviewForm && token && (
           <form onSubmit={handleReviewSubmit} className='border rounded-lg p-6 mb-6 bg-gray-50 dark:bg-slate-900 dark:border-slate-700'>
             <div className='mb-4'>
               <label className='block text-sm font-medium mb-2'>{t.rating}</label>
@@ -433,8 +495,8 @@ const Product = () => {
           </form>
         )}
 
-        {/* Display Reviews */}
-        <div className='space-y-4'>
+          {/* Display Reviews */}
+          <div className='space-y-4'>
           {reviews.length === 0 ? (
             <p className='text-gray-500 dark:text-slate-400 text-center py-8'>No reviews yet. Be the first to review!</p>
           ) : (
@@ -466,13 +528,15 @@ const Product = () => {
               </div>
             ))
           )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {viewerOpen && (
         <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4' onClick={() => setViewerOpen(false)}>
           <div
-            className='relative w-full max-w-4xl'
+            className='relative w-full max-w-4xl max-h-[95vh] overflow-y-auto'
             onClick={(event) => event.stopPropagation()}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
@@ -490,7 +554,7 @@ const Product = () => {
             <img
               src={productData.image[currentImageIndex]}
               alt='Product view'
-              className='max-h-[85vh] w-full object-contain rounded-lg shadow-2xl cursor-grab active:cursor-grabbing select-none'
+              className='max-h-[70vh] w-full object-contain rounded-lg shadow-2xl cursor-grab active:cursor-grabbing select-none'
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
@@ -499,6 +563,30 @@ const Product = () => {
                 showNextImage();
               }}
             />
+            <div className='mt-4 text-white text-sm'>
+              <p
+                ref={viewerDescriptionRef}
+                className='whitespace-pre-wrap break-words'
+                style={descriptionExpanded ? undefined : {
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {productData.description}
+              </p>
+              {descriptionHasMore && (
+                <button
+                  type='button'
+                  className='mt-2 text-orange-300 underline cursor-pointer'
+                  onClick={() => setDescriptionExpanded((expanded) => !expanded)}
+                >
+                  {descriptionExpanded ? 'Read less' : 'Read more'}
+                </button>
+              )}
+            </div>
             <div className='mt-4 text-center text-white text-sm'>
               {currentImageIndex + 1} / {productData.image.length}
             </div>

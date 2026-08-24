@@ -1,22 +1,64 @@
 import orderModel from '../models/orderModel.js';
 import userModel from '../models/userModel.js';
 import cancelledOrderModel from '../models/cancelledOrderModel.js';
+import { findActiveCoupon } from './couponController.js';
 import Stripe from 'stripe';
 import { sendOrderEmail, sendOrderStatusEmail } from '../utils/emailService.js';
 
 const currency = 'usd';
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
+const mergeOrderItems = (items = []) => {
+    const mergedItems = new Map();
+
+    items.forEach((item) => {
+        const key = `${item._id || item.id || item.name}:${item.size || 'default'}`;
+        const existingItem = mergedItems.get(key);
+
+        if (existingItem) {
+            existingItem.quantity += Number(item.quantity) || 0;
+        } else {
+            mergedItems.set(key, {
+                ...item,
+                quantity: Number(item.quantity) || 0,
+            });
+        }
+    });
+
+    return [...mergedItems.values()].filter((item) => item.quantity > 0);
+};
+
+const calculateOrderTotals = async (items, couponCode) => {
+    const subtotal = items.reduce((total, item) => total + (Number(item.price) * Number(item.quantity)), 0);
+    const coupon = couponCode ? await findActiveCoupon(couponCode) : null;
+
+    if (couponCode && !coupon) {
+        throw new Error('Invalid or inactive coupon code.');
+    }
+
+    const discount = coupon ? (subtotal * coupon.discountPercentage) / 100 : 0;
+    return {
+        subtotal,
+        discount,
+        coupon,
+        amount: Math.max(0, subtotal - discount + 10),
+    };
+};
+
 // 1. Placing orders using COD Method
 const placeOrder = async (req, res) => {
     try {
-        const { userId, items, amount, address } = req.body;
+        const { userId, items, address, couponCode } = req.body;
+        const mergedItems = mergeOrderItems(items);
+        const { amount, coupon } = await calculateOrderTotals(mergedItems, couponCode);
 
         const orderData = {
             userId,
-            items,
+            items: mergedItems,
             address,
             amount,
+            couponCode: coupon?.code || '',
+            discountPercentage: coupon?.discountPercentage || 0,
             paymentMethod: "COD",
             payment: false,
             paymentApproved: false,
@@ -59,14 +101,18 @@ const placeOrderStripe = async (req, res) => {
             return res.json({ success: false, message: 'Stripe is not configured on this server.' });
         }
 
-        const { userId, items, amount, address } = req.body;
+        const { userId, items, address, couponCode } = req.body;
         const { origin } = req.headers;
+        const mergedItems = mergeOrderItems(items);
+        const { amount, coupon } = await calculateOrderTotals(mergedItems, couponCode);
 
         const orderData = {
             userId,
-            items,
+            items: mergedItems,
             address,
             amount,
+            couponCode: coupon?.code || '',
+            discountPercentage: coupon?.discountPercentage || 0,
             paymentMethod: "Stripe",
             payment: false,
             paymentApproved: false,
@@ -93,16 +139,19 @@ const placeOrderStripe = async (req, res) => {
             }
         }
 
-        const line_items = items.map((item) => ({
+        const discountMultiplier = coupon ? 1 - (coupon.discountPercentage / 100) : 1;
+        const line_items = mergedItems
+            .filter((item) => Math.round(item.price * discountMultiplier * 100) > 0)
+            .map((item) => ({
             price_data: {
                 currency: currency,
                 product_data: {
                     name: item.name
                 },
-                unit_amount: item.price * 100
+                unit_amount: Math.round(item.price * discountMultiplier * 100)
             },
             quantity: item.quantity
-        }));
+            }));
 
         line_items.push({
             price_data: {

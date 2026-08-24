@@ -124,6 +124,9 @@ const Add = ({ token }) => {
 
     const handleDeleteType = async (typeName) => {
         if (!typeName) return;
+        const shouldDelete = window.confirm(`Do you want to delete the product type "${typeName}"?`);
+        if (!shouldDelete) return;
+
         try {
             const response = await axios.post(backendUrl + '/api/product-type/delete', { name: typeName }, { headers: { token } });
             if (response.data.success) {

@@ -4,13 +4,17 @@ import Title from '../components/Title';
 import { assets } from '../assets/assets';
 import CartTotal from '../components/CartTotal';
 import { translations } from '../data/translations';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const Cart = () => {
 
-  const { products, currency, cartItems, updateQuantity, navigate, language } = useContext(ShopContext);
+  const { products, currency, cartItems, updateQuantity, language } = useContext(ShopContext);
+  const navigate = useNavigate();
   const t = translations[language] || translations.en;
 
   const [cartData, setCartData] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   useEffect(() => {
     if (products.length > 0) {
@@ -27,8 +31,40 @@ const Cart = () => {
         }
       }
       setCartData(tempData);
+      setSelectedItems((previous) => previous.filter((key) => (
+        tempData.some((item) => `${item._id}:${item.size}` === key)
+      )));
     }
   }, [cartItems, products]);
+
+  const toggleItemSelection = (item) => {
+    const itemKey = `${item._id}:${item.size}`;
+    setSelectedItems((previous) => previous.includes(itemKey)
+      ? previous.filter((key) => key !== itemKey)
+      : [...previous, itemKey]);
+  };
+
+  const handleCheckout = () => {
+    if (selectedItems.length === 0) {
+      toast.error('Please select at least one product to buy.');
+      return;
+    }
+    navigate('/place-order', { state: { selectedItems } });
+  };
+
+  const allItemsSelected = cartData.length > 0 && selectedItems.length === cartData.length;
+
+  const toggleSelectAll = () => {
+    setSelectedItems(allItemsSelected
+      ? []
+      : cartData.map((item) => `${item._id}:${item.size}`));
+  };
+
+  const selectedAmount = cartData.reduce((total, item) => {
+    if (!selectedItems.includes(`${item._id}:${item.size}`)) return total;
+    const product = products.find((productItem) => productItem._id === item._id);
+    return total + (product ? product.price * item.quantity : 0);
+  }, 0);
 
   return (
     <div className='border-t pt-14 '>
@@ -38,6 +74,17 @@ const Cart = () => {
       </div>
 
       <div>
+        {cartData.length > 0 && (
+          <label className='mb-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700'>
+            <input
+              type='checkbox'
+              checked={allItemsSelected}
+              onChange={toggleSelectAll}
+              className='h-4 w-4 cursor-pointer'
+            />
+            Select all
+          </label>
+        )}
         {
           cartData.map((item, index) => {
             const productData = products.find((product) => product._id === item._id);
@@ -48,7 +95,14 @@ const Cart = () => {
             }
 
             return (
-              <div key={index} className='py-4 border-t border-b text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr] items-center gap-4'>
+              <div key={index} className='py-4 border-t border-b text-gray-700 grid grid-cols-[auto_4fr_0.5fr_0.5fr] sm:grid-cols-[auto_4fr_2fr_0.5fr] items-center gap-4'>
+                <input
+                  type='checkbox'
+                  checked={selectedItems.includes(`${item._id}:${item.size}`)}
+                  onChange={() => toggleItemSelection(item)}
+                  className='h-4 w-4 cursor-pointer'
+                  aria-label={`Select ${productData.name}`}
+                />
                 <div className='flex items-start gap-6'>
                   <img className='w-16 sm:w-20' src={productData.image?.[0] || ''} alt="" />
                   <div>
@@ -81,9 +135,9 @@ const Cart = () => {
 
       <div className='flex justify-end my-20'>
         <div className='w-full sm:w-[450px]'>
-          <CartTotal />
+          <CartTotal selectedAmount={selectedAmount} />
           <div className='w-full text-end'>
-            <button onClick={() => navigate('/place-order')} className='bg-black text-white text-sm my-8 px-8 py-3 cursor-pointer'>
+            <button type='button' onClick={handleCheckout} className='bg-black text-white text-sm my-8 px-8 py-3 cursor-pointer'>
               {t.proceedToCheckout}
             </button>
           </div>

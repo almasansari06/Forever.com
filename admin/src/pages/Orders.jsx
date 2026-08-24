@@ -166,7 +166,7 @@ const Orders = ({ token }) => {
               </div>
 
               <div className='space-y-2 text-sm text-slate-600'>
-                <p><span className='font-semibold text-slate-800'>Items</span>: {order.items.length}</p>
+                <p><span className='font-semibold text-slate-800'>Items</span>: {order.items.reduce((total, item) => total + Number(item.quantity || 0), 0)}</p>
                 <p><span className='font-semibold text-slate-800'>Method</span>: {order.paymentMethod}</p>
                 <p><span className='font-semibold text-slate-800'>Payment</span>: {order.payment ? 'Done' : 'Pending'}</p>
                 <p><span className='font-semibold text-slate-800'>Date</span>: {new Date(order.date).toLocaleDateString()}</p>

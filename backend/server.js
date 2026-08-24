@@ -9,6 +9,7 @@ import productTypeRouter from './routes/productTypeRoute.js';
 import cartRouter from './routes/cartRoute.js';
 import orderRouter from './routes/orderRoute.js';
 import reviewRouter from './routes/reviewRoute.js';
+import couponRouter from './routes/couponRoute.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -36,17 +37,25 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database & Cloudinary Connection Middleware for Serverless
 let isConnected = false;
+let connectionPromise;
 app.use(async (req, res, next) => {
-    if (!isConnected) {
-        try {
-            await connectDB();
+    if (isConnected) return next();
+
+    try {
+        connectionPromise ??= connectDB().then(() => {
             connectCloudinary();
             isConnected = true;
-        } catch (error) {
-            console.error('Failed to initialize backend:', error.message);
-        }
+        });
+        await connectionPromise;
+        return next();
+    } catch (error) {
+        connectionPromise = undefined;
+        console.error('Failed to initialize backend:', error.message);
+        return res.status(503).json({
+            success: false,
+            message: 'Database unavailable. Please check the backend MongoDB connection.',
+        });
     }
-    next();
 });
 
 // Root Route
@@ -61,6 +70,7 @@ app.use('/api/product-type', productTypeRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/review', reviewRouter);
+app.use('/api/coupon', couponRouter);
 
 if (!process.env.VERCEL) {
     app.listen(port, () => console.log('Server started on PORT : ' + port));

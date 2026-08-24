@@ -16,7 +16,10 @@ const connectDB = async () => {
 
     if (mongoUri && mongoUri.startsWith('mongodb')) {
         try {
-            await mongoose.connect(mongoUri);
+            await mongoose.connect(mongoUri, {
+                serverSelectionTimeoutMS: 10000,
+                connectTimeoutMS: 10000,
+            });
             return;
         } catch (error) {
             console.log('Remote MongoDB connection failed:', error.message);
@@ -28,10 +31,14 @@ const connectDB = async () => {
     try {
         mongoServer = await MongoMemoryServer.create();
         const localUri = await mongoServer.getUri();
-        await mongoose.connect(localUri);
+        await mongoose.connect(localUri, {
+            serverSelectionTimeoutMS: 10000,
+            connectTimeoutMS: 10000,
+        });
         console.log('MongoDB connected to local memory server');
     } catch (error) {
         console.log('Local MongoDB fallback failed:', error.message);
+        throw new Error('Database connection failed. Check MONGODB_URI and MongoDB Atlas Network Access settings.');
     }
 };
 

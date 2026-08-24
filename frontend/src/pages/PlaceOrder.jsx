@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { countryCodes } from '../data/countryCodes';
 import { translations } from '../data/translations';
@@ -7,11 +8,16 @@ import { toast } from 'react-toastify';
 
 const PlaceOrder = () => {
     const [method, setMethod] = useState('cod'); // Default COD
-    const { backendUrl, token, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
+    const { backendUrl, token, currency, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
     const t = translations[language] || translations.en;
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
     const [countrySearch, setCountrySearch] = useState('');
     const [filteredCountries, setFilteredCountries] = useState(countryCodes);
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [couponLoading, setCouponLoading] = useState(false);
+    const { state } = useLocation();
+    const selectedItems = Array.isArray(state?.selectedItems) ? state.selectedItems : null;
 
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', email: '', street: '', city: '', state: '', zipcode: '', country: '', phone: '', countryCode: '+1'
@@ -106,6 +112,36 @@ const PlaceOrder = () => {
         setShowCountryDropdown(false);
     };
 
+    const handleApplyCoupon = async () => {
+        const code = couponCode.trim().toUpperCase();
+        if (!code) {
+            toast.error('Please enter a coupon code.');
+            return;
+        }
+
+        setCouponLoading(true);
+        try {
+            const response = await axios.post(
+                `${backendUrl}/api/coupon/validate`,
+                { code },
+                { headers: { token } },
+            );
+            if (response.data.success) {
+                setCouponCode(response.data.coupon.code);
+                setAppliedCoupon(response.data.coupon);
+                toast.success(`${response.data.coupon.discountPercentage}% discount applied.`);
+            } else {
+                setAppliedCoupon(null);
+                toast.error(response.data.message || 'Invalid coupon code.');
+            }
+        } catch (error) {
+            setAppliedCoupon(null);
+            toast.error(error.response?.data?.message || error.message);
+        } finally {
+            setCouponLoading(false);
+        }
+    };
+
     const onSubmitHandler = async (event) => {
         event.preventDefault();
         // Prevent disabled/deleted users from placing orders
@@ -117,7 +153,8 @@ const PlaceOrder = () => {
             let orderItems = [];
             for (const items in cartItems) {
                 for (const item in cartItems[items]) {
-                    if (cartItems[items][item] > 0) {
+                    const itemKey = `${items}:${item}`;
+                    if (cartItems[items][item] > 0 && (!selectedItems || selectedItems.includes(itemKey))) {
                         const itemInfo = structuredClone(products.find(product => product._id === items));
                         if (itemInfo) {
                             itemInfo.size = item;
@@ -137,7 +174,8 @@ const PlaceOrder = () => {
                     phone: fullPhone
                 },
                 items: orderItems,
-                amount: getCartAmount() + delivery_fee
+                amount: finalAmount,
+                couponCode: appliedCoupon?.code || '',
             };
 
             if (method === 'cod') {
@@ -162,6 +200,17 @@ const PlaceOrder = () => {
             toast.error(error.message);
         }
     };
+
+    const subtotal = Object.entries(cartItems).reduce((total, [itemId, sizes]) => {
+        const product = products.find((item) => item._id === itemId);
+        if (!product) return total;
+        return total + Object.entries(sizes).reduce((itemTotal, [size, quantity]) => {
+            const itemKey = `${itemId}:${size}`;
+            return itemTotal + ((!selectedItems || selectedItems.includes(itemKey)) ? product.price * quantity : 0);
+        }, 0);
+    }, 0);
+    const discountAmount = appliedCoupon ? (subtotal * appliedCoupon.discountPercentage) / 100 : 0;
+    const finalAmount = subtotal === 0 ? 0 : subtotal - discountAmount + delivery_fee;
 
     return (
         <form onSubmit={onSubmitHandler} className='flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t'>
@@ -236,6 +285,33 @@ const PlaceOrder = () => {
                 </div>
             </div>
 
+            <div className='mb-8 w-full max-w-md'>
+                <p className='mb-2 text-sm font-medium'>Coupon Code</p>
+                <div className='flex gap-2'>
+                    <input
+                        value={couponCode}
+                        onChange={(event) => {
+                            setCouponCode(event.target.value.toUpperCase());
+                            setAppliedCoupon(null);
+                        }}
+                        placeholder='Enter coupon code'
+                        className='min-w-0 flex-1 border border-gray-300 rounded px-3 py-2 text-sm uppercase'
+                        disabled={couponLoading}
+                    />
+                    <button
+                        type='button'
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading}
+                        className='bg-black text-white px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60'
+                    >
+                        {couponLoading ? 'Checking...' : 'Apply'}
+                    </button>
+                </div>
+                {appliedCoupon && (
+                    <p className='mt-2 text-sm text-green-600'>Coupon applied: {appliedCoupon.discountPercentage}% off</p>
+                )}
+            </div>
+
             {/* Payment Method Selection */}
             <div className='mt-8'>
                 <div className='flex gap-3 flex-col lg:flex-row'>
@@ -247,6 +323,13 @@ const PlaceOrder = () => {
                         <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
                         <p className='text-gray-500 text-sm font-medium mx-4'>{t.cashOnDelivery}</p>
                     </div>
+                </div>
+
+                <div className='mt-6 space-y-2 text-sm text-gray-600'>
+                    <div className='flex justify-between'><span>Subtotal</span><span>{currency}{subtotal.toFixed(2)}</span></div>
+                    {appliedCoupon && <div className='flex justify-between text-green-600'><span>Discount</span><span>-{currency}{discountAmount.toFixed(2)}</span></div>}
+                    <div className='flex justify-between'><span>Shipping Fee</span><span>{currency}{delivery_fee.toFixed(2)}</span></div>
+                    <div className='flex justify-between border-t pt-2 font-semibold text-gray-900'><span>Total</span><span>{currency}{finalAmount.toFixed(2)}</span></div>
                 </div>
 
                 <div className='w-full text-end mt-8'>
