@@ -166,9 +166,38 @@ const Add = ({ token }) => {
         });
     };
 
-    const handleImageChange = (files, startIndex) => {
+    const compressImage = (file) => new Promise((resolve) => {
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        image.onload = () => {
+            const maxDimension = 1600;
+            const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+            canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(objectUrl);
+                resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
+            }, 'image/jpeg', 0.78);
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(file);
+        };
+        image.src = objectUrl;
+    });
+
+    const handleImageChange = async (files, startIndex) => {
         const selectedImages = Array.from(files).slice(0, 10 - startIndex);
-        selectedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+        const compressedImages = await Promise.all(selectedImages.map(compressImage));
+        compressedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+    };
+
+    const removeImage = (index) => {
+        imageSetters[index](false);
     };
 
     const onSubmitHandler = async (e) => {
@@ -236,10 +265,22 @@ const Add = ({ token }) => {
                         const inputId = `image${index + 1}`;
 
                         return (
-                            <label key={inputId} htmlFor={inputId} aria-label={`Upload Image ${index + 1}`}>
-                                <img className="w-20" src={!image ? assets.upload_area : URL.createObjectURL(image)} alt={`Upload Area ${index + 1}`} />
-                                <input onChange={(e) => handleImageChange(e.target.files, index)} multiple accept="image/*" type="file" id={inputId} hidden />
-                            </label>
+                            <div key={inputId} className="relative">
+                                <label htmlFor={inputId} aria-label={`Upload Image ${index + 1}`}>
+                                    <img className="w-20 cursor-pointer" src={!image ? assets.upload_area : URL.createObjectURL(image)} alt={`Upload Area ${index + 1}`} />
+                                    <input onChange={(e) => handleImageChange(e.target.files, index)} multiple accept="image/*" type="file" id={inputId} hidden />
+                                </label>
+                                {image && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(index)}
+                                        className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white hover:bg-red-700"
+                                        aria-label={`Remove image ${index + 1}`}
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
                         );
                     })}
                 </div>
