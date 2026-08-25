@@ -4,12 +4,13 @@ import { useParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProduct from '../components/RelatedProduct';
+import WatermarkedImage from '../components/WatermarkedImage';
 import { toast } from 'react-toastify';
 import { translations } from '../data/translations';
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart, backendUrl, language, token, navigate } = useContext(ShopContext);
+  const { products, formatPrice, addToCart, backendUrl, language, token, navigate } = useContext(ShopContext);
   const t = translations[language] || translations.en;
   const [productData, setProductData] = useState(null);
   const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -270,11 +271,11 @@ const Product = () => {
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
             <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
             {productData.image.map((item, index) => (
-              <img onClick={() => { setImage(item); setCurrentImageIndex(index); openImageViewer(index); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
+              <WatermarkedImage watermarked={Boolean(productData.logoWatermarked)} onClick={() => { setImage(item); setCurrentImageIndex(index); openImageViewer(index); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} wrapperClassName='w-[24%] sm:w-full sm:mb-3 flex-shrink-0' className='w-full cursor-pointer' alt="" />
             ))}
           </div>
           <div ref={imageRef} className='w-full sm:w-[80%]'>
-            <img onClick={() => openImageViewer(currentImageIndex)} className='w-full h-auto cursor-zoom-in' src={image} alt="" />
+            <WatermarkedImage watermarked={Boolean(productData.logoWatermarked)} onClick={() => openImageViewer(currentImageIndex)} className='w-full h-auto cursor-zoom-in' src={image} alt="" />
           </div>
         </div>
 
@@ -304,7 +305,7 @@ const Product = () => {
             ))}
             <p className='pl-2'>({reviewCount})</p>
           </div>
-          <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
+          <p className='mt-5 text-3xl font-medium'>{formatPrice(productData.price)}</p>
           <p
             ref={detailDescriptionRef}
             className='mt-5 w-full max-w-full break-all text-gray-500 md:w-4/5'
@@ -551,7 +552,8 @@ const Product = () => {
             >
               ×
             </button>
-            <img
+            <WatermarkedImage
+              watermarked={Boolean(productData.logoWatermarked)}
               src={productData.image[currentImageIndex]}
               alt='Product view'
               className='max-h-[70vh] w-full object-contain rounded-lg shadow-2xl cursor-grab active:cursor-grabbing select-none'

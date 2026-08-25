@@ -172,6 +172,8 @@ const Contact = () => {
       <div className='my-10 flex flex-col justify-center md:flex-row gap-10 mb-28 items-center'>
         
         <img
+          loading='lazy'
+          decoding='async'
           className='w-full md:max-w-[480px] rounded-xl shadow-md transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg'
           src={assets.contact_img}
           alt="Contact Us"

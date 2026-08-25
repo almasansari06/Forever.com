@@ -18,7 +18,7 @@ const normalizeSizes = (sizes = []) => {
 // Function for add product
 const addProduct = async (req, res) => {
     try {
-        const { name, description, price, category, subCategory, sizes, bestseller, newArrival, outOfStock } = req.body;
+        const { name, description, price, category, subCategory, sizes, bestseller, latestCollection, outOfStock } = req.body;
 
         const normalizedSubCategory = String(subCategory || '').trim();
         if (!normalizedSubCategory) {
@@ -47,7 +47,8 @@ const addProduct = async (req, res) => {
             price: Number(price),
             subCategory: normalizedSubCategory,
             bestseller: bestseller === "true" ? true : false,
-            newArrival: newArrival === "true" ? true : false,
+            latestCollection: latestCollection === "true",
+            logoWatermarked: true,
             outOfStock: outOfStock === "true" ? true : false,
             sizes: normalizeSizes(JSON.parse(sizes || '[]')),
             image: imagesUrl,
@@ -68,7 +69,7 @@ const addProduct = async (req, res) => {
 // Function for list all products
 const listProduct = async (req, res) => {
     try {
-        const products = await productModel.find({});
+        const products = await productModel.find({}).sort({ date: -1 });
         res.json({ success: true, products });
     } catch (error) {
         console.log(error);

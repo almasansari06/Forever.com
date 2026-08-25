@@ -277,6 +277,7 @@ const Collection = () => {
                   price={item.price} 
                   image={item.image} 
                   outOfStock={Boolean(item.outOfStock)}
+                  watermarked={Boolean(item.logoWatermarked)}
                 />
               ))}
             </div>

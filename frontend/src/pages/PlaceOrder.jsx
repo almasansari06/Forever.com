@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 
 const PlaceOrder = () => {
     const [method, setMethod] = useState('cod'); // Default COD
-    const { backendUrl, token, currency, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
+    const { backendUrl, token, formatPrice, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
     const t = translations[language] || translations.en;
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
     const [countrySearch, setCountrySearch] = useState('');
@@ -326,10 +326,10 @@ const PlaceOrder = () => {
                 </div>
 
                 <div className='mt-6 space-y-2 text-sm text-gray-600'>
-                    <div className='flex justify-between'><span>Subtotal</span><span>{currency}{subtotal.toFixed(2)}</span></div>
-                    {appliedCoupon && <div className='flex justify-between text-green-600'><span>Discount</span><span>-{currency}{discountAmount.toFixed(2)}</span></div>}
-                    <div className='flex justify-between'><span>Shipping Fee</span><span>{currency}{delivery_fee.toFixed(2)}</span></div>
-                    <div className='flex justify-between border-t pt-2 font-semibold text-gray-900'><span>Total</span><span>{currency}{finalAmount.toFixed(2)}</span></div>
+                    <div className='flex justify-between'><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+                    {appliedCoupon && <div className='flex justify-between text-green-600'><span>Discount</span><span>-{formatPrice(discountAmount)}</span></div>}
+                    <div className='flex justify-between'><span>Shipping Fee</span><span>{formatPrice(delivery_fee)}</span></div>
+                    <div className='flex justify-between border-t pt-2 font-semibold text-gray-900'><span>Total</span><span>{formatPrice(finalAmount)}</span></div>
                 </div>
 
                 <div className='w-full text-end mt-8'>

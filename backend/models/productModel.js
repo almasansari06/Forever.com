@@ -10,7 +10,8 @@ const productSchema = new mongoose.Schema({
     sizes: { type: Array, required: true },
     outOfStock: { type: Boolean, default: false },
     bestseller: { type: Boolean, default: false },
-    newArrival: { type: Boolean, default: false },
+    latestCollection: { type: Boolean, default: false },
+    logoWatermarked: { type: Boolean, default: false },
     date: { type: Date, required: true },
 })
 

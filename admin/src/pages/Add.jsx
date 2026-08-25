@@ -26,7 +26,7 @@ const Add = ({ token }) => {
     const [newCategory, setNewCategory] = useState('');
     const [subCategory, setSubCategory] = useState('');
     const [bestseller, setBestseller] = useState(false);
-    const [newArrival, setNewArrival] = useState(false);
+    const [latestCollection, setLatestCollection] = useState(false);
     const [outOfStock, setOutOfStock] = useState(false);
     const [sizes, setSizes] = useState([]);
     const [productTypes, setProductTypes] = useState([]);
@@ -176,11 +176,38 @@ const Add = ({ token }) => {
             const canvas = document.createElement('canvas');
             canvas.width = Math.max(1, Math.round(image.width * scale));
             canvas.height = Math.max(1, Math.round(image.height * scale));
-            canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
+            const context = canvas.getContext('2d');
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            const logo = new Image();
+            logo.onload = () => {
+                const logoSourceHeight = logo.height * 0.74;
+                const logoWidth = Math.min(canvas.width * 0.28, 360);
+                const logoHeight = logoWidth * (logoSourceHeight / logo.width);
+                const padding = Math.max(12, canvas.width * 0.03);
+
+                context.drawImage(
+                    logo,
+                    0,
+                    0,
+                    logo.width,
+                    logoSourceHeight,
+                    canvas.width - logoWidth - padding,
+                    padding,
+                    logoWidth,
+                    logoHeight
+                );
+
+                canvas.toBlob((blob) => {
+                    URL.revokeObjectURL(objectUrl);
+                    resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
+                }, 'image/jpeg', 0.78);
+            };
+            logo.onerror = () => {
                 URL.revokeObjectURL(objectUrl);
-                resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
-            }, 'image/jpeg', 0.78);
+                resolve(file);
+            };
+            logo.src = assets.logo;
         };
 
         image.onerror = () => {
@@ -212,7 +239,7 @@ const Add = ({ token }) => {
             formData.append('category', category);
             formData.append('subCategory', subCategory);
             formData.append('bestseller', bestseller);
-            formData.append('newArrival', newArrival);
+            formData.append('latestCollection', latestCollection);
             formData.append('outOfStock', outOfStock);
             // Agar clothing ya footwear nahi hai (jaise Makeup ya Jewelry), to empty array bhejega
             formData.append('sizes', JSON.stringify(hasSizeSelection ? sizes : []));
@@ -243,7 +270,7 @@ const Add = ({ token }) => {
                 setCategory(categoryOptions[0] || 'Men');
                 setSubCategory(productTypes[0] || '');
                 setBestseller(false);
-                setNewArrival(false);
+                setLatestCollection(false);
                 setOutOfStock(false);
                 setSizes([]);
             } else {
@@ -402,8 +429,8 @@ const Add = ({ token }) => {
                     <label className="cursor-pointer" htmlFor="bestseller">Add to bestseller</label>
                 </div>
                 <div className="flex gap-2">
-                    <input onChange={() => setNewArrival((prev) => !prev)} checked={newArrival} type="checkbox" id="newArrival" />
-                    <label className="cursor-pointer" htmlFor="newArrival">Add to new arrival</label>
+                    <input onChange={() => setLatestCollection((prev) => !prev)} checked={latestCollection} type="checkbox" id="latestCollection" />
+                    <label className="cursor-pointer" htmlFor="latestCollection">Add to latest collection</label>
                 </div>
                 <div className="flex gap-2">
                     <input onChange={() => setOutOfStock((prev) => !prev)} checked={outOfStock} type="checkbox" id="outOfStock" />

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 export const ShopContext = createContext();
 
 const ShopContextProvider = (props) => {
-    const currency = '$';
+    const [currencyDetails, setCurrencyDetails] = useState({ code: 'USD', rate: 1 });
     const delivery_fee = 10;
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
@@ -23,6 +23,38 @@ const ShopContextProvider = (props) => {
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const language = 'en';
+
+    const currencyByCountry = {
+        IN: ['INR', 83.5], AE: ['AED', 3.67], SA: ['SAR', 3.75], QA: ['QAR', 3.64],
+        KW: ['KWD', 0.307], BH: ['BHD', 0.376], GB: ['GBP', 0.79], DE: ['EUR', 0.92],
+        FR: ['EUR', 0.92], IT: ['EUR', 0.92], ES: ['EUR', 0.92], NL: ['EUR', 0.92],
+        CA: ['CAD', 1.37], AU: ['AUD', 1.53], SG: ['SGD', 1.34], JP: ['JPY', 157], CN: ['CNY', 7.2]
+    };
+
+    const formatPrice = (amount) => new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: currencyDetails.code,
+        maximumFractionDigits: currencyDetails.code === 'JPY' ? 0 : 2,
+    }).format(Number(amount || 0) * currencyDetails.rate);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const detectCurrency = async () => {
+            try {
+                const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+                const data = await response.json();
+                const details = currencyByCountry[data.country_code];
+                if (details) {
+                    setCurrencyDetails({ code: details[0], rate: details[1] });
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') console.log('Currency detection failed:', error.message);
+            }
+        };
+
+        detectCurrency();
+        return () => controller.abort();
+    }, []);
 
     const requestUserLocation = async () => {
         if (!token || !navigator.geolocation) {
@@ -155,6 +187,9 @@ const ShopContextProvider = (props) => {
         };
 
         fetchProducts();
+        const refreshTimer = window.setInterval(fetchProducts, 24 * 60 * 60 * 1000);
+
+        return () => window.clearInterval(refreshTimer);
     }, [backendUrl]);
 
     const addToCart = async (itemId, size) => {
@@ -225,7 +260,8 @@ const ShopContextProvider = (props) => {
     };
 
     const value = {
-        currency,
+        currency: currencyDetails.code,
+        formatPrice,
         delivery_fee,
         backendUrl,
         token,

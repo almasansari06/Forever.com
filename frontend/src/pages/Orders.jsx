@@ -7,7 +7,7 @@ import { translations } from '../data/translations';
 
 const Orders = () => {
 
-  const { backendUrl, token, currency, language } = useContext(ShopContext);
+  const { backendUrl, token, formatPrice, language } = useContext(ShopContext);
   const t = translations[language] || translations.en;
 
   const trackingSteps = [t.orderPlaced, t.packing, t.shipped, t.outForDelivery, t.delivered];
@@ -116,7 +116,7 @@ const Orders = () => {
                   </div>
                   <p className='sm:text-base font-medium text-gray-900'>{item.name}</p>
                   <div className='flex items-center gap-3 mt-1 text-base text-gray-700'>
-                    <p>{currency}{item.price}</p>
+                    <p>{formatPrice(item.price)}</p>
                     <p>{t.quantity}: {item.quantity}</p>
                     <p>{t.size}: {item.size}</p>
                   </div>

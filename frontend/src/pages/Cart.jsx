@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 
 const Cart = () => {
 
-  const { products, currency, cartItems, updateQuantity, language } = useContext(ShopContext);
+  const { products, formatPrice, cartItems, updateQuantity, language } = useContext(ShopContext);
   const navigate = useNavigate();
   const t = translations[language] || translations.en;
 
@@ -109,7 +109,7 @@ const Cart = () => {
                     <p className='text-xs sm:text-lg font-medium'>{productData.name}</p>
 
                     <div className='flex items-center gap-5 mt-2'>
-                      <p>{currency}{productData.price}</p>
+                      <p>{formatPrice(productData.price)}</p>
                       <p className='text-sm sm:text-base text-gray-700 dark:text-gray-200'>{t.size}: {item.size}</p>
                     </div>
                   </div>
