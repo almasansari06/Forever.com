@@ -66,7 +66,7 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
 
       <div
         onScroll={() => setHasInteracted(true)}
-        className='hidden sm:flex lg:hidden relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+        className='hidden sm:flex md:hidden relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
         {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
         {tabletPages.map((page, index) => productPage(page, index, 3))}
@@ -81,7 +81,7 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
 
       <div
         onScroll={() => setHasInteracted(true)}
-        className='hidden lg:flex relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+        className='hidden md:flex relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
         {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
         {desktopPages.map((page, index) => productPage(page, index, 4))}
