@@ -1,25 +1,26 @@
-import React, { useContext, useEffect } from 'react'
+import React, { lazy, Suspense, useContext, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
-import Collection from './pages/Collection'
-import About from './pages/About'
-import Contact from './pages/Contact'
-import DeliveryReturns from './pages/DeliveryReturns'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import Product from './pages/Product'
-import Cart from './pages/Cart'
-import Login from './pages/Login'
-import PlaceOrder from './pages/PlaceOrder'
-import Orders from './pages/Orders'
-import MyProfile from './pages/MyProfile'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
 import ChatBot from './components/ChatBot'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Verify from './pages/Verify'
 import { ShopContext } from './context/ShopContext'
+
+const Collection = lazy(() => import('./pages/Collection'))
+const About = lazy(() => import('./pages/About'))
+const Contact = lazy(() => import('./pages/Contact'))
+const DeliveryReturns = lazy(() => import('./pages/DeliveryReturns'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const Product = lazy(() => import('./pages/Product'))
+const Cart = lazy(() => import('./pages/Cart'))
+const Login = lazy(() => import('./pages/Login'))
+const PlaceOrder = lazy(() => import('./pages/PlaceOrder'))
+const Orders = lazy(() => import('./pages/Orders'))
+const MyProfile = lazy(() => import('./pages/MyProfile'))
+const Verify = lazy(() => import('./pages/Verify'))
 
 const App = () => {
   const { theme } = useContext(ShopContext)
@@ -45,21 +46,23 @@ const App = () => {
         />
         <Navbar />
         <SearchBar />
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/collection' element={<Collection />} />
-          <Route path='/about' element={<About />} />
-          <Route path='/contact' element={<Contact />} />
-          <Route path='/delivery-returns' element={<DeliveryReturns />} />
-          <Route path='/privacy-policy' element={<PrivacyPolicy />} />
-          <Route path='/product/:productId' element={<Product />} />
-          <Route path='/cart' element={<Cart />} />
-          <Route path='/login' element={<Login />} />
-          <Route path='/place-order' element={<PlaceOrder />} />
-          <Route path='/orders' element={<Orders />} />
-          <Route path='/verify' element={<Verify />} />
-          <Route path='/profile' element={<MyProfile />} />
-        </Routes>
+        <Suspense fallback={<div className='min-h-[50vh] flex items-center justify-center text-sm text-gray-500'>Loading...</div>}>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='/collection' element={<Collection />} />
+            <Route path='/about' element={<About />} />
+            <Route path='/contact' element={<Contact />} />
+            <Route path='/delivery-returns' element={<DeliveryReturns />} />
+            <Route path='/privacy-policy' element={<PrivacyPolicy />} />
+            <Route path='/product/:productId' element={<Product />} />
+            <Route path='/cart' element={<Cart />} />
+            <Route path='/login' element={<Login />} />
+            <Route path='/place-order' element={<PlaceOrder />} />
+            <Route path='/orders' element={<Orders />} />
+            <Route path='/verify' element={<Verify />} />
+            <Route path='/profile' element={<MyProfile />} />
+          </Routes>
+        </Suspense>
         <Footer />
         <ChatBot />
       </div>
