@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { products as localProducts } from "../assets/assets";
 
 // Create and export ShopContext
 export const ShopContext = createContext();
@@ -179,10 +180,12 @@ const ShopContextProvider = (props) => {
             try {
                 const response = await axios.get(backendUrl + '/api/product/list');
                 if (response.data.success) {
-                    setProducts(response.data.products || []);
+                    const apiProducts = response.data.products || [];
+                    setProducts(apiProducts.length > 0 ? apiProducts : localProducts);
                 }
             } catch (error) {
                 console.log(error);
+                setProducts(localProducts);
             }
         };
 
