@@ -24,7 +24,7 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
   }
 
   const productPage = (pageProducts, pageIndex, columns) => (
-    <div key={pageIndex} className={`min-w-full snap-start grid ${columns === 2 ? 'grid-cols-2' : 'grid-cols-3'} gap-4 px-1 sm:gap-6`}>
+    <div key={pageIndex} className={`min-w-full snap-start grid ${columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4'} gap-4 px-1 sm:gap-6`}>
       {pageProducts.map((item, index) => (
         <ProductItem
           key={item._id || `${pageIndex}-${index}`}
