@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title'
-import ProductItem from './ProductItem';
+import FeaturedProductCarousel from './FeaturedProductCarousel'
 
 const LatestCollection = () => {
 
@@ -10,16 +10,11 @@ const LatestCollection = () => {
 
     useEffect(() => {
         const updateLatestProducts = () => {
-            const oneDayInMs = 24 * 60 * 60 * 1000;
             const latest = products
-                .filter((item) => {
-                    if (!item.latestCollection || !item.date) return false;
-                    const productAge = Date.now() - new Date(item.date).getTime();
-                    return productAge >= 0 && productAge <= oneDayInMs;
-                })
-                .sort((first, second) => new Date(second.date) - new Date(first.date));
+                .filter((item) => item.latestCollection)
+                .sort((first, second) => new Date(second.date || 0) - new Date(first.date || 0));
 
-            setLatestProducts(latest.slice(0, 10));
+            setLatestProducts(latest);
         };
 
         updateLatestProducts();
@@ -36,13 +31,7 @@ const LatestCollection = () => {
             </p>
         </div>
       {/*Rendering products*/}
-      <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'> 
-        {
-            latestProducts.map((item,index)=>(
-                <ProductItem key={index} id={item._id} image={item.image} name={item.name} price={item.price} outOfStock={Boolean(item.outOfStock)} watermarked={Boolean(item.logoWatermarked)}/>
-            ))
-        }
-      </div>
+            <FeaturedProductCarousel products={latestProducts} viewMorePath='/collection?featured=latest' />
     </div>
   )
 }

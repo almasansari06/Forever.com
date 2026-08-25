@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
@@ -7,6 +8,8 @@ import { translations } from '../data/translations';
 
 const Collection = () => {
   const { products, search, showSearch, language } = useContext(ShopContext);
+  const [searchParams] = useSearchParams();
+  const featuredType = searchParams.get('featured');
   const t = translations[language] || translations.en;
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
@@ -68,6 +71,15 @@ const Collection = () => {
 
   const applyFilter = () => {
     let productsCopy = products.slice(0);
+
+    if (featuredType === 'latest') {
+      productsCopy = productsCopy.filter(item => item.latestCollection);
+      productsCopy.sort((first, second) => new Date(second.date || 0) - new Date(first.date || 0));
+    }
+
+    if (featuredType === 'bestseller') {
+      productsCopy = productsCopy.filter(item => item.bestseller);
+    }
 
     if (search && search.trim()) {
       const term = search.trim().toLowerCase();
@@ -149,7 +161,7 @@ const Collection = () => {
   useEffect(() => {
     applyFilter();
     setCurrentPage(1); // Reset to first page when filters change
-  }, [category, subCategory, search, products, sortType]);
+  }, [category, subCategory, search, products, sortType, featuredType]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });

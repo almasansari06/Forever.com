@@ -8,9 +8,9 @@ const ProductItem = ({id,image,name,price,outOfStock,watermarked}) => {
     const {formatPrice} = useContext(ShopContext);
 
   return (
-    <Link className='text-gray-700 cursor-pointer block max-w-[200px]' to={`/product/${id}`} title={name}>
+    <Link className='text-gray-700 cursor-pointer block w-full max-w-[200px]' to={`/product/${id}`} title={name}>
       <div className='overflow-hidden relative'>
-        <WatermarkedImage watermarked={watermarked} className='hover:scale-110 transition ease-in-out' src={image[0]} alt="product" style={{height:"280px", width:"200px"}} />
+        <WatermarkedImage watermarked={watermarked} className='w-full aspect-[5/7] object-cover hover:scale-110 transition ease-in-out' src={image[0]} alt="product" />
         {outOfStock && (
           <span className='absolute top-2 left-2 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-1 rounded'>Out of stock</span>
         )}
