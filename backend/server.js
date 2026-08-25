@@ -10,6 +10,7 @@ import cartRouter from './routes/cartRoute.js';
 import orderRouter from './routes/orderRoute.js';
 import reviewRouter from './routes/reviewRoute.js';
 import couponRouter from './routes/couponRoute.js';
+import newsletterRouter from './routes/newsletterRoute.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -71,6 +72,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/coupon', couponRouter);
+app.use('/api/newsletter', newsletterRouter);
 
 if (!process.env.VERCEL) {
     app.listen(port, () => console.log('Server started on PORT : ' + port));

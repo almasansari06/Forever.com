@@ -35,6 +35,67 @@ const sendMail = async ({ to, subject, html, text, attachments = [] }) => {
   }
 };
 
+const escapeHtml = (value) => String(value || '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
+export const sendNewsletterWelcomeEmail = async ({ to }) => {
+  if (!to) return { success: false, skipped: true };
+
+  const subject = 'Welcome to Forever updates';
+  const text = `Welcome to Forever!\n\nThank you for subscribing. We will share new arrivals, handpicked products, and special updates with you every few days.\n\nHappy shopping,\nForever Team`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6; max-width: 620px; margin: auto;">
+      <h2 style="color: #111;">Welcome to Forever</h2>
+      <p>Thank you for subscribing to Forever updates.</p>
+      <p>We will send you handpicked new arrivals, product highlights, and special updates every few days.</p>
+      <p>We are glad to have you with us.</p>
+      <p>Happy shopping,<br /><strong>Forever Team</strong></p>
+    </div>
+  `;
+
+  return sendMail({ to, subject, text, html });
+};
+
+export const sendNewsletterUpdateEmail = async ({ to, products = [] }) => {
+  if (!to || products.length === 0) return { success: false, skipped: true };
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const productRows = products.map((product) => {
+    const productUrl = `${frontendUrl.replace(/\/$/, '')}/product/${encodeURIComponent(product.id)}`;
+    return `
+      <td style="width: 25%; padding: 8px; vertical-align: top;">
+        <a href="${productUrl}" style="color: #222; text-decoration: none;">
+          ${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="display: block; width: 100%; height: 180px; object-fit: cover; margin-bottom: 8px;" />` : ''}
+          <strong>${escapeHtml(product.name)}</strong><br />
+          <span>View product</span>
+        </a>
+      </td>
+    `;
+  }).join('');
+
+  const productLinks = products.map((product) => {
+    const productUrl = `${frontendUrl.replace(/\/$/, '')}/product/${encodeURIComponent(product.id)}`;
+    return `${product.name}: ${productUrl}`;
+  }).join('\n');
+  const subject = 'Fresh finds from Forever are here';
+  const text = `New products have arrived at Forever. Take a look at these handpicked finds:\n\n${productLinks}\n\nSee you at Forever!`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6; max-width: 720px; margin: auto;">
+      <h2 style="color: #111;">Fresh finds from Forever</h2>
+      <p>New products have arrived. Here are four handpicked pieces we think you will love:</p>
+      <table style="width: 100%; border-collapse: collapse;"><tr>${productRows}</tr></table>
+      <p style="margin-top: 24px;">Visit Forever and find your next favorite piece.</p>
+      <p>Happy shopping,<br /><strong>Forever Team</strong></p>
+    </div>
+  `;
+
+  return sendMail({ to, subject, text, html });
+};
+
 export const sendLoginOtpEmail = async ({ to, otp, name }) => {
   if (!to || !otp) return { success: false, skipped: true };
 

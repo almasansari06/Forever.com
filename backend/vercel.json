@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/newsletter/send-updates",
+      "schedule": "0 9 */3 * *"
+    }
+  ],
   "builds": [
     {
       "src": "server.js",

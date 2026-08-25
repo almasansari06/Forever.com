@@ -124,6 +124,10 @@ backend/
    # Admin Credentials
    ADMIN_EMAIL=admin@example.com
    ADMIN_PASSWORD=secure_password
+
+  # Newsletter emails
+  FRONTEND_URL=https://your-store-domain.com
+  CRON_SECRET=use-a-long-random-secret
    
    # Payment Gateways
    STRIPE_SECRET_KEY=sk_test_xxxxx
