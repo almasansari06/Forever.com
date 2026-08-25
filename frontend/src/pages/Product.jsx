@@ -29,6 +29,7 @@ const Product = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewFiles, setReviewFiles] = useState([]);
+  const [reviewViewerImage, setReviewViewerImage] = useState('');
   const dragStartXRef = useRef(null);
   const imageRef = useRef(null);
   const viewerDescriptionRef = useRef(null);
@@ -81,6 +82,7 @@ const Product = () => {
   useEffect(() => {
     const handleEsc = (event) => {
       if (event.key === 'Escape') closeImageViewer();
+      if (event.key === 'Escape') setReviewViewerImage('');
     };
 
     window.addEventListener('keydown', handleEsc);
@@ -578,6 +580,7 @@ const Product = () => {
                         src={img}
                         alt={`review-img-${idx}`}
                         className='w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80'
+                        onClick={() => setReviewViewerImage(img)}
                       />
                     ))}
                   </div>
@@ -649,6 +652,28 @@ const Product = () => {
               {currentImageIndex + 1} / {productData.image.length}
             </div>
           </div>
+        </div>
+      )}
+
+      {reviewViewerImage && (
+        <div
+          className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4'
+          onClick={() => setReviewViewerImage('')}
+        >
+          <button
+            type='button'
+            className='absolute top-4 right-5 text-white text-4xl leading-none cursor-pointer'
+            aria-label='Close review image viewer'
+            onClick={() => setReviewViewerImage('')}
+          >
+            ×
+          </button>
+          <img
+            src={reviewViewerImage}
+            alt='Review full size'
+            className='max-h-[90vh] max-w-full object-contain rounded-lg'
+            onClick={(event) => event.stopPropagation()}
+          />
         </div>
       )}
 
