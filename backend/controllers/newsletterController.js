@@ -43,18 +43,22 @@ const sendUpdates = async (req, res) => {
             return res.json({ success: true, sent: 0, message: 'No products or subscribers to update.' });
         }
 
-        const selectedProducts = products
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 4)
-            .map((product) => ({
-                id: product._id.toString(),
-                name: product.name,
-                price: product.price,
-                image: Array.isArray(product.image) ? product.image[0] : '',
-            }));
-
         let sent = 0;
         for (const subscriber of subscribers) {
+            const newProducts = products.filter((product) => (
+                !subscriber.lastUpdateAt || new Date(product.date) > subscriber.lastUpdateAt
+            ));
+            if (newProducts.length === 0) continue;
+
+            const selectedProducts = newProducts
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 4)
+                .map((product) => ({
+                    id: product._id.toString(),
+                    name: product.name,
+                    price: product.price,
+                    image: Array.isArray(product.image) ? product.image[0] : '',
+                }));
             const result = await sendNewsletterUpdateEmail({ to: subscriber.email, products: selectedProducts });
             if (result.success) {
                 subscriber.lastUpdateAt = new Date();
