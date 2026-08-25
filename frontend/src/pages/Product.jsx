@@ -38,6 +38,8 @@ const Product = () => {
   const viewerHistoryRef = useRef(false);
   const reviewViewerStartXRef = useRef(null);
   const reviewViewerMovedRef = useRef(false);
+  const galleryStartXRef = useRef(null);
+  const galleryMovedRef = useRef(false);
 
   const closeImageViewer = () => {
     if (viewerHistoryRef.current) {
@@ -184,13 +186,30 @@ const Product = () => {
   };
 
   const handleWheelNavigation = (event) => {
-    if (Math.abs(event.deltaX) > 25 || Math.abs(event.deltaY) > 25) {
-      if (event.deltaX < 0 || event.deltaY < 0) {
-        showNextImage();
-      } else {
-        showPreviousImage();
+    if (Math.abs(event.deltaX) > 25) {
+      if (event.deltaX > 0) showNextImage();
+      else showPreviousImage();
+    }
+  };
+
+  const handleGalleryPointerDown = (event) => {
+    galleryStartXRef.current = event.clientX;
+    galleryMovedRef.current = false;
+  };
+
+  const handleGalleryPointerUp = (event) => {
+    if (galleryStartXRef.current !== null) {
+      const distance = galleryStartXRef.current - event.clientX;
+      if (Math.abs(distance) >= 50) {
+        if (distance > 0) showNextImage();
+        else showPreviousImage();
+        galleryMovedRef.current = true;
       }
     }
+    galleryStartXRef.current = null;
+    window.setTimeout(() => {
+      galleryMovedRef.current = false;
+    }, 100);
   };
 
   const handleReviewFileChange = (e) => {
@@ -334,8 +353,23 @@ const Product = () => {
               <WatermarkedImage watermarked={Boolean(productData.logoWatermarked)} onClick={() => { setImage(item); setCurrentImageIndex(index); openImageViewer(index); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} wrapperClassName='w-[24%] sm:w-full sm:mb-3 flex-shrink-0' className='w-full cursor-pointer' alt="" />
             ))}
           </div>
-          <div ref={imageRef} className='w-full sm:w-[80%]'>
-            <WatermarkedImage watermarked={Boolean(productData.logoWatermarked)} onClick={() => openImageViewer(currentImageIndex)} className='w-full h-auto cursor-zoom-in' src={image} alt="" />
+          <div
+            ref={imageRef}
+            className='w-full sm:w-[80%] touch-pan-y'
+            onPointerDown={handleGalleryPointerDown}
+            onPointerUp={handleGalleryPointerUp}
+            onPointerLeave={handleGalleryPointerUp}
+            onWheel={handleWheelNavigation}
+          >
+            <WatermarkedImage
+              watermarked={Boolean(productData.logoWatermarked)}
+              onClick={() => {
+                if (!galleryMovedRef.current) openImageViewer(currentImageIndex);
+              }}
+              className='w-full h-auto cursor-zoom-in select-none'
+              src={image}
+              alt=""
+            />
           </div>
         </div>
 
@@ -621,7 +655,7 @@ const Product = () => {
               watermarked={Boolean(productData.logoWatermarked)}
               src={productData.image[currentImageIndex]}
               alt='Product view'
-              className='max-h-[70vh] w-full object-contain rounded-lg shadow-2xl cursor-grab active:cursor-grabbing select-none'
+              className='max-h-[85vh] max-w-[95vw] w-full object-contain rounded-lg shadow-2xl cursor-grab active:cursor-grabbing select-none'
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
