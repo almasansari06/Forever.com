@@ -158,6 +158,23 @@ a.active hr{
     animation: fadeUp 0.45s ease-out;
   }
 
+  @keyframes swipeHint {
+    0%, 100% { opacity: 0; transform: translateX(18px); }
+    20%, 70% { opacity: 0.9; }
+    50% { transform: translateX(-18px); }
+  }
+
+  .swipe-hint {
+    position: absolute;
+    z-index: 10;
+    left: 50%;
+    top: 3.25rem;
+    pointer-events: none;
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+    animation: swipeHint 2.2s ease-in-out 2;
+  }
+
   @media (max-width: 650px) {
     a.active{
         background-color: black;

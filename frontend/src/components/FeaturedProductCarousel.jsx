@@ -1,26 +1,27 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductItem from './ProductItem'
 
-const MAX_FEATURED_PRODUCTS = 15
+const MAX_FEATURED_PRODUCTS = 8
 
 const FeaturedProductCarousel = ({ products, viewMorePath }) => {
   const desktopCarouselRef = useRef(null)
   const mobileCarouselRef = useRef(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
   const featuredProducts = products.slice(0, MAX_FEATURED_PRODUCTS)
   const desktopPages = []
   const mobilePages = []
 
-  for (let index = 0; index < featuredProducts.length; index += 6) {
-    desktopPages.push(featuredProducts.slice(index, index + 6))
+  for (let index = 0; index < featuredProducts.length; index += 3) {
+    desktopPages.push(featuredProducts.slice(index, index + 3))
   }
 
-  for (let index = 0; index < featuredProducts.length; index += 4) {
-    mobilePages.push(featuredProducts.slice(index, index + 4))
+  for (let index = 0; index < featuredProducts.length; index += 2) {
+    mobilePages.push(featuredProducts.slice(index, index + 2))
   }
 
   const productPage = (pageProducts, pageIndex, columns) => (
-    <div key={pageIndex} className={`min-w-full snap-start grid ${columns === 2 ? 'grid-cols-2' : 'grid-cols-3'} grid-rows-2 gap-4 gap-y-6 px-1 sm:gap-6`}>
+    <div key={pageIndex} className={`min-w-full snap-start grid ${columns === 2 ? 'grid-cols-2' : 'grid-cols-3'} gap-4 px-1 sm:gap-6`}>
       {pageProducts.map((item, index) => (
         <ProductItem
           key={item._id || `${pageIndex}-${index}`}
@@ -41,7 +42,13 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
       left: direction * carousel.clientWidth,
       behavior: 'smooth',
     })
+    setHasInteracted(true)
   }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setHasInteracted(true), 4500)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   return (
     <div className='relative'>
@@ -64,13 +71,23 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
         </button>
       </div>
 
-      <div ref={mobileCarouselRef} className='md:hidden flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'>
+      {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && (
+        <div className='swipe-hint' aria-hidden='true'>
+          <span>☝</span>
+        </div>
+      )}
+
+      <div
+        ref={mobileCarouselRef}
+        onScroll={() => setHasInteracted(true)}
+        className='md:hidden flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+      >
         {mobilePages.map((page, index) => productPage(page, index, 2))}
         {products.length > MAX_FEATURED_PRODUCTS && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
             <Link
               to={viewMorePath}
-              className='w-full min-h-32 flex items-center justify-center border border-gray-300 text-sm font-medium hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'
+              className='w-36 h-12 self-center mx-auto flex items-center justify-center border border-gray-300 text-sm font-medium hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'
             >
               View More
             </Link>
@@ -78,13 +95,17 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
         )}
       </div>
 
-      <div ref={desktopCarouselRef} className='hidden md:flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'>
+      <div
+        ref={desktopCarouselRef}
+        onScroll={() => setHasInteracted(true)}
+        className='hidden md:flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+      >
         {desktopPages.map((page, index) => productPage(page, index, 3))}
         {products.length > MAX_FEATURED_PRODUCTS && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
             <Link
               to={viewMorePath}
-              className='w-full min-h-32 flex items-center justify-center border border-gray-300 text-sm font-medium hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'
+              className='w-36 h-12 self-center mx-auto flex items-center justify-center border border-gray-300 text-sm font-medium hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'
             >
               View More
             </Link>
