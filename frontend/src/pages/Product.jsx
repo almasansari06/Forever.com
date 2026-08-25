@@ -29,12 +29,15 @@ const Product = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewFiles, setReviewFiles] = useState([]);
-  const [reviewViewerImage, setReviewViewerImage] = useState('');
+  const [reviewViewerImages, setReviewViewerImages] = useState([]);
+  const [reviewViewerIndex, setReviewViewerIndex] = useState(0);
   const dragStartXRef = useRef(null);
   const imageRef = useRef(null);
   const viewerDescriptionRef = useRef(null);
   const detailDescriptionRef = useRef(null);
   const viewerHistoryRef = useRef(false);
+  const reviewViewerStartXRef = useRef(null);
+  const reviewViewerMovedRef = useRef(false);
 
   const closeImageViewer = () => {
     if (viewerHistoryRef.current) {
@@ -82,7 +85,7 @@ const Product = () => {
   useEffect(() => {
     const handleEsc = (event) => {
       if (event.key === 'Escape') closeImageViewer();
-      if (event.key === 'Escape') setReviewViewerImage('');
+      if (event.key === 'Escape') setReviewViewerImages([]);
     };
 
     window.addEventListener('keydown', handleEsc);
@@ -275,7 +278,6 @@ const Product = () => {
 
       const payload = {
         productId,
-        userName: 'Customer',
         rating: reviewRating,
         comment: reviewComment,
         images: imageUrls
@@ -571,6 +573,7 @@ const Product = () => {
                   </div>
                   <span className='text-xs text-gray-500 dark:text-slate-400'>{review.date}</span>
                 </div>
+                <p className='mb-1 text-sm font-semibold dark:text-slate-100'>{review.userName || 'Customer'}</p>
                 <p className='text-sm mb-3 dark:text-slate-200'>{review.comment}</p>
                 {review.images && review.images.length > 0 && (
                   <div className='flex gap-2 flex-wrap'>
@@ -580,7 +583,10 @@ const Product = () => {
                         src={img}
                         alt={`review-img-${idx}`}
                         className='w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80'
-                        onClick={() => setReviewViewerImage(img)}
+                        onClick={() => {
+                          setReviewViewerImages(review.images);
+                          setReviewViewerIndex(idx);
+                        }}
                       />
                     ))}
                   </div>
@@ -655,25 +661,54 @@ const Product = () => {
         </div>
       )}
 
-      {reviewViewerImage && (
+      {reviewViewerImages.length > 0 && (
         <div
           className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4'
-          onClick={() => setReviewViewerImage('')}
+          onClick={() => setReviewViewerImages([])}
         >
           <button
             type='button'
             className='absolute top-4 right-5 text-white text-4xl leading-none cursor-pointer'
             aria-label='Close review image viewer'
-            onClick={() => setReviewViewerImage('')}
+            onClick={() => setReviewViewerImages([])}
           >
             ×
           </button>
           <img
-            src={reviewViewerImage}
+            src={reviewViewerImages[reviewViewerIndex]}
             alt='Review full size'
-            className='max-h-[90vh] max-w-full object-contain rounded-lg'
-            onClick={(event) => event.stopPropagation()}
+            className='max-h-[90vh] max-w-full object-contain rounded-lg cursor-pointer select-none'
+            onPointerDown={(event) => {
+              reviewViewerStartXRef.current = event.clientX;
+              reviewViewerMovedRef.current = false;
+            }}
+            onPointerUp={(event) => {
+              if (reviewViewerStartXRef.current === null) return;
+              const distance = reviewViewerStartXRef.current - event.clientX;
+              reviewViewerStartXRef.current = null;
+              if (Math.abs(distance) > 50 && reviewViewerImages.length > 1) {
+                reviewViewerMovedRef.current = true;
+                setReviewViewerIndex((currentIndex) => (
+                  distance > 0
+                    ? (currentIndex + 1) % reviewViewerImages.length
+                    : (currentIndex - 1 + reviewViewerImages.length) % reviewViewerImages.length
+                ));
+              }
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (reviewViewerMovedRef.current) {
+                reviewViewerMovedRef.current = false;
+                return;
+              }
+              if (reviewViewerImages.length > 1) {
+                setReviewViewerIndex((currentIndex) => (currentIndex + 1) % reviewViewerImages.length);
+              }
+            }}
           />
+          <div className='absolute bottom-6 left-0 right-0 text-center text-sm text-white'>
+            {reviewViewerIndex + 1} / {reviewViewerImages.length}
+          </div>
         </div>
       )}
 

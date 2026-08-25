@@ -1,8 +1,9 @@
 import reviewModel from '../models/reviewModel.js';
+import userModel from '../models/userModel.js';
 
 const addReview = async (req, res) => {
   try {
-    const { productId, userName, rating, comment, images } = req.body;
+    const { productId, rating, comment, images } = req.body;
 
     if (!productId || !comment || !rating) {
       return res.json({ success: false, message: 'Product, comment and rating are required.' });
@@ -13,9 +14,11 @@ const addReview = async (req, res) => {
       return res.json({ success: false, message: 'Rating must be between 1 and 5.' });
     }
 
+    const user = await userModel.findById(req.userId).select('name');
+
     const review = await reviewModel.create({
       productId,
-      userName: userName || 'Customer',
+      userName: user?.name || 'Customer',
       rating: normalizedRating,
       comment: String(comment).trim(),
       images: Array.isArray(images) ? images : []
