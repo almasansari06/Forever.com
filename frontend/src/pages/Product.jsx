@@ -43,8 +43,9 @@ const Product = () => {
 
     const product = products.find(item => item._id === productId);
     if (product) {
-      setProductData(product);
-      setImage(product.image[0]);
+      const productImages = (product.image || []).filter(Boolean);
+      setProductData({ ...product, image: productImages });
+      setImage(productImages[0] || '');
       setCurrentImageIndex(0);
       setViewerOpen(false);
       setDescriptionExpanded(false);

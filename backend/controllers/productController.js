@@ -5,6 +5,8 @@ import productTypeModel from "../models/productTypeModel.js";
 const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
 const footwearSizes = ['6', '7', '8', '9', '10'];
 
+const normalizeImages = (images = []) => (Array.isArray(images) ? images : []).filter(Boolean);
+
 const normalizeSizes = (sizes = []) => {
     const raw = Array.isArray(sizes) ? sizes : [];
     const unique = [...new Set(raw.map((size) => String(size).trim()).filter(Boolean))];
@@ -69,7 +71,10 @@ const addProduct = async (req, res) => {
 // Function for list all products
 const listProduct = async (req, res) => {
     try {
-        const products = await productModel.find({}).sort({ date: -1 });
+        const products = (await productModel.find({}).sort({ date: -1 })).map((product) => ({
+            ...product.toObject(),
+            image: normalizeImages(product.image),
+        }));
         res.json({ success: true, products });
     } catch (error) {
         console.log(error);
@@ -101,7 +106,10 @@ const removeProduct = async (req, res) => {
 const singleProduct = async (req, res) => {
     try {
         const { productId } = req.body;
-        const product = await productModel.findById(productId);
+        const productDocument = await productModel.findById(productId);
+        const product = productDocument
+            ? { ...productDocument.toObject(), image: normalizeImages(productDocument.image) }
+            : null;
         res.json({ success: true, product });
     } catch (error) {
         console.log(error);
