@@ -368,7 +368,7 @@ const Product = () => {
           <p className='mt-5 text-3xl font-medium'>{formatPrice(productData.price)}</p>
           <p
             ref={detailDescriptionRef}
-            className='mt-5 w-full max-w-full break-all text-gray-500 md:w-4/5'
+            className='mt-5 w-full max-w-full whitespace-pre-wrap break-all text-gray-500 md:w-4/5'
             style={detailDescriptionExpanded ? undefined : {
               display: '-webkit-box',
               WebkitLineClamp: 3,
