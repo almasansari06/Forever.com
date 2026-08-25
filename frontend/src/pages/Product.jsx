@@ -33,6 +33,15 @@ const Product = () => {
   const imageRef = useRef(null);
   const viewerDescriptionRef = useRef(null);
   const detailDescriptionRef = useRef(null);
+  const viewerHistoryRef = useRef(false);
+
+  const closeImageViewer = () => {
+    if (viewerHistoryRef.current) {
+      viewerHistoryRef.current = false;
+      window.history.back();
+    }
+    setViewerOpen(false);
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -47,7 +56,7 @@ const Product = () => {
       setProductData({ ...product, image: productImages });
       setImage(productImages[0] || '');
       setCurrentImageIndex(0);
-      setViewerOpen(false);
+      closeImageViewer();
       setDescriptionExpanded(false);
       setDetailDescriptionExpanded(false);
       setActiveInfoTab('description');
@@ -58,8 +67,20 @@ const Product = () => {
   }, [productId, products]);
 
   useEffect(() => {
+    const handleBrowserBack = () => {
+      if (viewerHistoryRef.current) {
+        viewerHistoryRef.current = false;
+        setViewerOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handleBrowserBack);
+    return () => window.removeEventListener('popstate', handleBrowserBack);
+  }, []);
+
+  useEffect(() => {
     const handleEsc = (event) => {
-      if (event.key === 'Escape') setViewerOpen(false);
+      if (event.key === 'Escape') closeImageViewer();
     };
 
     window.addEventListener('keydown', handleEsc);
@@ -121,6 +142,10 @@ const Product = () => {
     setCurrentImageIndex(index);
     setImage(productData.image[index]);
     setDescriptionExpanded(false);
+    if (!viewerHistoryRef.current) {
+      window.history.pushState({ imageViewer: true }, '');
+      viewerHistoryRef.current = true;
+    }
     setViewerOpen(true);
   };
 
@@ -536,7 +561,7 @@ const Product = () => {
       </div>
 
       {viewerOpen && (
-        <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4' onClick={() => setViewerOpen(false)}>
+        <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4' onClick={closeImageViewer}>
           <div
             className='relative w-full max-w-4xl max-h-[95vh] overflow-y-auto'
             onClick={(event) => event.stopPropagation()}
@@ -549,7 +574,7 @@ const Product = () => {
               type='button'
               className='absolute -top-12 right-0 text-white text-3xl leading-none cursor-pointer'
               aria-label='Close image viewer'
-              onClick={() => setViewerOpen(false)}
+              onClick={closeImageViewer}
             >
               ×
             </button>
