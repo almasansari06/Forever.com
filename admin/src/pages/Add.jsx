@@ -4,6 +4,8 @@ import axios from 'axios';
 import { backendUrl } from '../App';
 import { toast } from 'react-toastify';
 
+let logoPromise;
+
 const Add = ({ token }) => {
     const [image1, setImage1] = useState(false);
     const [image2, setImage2] = useState(false);
@@ -166,6 +168,18 @@ const Add = ({ token }) => {
         });
     };
 
+    const loadLogo = () => {
+        if (!logoPromise) {
+            logoPromise = new Promise((resolve) => {
+                const logo = new Image();
+                logo.onload = () => resolve(logo);
+                logo.onerror = () => resolve(null);
+                logo.src = assets.logo;
+            });
+        }
+        return logoPromise;
+    };
+
     const compressImage = (file) => new Promise((resolve) => {
         const image = new Image();
         const objectUrl = URL.createObjectURL(file);
@@ -179,8 +193,12 @@ const Add = ({ token }) => {
             const context = canvas.getContext('2d');
             context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-            const logo = new Image();
-            logo.onload = () => {
+            loadLogo().then((logo) => {
+                if (!logo) {
+                    URL.revokeObjectURL(objectUrl);
+                    resolve(file);
+                    return;
+                }
                 const logoSourceHeight = logo.height * 0.74;
                 const logoWidth = Math.min(canvas.width * 0.28, 360);
                 const logoHeight = logoWidth * (logoSourceHeight / logo.width);
@@ -202,12 +220,7 @@ const Add = ({ token }) => {
                     URL.revokeObjectURL(objectUrl);
                     resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
                 }, 'image/jpeg', 0.78);
-            };
-            logo.onerror = () => {
-                URL.revokeObjectURL(objectUrl);
-                resolve(file);
-            };
-            logo.src = assets.logo;
+            });
         };
 
         image.onerror = () => {

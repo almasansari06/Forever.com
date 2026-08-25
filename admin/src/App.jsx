@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useState } from 'react'
 import Navbar from './components/NavBar'
 import Sidebar from './components/SideBar'
 import { Routes, Route } from 'react-router-dom'
-import Add from './pages/Add'
-import List from './pages/List'
-import Orders from './pages/Orders'
-import CancelledOrders from './pages/CancelledOrders'
-import Users from './pages/Users'
 import Login from './components/Login'
-import Coupons from './pages/Coupons'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
 export const currency = '$'
+
+const Add = lazy(() => import('./pages/Add'))
+const List = lazy(() => import('./pages/List'))
+const Orders = lazy(() => import('./pages/Orders'))
+const CancelledOrders = lazy(() => import('./pages/CancelledOrders'))
+const Users = lazy(() => import('./pages/Users'))
+const Coupons = lazy(() => import('./pages/Coupons'))
 
 const App = () => {
   const storedToken = localStorage.getItem('token');
@@ -41,14 +42,16 @@ const App = () => {
               <div className='flex flex-col gap-6 lg:flex-row'>
                 <Sidebar />
                 <main className='flex-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:p-6'>
-                  <Routes>
-                    <Route path='/add' element={<Add token={token} />} />
-                    <Route path='/list' element={<List token={token} />} />
-                    <Route path='/orders' element={<Orders token={token} />} />
-                    <Route path='/cancelled' element={<CancelledOrders token={token} />} />
-                    <Route path='/users' element={<Users token={token} />} />
-                    <Route path='/coupons' element={<Coupons token={token} />} />
-                  </Routes>
+                  <Suspense fallback={<div className='flex min-h-[40vh] items-center justify-center text-sm text-slate-500'>Loading...</div>}>
+                    <Routes>
+                      <Route path='/add' element={<Add token={token} />} />
+                      <Route path='/list' element={<List token={token} />} />
+                      <Route path='/orders' element={<Orders token={token} />} />
+                      <Route path='/cancelled' element={<CancelledOrders token={token} />} />
+                      <Route path='/users' element={<Users token={token} />} />
+                      <Route path='/coupons' element={<Coupons token={token} />} />
+                    </Routes>
+                  </Suspense>
                 </main>
               </div>
             </div>
