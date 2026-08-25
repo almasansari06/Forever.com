@@ -1,19 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductItem from './ProductItem'
 
 const MAX_FEATURED_PRODUCTS = 8
 
 const FeaturedProductCarousel = ({ products, viewMorePath }) => {
-  const desktopCarouselRef = useRef(null)
-  const mobileCarouselRef = useRef(null)
   const [hasInteracted, setHasInteracted] = useState(false)
   const featuredProducts = products.slice(0, MAX_FEATURED_PRODUCTS)
   const desktopPages = []
+  const tabletPages = []
   const mobilePages = []
 
+  for (let index = 0; index < featuredProducts.length; index += 4) {
+    desktopPages.push(featuredProducts.slice(index, index + 4))
+  }
+
   for (let index = 0; index < featuredProducts.length; index += 3) {
-    desktopPages.push(featuredProducts.slice(index, index + 3))
+    tabletPages.push(featuredProducts.slice(index, index + 3))
   }
 
   for (let index = 0; index < featuredProducts.length; index += 2) {
@@ -36,15 +39,6 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
     </div>
   )
 
-  const moveCarousel = (direction) => {
-    const carousel = window.innerWidth < 768 ? mobileCarouselRef.current : desktopCarouselRef.current
-    carousel?.scrollBy({
-      left: direction * carousel.clientWidth,
-      behavior: 'smooth',
-    })
-    setHasInteracted(true)
-  }
-
   useEffect(() => {
     const timer = window.setTimeout(() => setHasInteracted(true), 4500)
     return () => window.clearTimeout(timer)
@@ -52,36 +46,11 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
 
   return (
     <div className='relative'>
-      <div className='flex justify-end gap-2 mb-4'>
-        <button
-          type='button'
-          onClick={() => moveCarousel(-1)}
-          aria-label='Previous products'
-          className='w-9 h-9 border border-gray-300 text-lg leading-none hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'
-        >
-          &#8592;
-        </button>
-        <button
-          type='button'
-          onClick={() => moveCarousel(1)}
-          aria-label='Next products'
-          className='w-9 h-9 border border-gray-300 text-lg leading-none hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'
-        >
-          &#8594;
-        </button>
-      </div>
-
-      {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && (
-        <div className='swipe-hint' aria-hidden='true'>
-          <span>☝</span>
-        </div>
-      )}
-
       <div
-        ref={mobileCarouselRef}
         onScroll={() => setHasInteracted(true)}
-        className='md:hidden flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+        className='sm:hidden relative flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
+        {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
         {mobilePages.map((page, index) => productPage(page, index, 2))}
         {products.length > MAX_FEATURED_PRODUCTS && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
@@ -96,11 +65,26 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
       </div>
 
       <div
-        ref={desktopCarouselRef}
         onScroll={() => setHasInteracted(true)}
-        className='hidden md:flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+        className='hidden sm:flex lg:hidden relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
-        {desktopPages.map((page, index) => productPage(page, index, 3))}
+        {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
+        {tabletPages.map((page, index) => productPage(page, index, 3))}
+        {products.length > MAX_FEATURED_PRODUCTS && (
+          <div className='min-w-full snap-start flex items-center justify-center px-1'>
+            <Link to={viewMorePath} className='w-36 h-12 flex items-center justify-center border border-gray-300 text-sm font-medium hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'>
+              View More
+            </Link>
+          </div>
+        )}
+      </div>
+
+      <div
+        onScroll={() => setHasInteracted(true)}
+        className='hidden lg:flex relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
+      >
+        {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
+        {desktopPages.map((page, index) => productPage(page, index, 4))}
         {products.length > MAX_FEATURED_PRODUCTS && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
             <Link
@@ -115,5 +99,12 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
     </div>
   )
 }
+
+const SwipeHint = () => (
+  <div className='swipe-hint' aria-hidden='true'>
+    <span className='swipe-hint-hand'>👉</span>
+    <span className='swipe-hint-text'>Swipe to see the products</span>
+  </div>
+)
 
 export default FeaturedProductCarousel

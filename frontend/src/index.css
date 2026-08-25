@@ -168,11 +168,28 @@ a.active hr{
     position: absolute;
     z-index: 10;
     left: 50%;
-    top: 3.25rem;
+    top: 50%;
     pointer-events: none;
-    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
     animation: swipeHint 2.2s ease-in-out 2;
+  }
+
+  .swipe-hint-hand {
+    font-size: 2rem;
+  }
+
+  .swipe-hint-text {
+    padding: 0.45rem 0.7rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(17, 24, 39, 0.15);
+    color: #111827;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
   @media (max-width: 650px) {
