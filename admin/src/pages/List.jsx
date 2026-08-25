@@ -228,6 +228,13 @@ const List = ({token}) => {
   })
   const totalPages = Math.ceil(filteredList.length / itemsPerPage)
   const paginatedList = filteredList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const activeFilterName = selectedCategory !== 'All' && selectedType !== 'All'
+    ? `${selectedCategory} / ${selectedType}`
+    : selectedCategory !== 'All'
+      ? selectedCategory
+      : selectedType !== 'All'
+        ? selectedType
+        : 'All Products'
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages || 1))
@@ -256,7 +263,7 @@ const List = ({token}) => {
           onChange={(e) => setSelectedType(e.target.value)}
           className='px-3 py-2 border rounded min-w-[200px]'
         >
-          <option value='All'>All Products</option>
+          <option value='All'>All Products ({list.length})</option>
           {productTypes.map((type) => (
             <option key={type} value={type}>{type}</option>
           ))}
@@ -269,6 +276,16 @@ const List = ({token}) => {
     <>
       <p className='mb-2 '>ALL Products List</p>
       <div className='flex flex-col gap-2'>
+        <div className='flex flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2'>
+          <p className='text-sm text-slate-600'>
+            <span className='font-semibold text-slate-800'>{activeFilterName}</span>
+            <span className='mx-1'>:</span>
+            <span>{filteredList.length} products found</span>
+          </p>
+          {selectedCategory === 'All' && selectedType === 'All' && (
+            <p className='text-xs font-medium text-slate-500'>Total website products: {list.length}</p>
+          )}
+        </div>
         {renderFilter()}
 
         {/*---------------------------list table---------------------------*/}
