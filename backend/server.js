@@ -30,7 +30,7 @@ app.use(cors({
 }));
 
 // Middlewares
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

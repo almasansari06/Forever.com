@@ -198,10 +198,40 @@ const Product = () => {
   };
 
   const fileToDataUrl = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Failed to read image'));
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      const maxDimension = 900;
+      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
+
+      let quality = 0.72;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while (dataUrl.length > 180000 && quality > 0.35) {
+        quality -= 0.07;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+
+      while (dataUrl.length > 180000 && canvas.width > 480) {
+        canvas.width = Math.round(canvas.width * 0.8);
+        canvas.height = Math.round(canvas.height * 0.8);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+      }
+
+      resolve(dataUrl);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Failed to read image'));
+    };
+    image.src = objectUrl;
   });
 
   const fetchReviews = async () => {
