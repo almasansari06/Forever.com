@@ -142,6 +142,11 @@ const PlaceOrder = () => {
         }
     };
 
+    const handleRemoveCoupon = () => {
+        setCouponCode('');
+        setAppliedCoupon(null);
+    };
+
     const onSubmitHandler = async (event) => {
         event.preventDefault();
         // Prevent disabled/deleted users from placing orders
@@ -209,7 +214,8 @@ const PlaceOrder = () => {
             return itemTotal + ((!selectedItems || selectedItems.includes(itemKey)) ? product.price * quantity : 0);
         }, 0);
     }, 0);
-    const discountAmount = appliedCoupon ? (subtotal * appliedCoupon.discountPercentage) / 100 : 0;
+    const discountPercentage = appliedCoupon?.discountPercentage || 0;
+    const discountAmount = (subtotal * discountPercentage) / 100;
     const finalAmount = subtotal === 0 ? 0 : subtotal - discountAmount + delivery_fee;
 
     return (
@@ -298,14 +304,24 @@ const PlaceOrder = () => {
                         className='min-w-0 flex-1 border border-gray-300 rounded px-3 py-2 text-sm uppercase'
                         disabled={couponLoading}
                     />
-                    <button
-                        type='button'
-                        onClick={handleApplyCoupon}
-                        disabled={couponLoading}
-                        className='bg-black text-white px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60'
-                    >
-                        {couponLoading ? 'Checking...' : 'Apply'}
-                    </button>
+                    {appliedCoupon ? (
+                        <button
+                            type='button'
+                            onClick={handleRemoveCoupon}
+                            className='bg-red-600 text-white px-4 py-2 text-sm hover:bg-red-700'
+                        >
+                            Remove
+                        </button>
+                    ) : (
+                        <button
+                            type='button'
+                            onClick={handleApplyCoupon}
+                            disabled={couponLoading}
+                            className='bg-black text-white px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60'
+                        >
+                            {couponLoading ? 'Checking...' : 'Apply'}
+                        </button>
+                    )}
                 </div>
                 {appliedCoupon && (
                     <p className='mt-2 text-sm text-green-600'>Coupon applied: {appliedCoupon.discountPercentage}% off</p>
@@ -327,7 +343,7 @@ const PlaceOrder = () => {
 
                 <div className='mt-6 space-y-2 text-sm text-gray-600'>
                     <div className='flex justify-between'><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-                    {appliedCoupon && <div className='flex justify-between text-green-600'><span>Discount</span><span>-{formatPrice(discountAmount)}</span></div>}
+                    {discountAmount > 0 && <div className='flex justify-between text-green-600'><span>Discount ({discountPercentage}%)</span><span>-{formatPrice(discountAmount)}</span></div>}
                     <div className='flex justify-between'><span>Shipping Fee</span><span>{formatPrice(delivery_fee)}</span></div>
                     <div className='flex justify-between border-t pt-2 font-semibold text-gray-900'><span>Total</span><span>{formatPrice(finalAmount)}</span></div>
                 </div>

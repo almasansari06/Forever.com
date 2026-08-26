@@ -15,13 +15,16 @@ const About = () => {
         <Title text1={language === 'en' ? 'ABOUT' : t.aboutTitle.toUpperCase().slice(0, 5)} text2={language === 'en' ? 'US' : t.aboutTitle.toUpperCase().slice(5)} />
       </div>
 
-      <div className='my-10 flex flex-col md:flex-row gap-16'>
-        <img className='w-full md:max-w-[450px]' src={assets.about_img} alt="" loading='lazy' decoding='async' />
-        <div className='flex flex-col justify-center gap-6 md:w-2/4 text-gray-600'>
-        <p>Forever was born out of a passion for innovation and a desire to revolutionize the way people shop online. Our journey began with a simple idea: to provide a platform where customers can easily discover, explore, and purchase a wide range of products from the comfort of their homes.</p>
-        <p>Sinde our inception, we've worked tirelessly to curate a diverse selection of high-quality products that cater to every taste and preference. From fashion and beauty to electronics and home essentials, we offer an extensive collection sourced from trusted brands and suppliers.</p>
-        <b className='text-gray-800'>{t.mission}</b>
-        <p>Our mission at Forever is to empower customers with choice, convenience, and confidence. We're dedicated to providing a seamless shopping experience that exceeds expectations, from browsing and ordering to delivery and beyond.</p>
+      <div className='my-10 flex flex-col md:flex-row gap-16 items-center'>
+        <div className='relative w-full md:max-w-[450px] p-2 border border-[#c9a96e]/50 bg-white shadow-[0_18px_45px_rgba(31,41,55,0.14)]'>
+          <img className='w-full aspect-[4/5] object-cover brightness-[0.97] contrast-[1.04]' src={assets.about_img} alt="Curated Forever fashion and lifestyle collection" loading='lazy' decoding='async' />
+          <div className='pointer-events-none absolute inset-2 bg-gradient-to-tr from-[#1f2937]/10 via-transparent to-[#c9a96e]/20' />
+        </div>
+        <div className='flex flex-col justify-center gap-6 md:w-2/4 text-gray-600 leading-relaxed'>
+        <p>Forever is a destination for considered living, created for those who believe everyday style should feel extraordinary. We bring together luxury statements, premium essentials, and beautifully made mid-range pieces so every customer can discover something that feels uniquely theirs.</p>
+        <p>From fashion and beauty to electronics and home essentials, every collection is chosen with a sharp eye for design, quality, and lasting value. We partner with trusted brands and suppliers to make a more refined shopping experience available from the comfort of home.</p>
+        <b className='text-gray-900'>{t.mission}</b>
+        <p>Our mission at Forever is to make elevated shopping feel personal, effortless, and within reach. Whether you are investing in an iconic piece or finding a thoughtful everyday upgrade, we are here to help you shop with confidence, convenience, and a little more pleasure.</p>
         </div>
       </div>
 
@@ -32,15 +35,15 @@ const About = () => {
       <div className='flex flex-col md:flex-row text-sm mb-20'>
         <div className='border px-10 md:px-16 py-8 sm:py-20 flex flex-col gap-5'>
           <b>{t.qualityAssurance}</b>
-          <p className='text-gray-600'>We meticulously select and vet each product to ensure it meets our stringent quality standards.</p>
+          <p className='text-gray-600'>Every piece is selected for its design, craftsmanship, and ability to bring lasting value to your life.</p>
         </div>
         <div className='border px-10 md:px-16 py-8 sm:py-20 flex flex-col gap-5'>
           <b>{t.convenience}</b>
-          <p className='text-gray-600'>With our user-friendly interface and hassle-free ordering process, shopping has never been easier.</p>
+          <p className='text-gray-600'>Discover luxury, premium, and accessible mid-range collections in one beautifully simple destination.</p>
         </div>
         <div className='border px-10 md:px-16 py-8 sm:py-20 flex flex-col gap-5'>
           <b>{t.customerService}</b>
-          <p className='text-gray-600'>Our team of dedicated professionals is here to assist you the way, ensuring your satisfaction is our top priority.</p>
+          <p className='text-gray-600'>From your first visit to delivery at your door, thoughtful service is at the heart of Forever.</p>
         </div>
 
       </div>

@@ -136,8 +136,15 @@ const Orders = () => {
                     Payment received. Please wait while we confirm and approve it.
                   </div>
                 ) : item.status === 'Delivered' ? (
-                  <div className='rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700'>
-                    {t.orderStatusDelivered}
+                  <div className='space-y-2'>
+                    <div className='rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700'>
+                      {t.orderStatusDelivered}
+                    </div>
+                    {item.returnRequested && (
+                      <div className={`rounded-md border px-3 py-2 text-sm font-medium ${item.returnStatus === 'Rejected' ? 'border-red-200 bg-red-50 text-red-700' : item.returnStatus === 'Approved' ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                        {item.returnMessage || `${item.returnType} request is waiting for confirmation.`}
+                      </div>
+                    )}
                   </div>
                 ) : item.status === 'Cancelled' || (item.cancellationRequested && item.cancelledBy === 'user') ? (
                   <div className='cancelled-status-box px-3 py-2 text-sm rounded-sm'>
