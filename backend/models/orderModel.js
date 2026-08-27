@@ -4,6 +4,8 @@ const orderSchema = new mongoose.Schema({
     userId: { type: String, required: true },
     items: { type: Array, required: true },
     amount: { type: Number, required: true },
+    currency: { type: String, default: 'USD' },
+    currencyRate: { type: Number, default: 1 },
     couponCode: { type: String, default: '' },
     discountPercentage: { type: Number, default: 0 },
     address: { type: Object, required: true },

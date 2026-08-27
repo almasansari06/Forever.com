@@ -6,7 +6,17 @@ import Stripe from 'stripe';
 import { sendOrderEmail, sendOrderStatusEmail } from '../utils/emailService.js';
 
 const currency = 'usd';
+const currencyRates = {
+    USD: 1, INR: 83.5, AED: 3.67, SAR: 3.75, QAR: 3.64,
+    KWD: 0.307, BHD: 0.376, GBP: 0.79, EUR: 0.92, CAD: 1.37,
+    AUD: 1.53, SGD: 1.34, JPY: 157, CNY: 7.2
+};
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+const getOrderCurrency = (currencyCode) => {
+    const code = String(currencyCode || '').toUpperCase();
+    return currencyRates[code] ? { code, rate: currencyRates[code] } : { code: 'USD', rate: 1 };
+};
 
 const mergeOrderItems = (items = []) => {
     const mergedItems = new Map();
@@ -49,6 +59,7 @@ const calculateOrderTotals = async (items, couponCode) => {
 const placeOrder = async (req, res) => {
     try {
         const { userId, items, address, couponCode } = req.body;
+        const orderCurrency = getOrderCurrency(req.body.currency);
         const mergedItems = mergeOrderItems(items);
         const { amount, coupon } = await calculateOrderTotals(mergedItems, couponCode);
 
@@ -57,6 +68,8 @@ const placeOrder = async (req, res) => {
             items: mergedItems,
             address,
             amount,
+            currency: orderCurrency.code,
+            currencyRate: orderCurrency.rate,
             couponCode: coupon?.code || '',
             discountPercentage: coupon?.discountPercentage || 0,
             paymentMethod: "COD",
@@ -102,6 +115,7 @@ const placeOrderStripe = async (req, res) => {
         }
 
         const { userId, items, address, couponCode } = req.body;
+        const orderCurrency = getOrderCurrency(req.body.currency);
         const { origin } = req.headers;
         const mergedItems = mergeOrderItems(items);
         const { amount, coupon } = await calculateOrderTotals(mergedItems, couponCode);
@@ -111,6 +125,8 @@ const placeOrderStripe = async (req, res) => {
             items: mergedItems,
             address,
             amount,
+            currency: orderCurrency.code,
+            currencyRate: orderCurrency.rate,
             couponCode: coupon?.code || '',
             discountPercentage: coupon?.discountPercentage || 0,
             paymentMethod: "Stripe",

@@ -39,7 +39,7 @@ const Footer = () => {
         <div>
           <p className='text-xl font-medium mb-5 text-gray-800 dark:text-slate-100'>{t.getInTouch}</p>
           <ul className='flex flex-col gap-2 text-gray-600 dark:text-slate-300'>
-            <li className='hover:text-black transition-colors dark:hover:text-white'>+91 9111-9111-91</li>
+            <li className='hover:text-black transition-colors dark:hover:text-white'>+91 9111-9111-99</li>
             <li className='hover:text-black transition-colors dark:hover:text-white'>+976 50-523-4444</li>
             <li className='hover:text-black transition-colors dark:hover:text-white'>
               <a href='mailto:foreverglobal.new@gmail.com' className='hover:underline'>foreverglobal.new@gmail.com</a>

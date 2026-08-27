@@ -193,6 +193,35 @@ const deleteProductType = async (req, res) => {
     }
 };
 
+const updateProductType = async (req, res) => {
+    try {
+        const { name, newName } = req.body;
+        const trimmedName = String(name || '').trim();
+        const trimmedNewName = String(newName || '').trim();
+
+        if (!trimmedName || !trimmedNewName) {
+            return res.json({ success: false, message: 'Old and new type names are required.' });
+        }
+
+        const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const oldNameRegex = new RegExp(`^${escapeRegex(trimmedName)}$`, 'i');
+        const existingType = await productTypeModel.findOne({ name: new RegExp(`^${escapeRegex(trimmedNewName)}$`, 'i') });
+
+        if (existingType && existingType.name.toLowerCase() !== trimmedName.toLowerCase()) {
+            return res.json({ success: false, message: 'A product type with this name already exists.' });
+        }
+
+        await productTypeModel.updateOne({ name: oldNameRegex }, { $set: { name: trimmedNewName } });
+        await productModel.updateMany({ subCategory: oldNameRegex }, { $set: { subCategory: trimmedNewName } });
+
+        const allTypes = await getAllProductTypes();
+        res.json({ success: true, message: 'Type updated successfully.', productTypes: allTypes });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 const getAllProductTypes = async () => {
     const typeDocs = await productTypeModel.find({}).sort({ name: 1 });
     const typeNames = typeDocs.map(item => item.name);
@@ -231,4 +260,4 @@ const updateProduct = async (req, res) => {
     }
 };
 
-export { listProduct, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType, updateProduct };
+export { listProduct, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType, updateProductType, updateProduct };

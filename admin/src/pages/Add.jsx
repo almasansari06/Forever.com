@@ -33,6 +33,8 @@ const Add = ({ token }) => {
     const [sizes, setSizes] = useState([]);
     const [productTypes, setProductTypes] = useState([]);
     const [newType, setNewType] = useState('');
+    const [editingType, setEditingType] = useState('');
+    const [editingTypeName, setEditingTypeName] = useState('');
     const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
     const selectedSizeGroup = sizes.some((size) => clothingSizes.includes(size)) ? 'clothing' : sizes.some((size) => footwearSizes.includes(size)) ? 'footwear' : null;
@@ -141,6 +143,31 @@ const Add = ({ token }) => {
                 toast.success(response.data.message || 'Type deleted');
             } else {
                 toast.error(response.data.message || 'Unable to delete type');
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error.response?.data?.message || error.message);
+        }
+    };
+
+    const handleEditType = async (typeName) => {
+        const trimmedName = editingTypeName.trim();
+        if (!trimmedName) {
+            toast.error('Type name required');
+            return;
+        }
+
+        try {
+            const response = await axios.post(backendUrl + '/api/product-type/edit', { name: typeName, newName: trimmedName }, { headers: { token } });
+            if (response.data.success) {
+                const types = response.data.productTypes || [];
+                setProductTypes(types);
+                setSubCategory((prev) => prev.toLowerCase() === typeName.toLowerCase() ? trimmedName : prev);
+                setEditingType('');
+                setEditingTypeName('');
+                toast.success(response.data.message || 'Type updated successfully');
+            } else {
+                toast.error(response.data.message || 'Unable to update type');
             }
         } catch (error) {
             console.log(error);
@@ -267,6 +294,7 @@ const Add = ({ token }) => {
 
             if (response.data.success) {
                 toast.success(response.data.message);
+                localStorage.setItem('products_updated_at', String(Date.now()));
                 setName('');
                 setDescription('');
                 setImage1(false);
@@ -378,15 +406,41 @@ const Add = ({ token }) => {
                         {productTypes.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                                 {productTypes.map((item) => (
-                                    <button
-                                        key={item}
-                                        type="button"
-                                        onClick={() => handleDeleteType(item)}
-                                        className="px-2 py-1 border border-red-200 text-red-600 text-xs rounded hover:bg-red-50"
-                                        title={`Delete ${item}`}
-                                    >
-                                        {item} ×
-                                    </button>
+                                    editingType === item ? (
+                                        <div key={item} className="flex items-center gap-1">
+                                            <input
+                                                value={editingTypeName}
+                                                onChange={(e) => setEditingTypeName(e.target.value)}
+                                                className="w-28 px-2 py-1 border text-xs"
+                                                aria-label={`Edit ${item}`}
+                                                autoFocus
+                                            />
+                                            <button type="button" onClick={() => handleEditType(item)} className="px-2 py-1 bg-black text-white text-xs">Save</button>
+                                            <button type="button" onClick={() => setEditingType('')} className="px-2 py-1 border text-xs">Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <div key={item} className="flex items-center gap-3 border border-slate-200 px-3 py-1 text-xs">
+                                            <span>{item}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setEditingType(item); setEditingTypeName(item); }}
+                                                className="px-1 text-blue-600 hover:text-blue-800"
+                                                title={`Edit ${item}`}
+                                                aria-label={`Edit ${item}`}
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteType(item)}
+                                                className="px-1 text-red-600 hover:text-red-800"
+                                                title={`Delete ${item}`}
+                                                aria-label={`Delete ${item}`}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    )
                                 ))}
                             </div>
                         )}

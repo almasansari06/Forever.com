@@ -174,7 +174,7 @@ const Contact = () => {
         <img
           loading='lazy'
           decoding='async'
-          className='w-full md:max-w-[480px] rounded-xl shadow-md transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg'
+          className='h-auto w-full max-w-[520px] self-start rounded-xl object-contain shadow-md transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg'
           src={assets.contact_img}
           alt="Contact Us"
         />
@@ -188,7 +188,7 @@ const Contact = () => {
           </p>
 
           <div className='text-gray-500 dark:text-slate-400 leading-relaxed space-y-1'>
-            <p><span className='font-medium text-gray-700 dark:text-slate-300'>Tel:</span> +91 999915299</p>
+            <p><span className='font-medium text-gray-700 dark:text-slate-300'>Tel:</span> +91 9111-9111-99</p>
             <p><span className='font-medium text-gray-700 dark:text-slate-300'>Tel:</span> +976 50-523-4444</p>
             <p><span className='font-medium text-gray-700 dark:text-slate-300'>Email:</span> <a href='mailto:foreverglobal.new@gmail.com' className='text-blue-600 dark:text-blue-400 hover:underline'>foreverglobal.new@gmail.com</a></p>
           </div>

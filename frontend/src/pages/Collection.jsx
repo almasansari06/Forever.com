@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
@@ -16,7 +16,31 @@ const Collection = () => {
   const [productTypes, setProductTypes] = useState([]);
   const [categories, setCategories] = useState(['Men', 'Women', 'Kids']);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth < 768 ? 20 : 30);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef(null);
+
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      setItemsPerPage(window.innerWidth < 768 ? 20 : 30);
+      setCurrentPage(1);
+    };
+
+    window.addEventListener('resize', updateItemsPerPage);
+    return () => window.removeEventListener('resize', updateItemsPerPage);
+  }, []);
+
+  useEffect(() => {
+    const closeSortMenu = (event) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setSortMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeSortMenu);
+    return () => document.removeEventListener('mousedown', closeSortMenu);
+  }, []);
+
   const [category, setCategory] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('forever_collection_category')) || [];
@@ -264,17 +288,49 @@ const Collection = () => {
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-gray-50/60 p-4 sm:p-5 rounded-2xl border border-gray-100 transition-all duration-300 dark:bg-slate-900/80 dark:border-slate-700'>
           <Title text1={t.allCollections.split(' ')[0] || 'ALL'} text2={t.allCollections.split(' ').slice(1).join(' ') || 'COLLECTIONS'} />
           
-          <div className='flex items-center gap-2 self-end sm:self-auto'>
+          <div className='flex w-full items-center gap-2 self-end sm:w-auto sm:self-auto'>
             <span className='hidden sm:inline text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-slate-300'>{t.sort}:</span>
-            <select 
-              value={sortType}
-              onChange={(e) => setSortType(e.target.value)} 
-              className='bg-white border border-gray-200 hover:border-gray-400 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl outline-none cursor-pointer transition-all shadow-xs focus:ring-2 focus:ring-black/5 dark:bg-slate-950 dark:border-slate-600 dark:text-slate-100'
-            >
-              <option value="relavent">{t.relevant}</option>
-              <option value="low-high">{t.lowToHigh}</option>
-              <option value="high-low">{t.highToLow}</option>
-            </select>
+            <div ref={sortMenuRef} className='relative w-full sm:w-auto'>
+              <button
+                type='button'
+                onClick={() => setSortMenuOpen((open) => !open)}
+                aria-haspopup='listbox'
+                aria-expanded={sortMenuOpen}
+                className='flex w-full min-w-0 items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-left text-xs font-semibold text-gray-800 shadow-sm outline-none transition-all hover:border-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 sm:min-w-[190px] sm:text-sm dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-slate-400 dark:focus:border-slate-300'
+              >
+                <span>{sortType === 'low-high' ? t.lowToHigh : sortType === 'high-low' ? t.highToLow : t.relevant}</span>
+                <img
+                  src={assets.dropdown_icon}
+                  alt=''
+                  aria-hidden='true'
+                  className={`h-3 w-3 opacity-70 transition-transform dark:invert ${sortMenuOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {sortMenuOpen && (
+                <div role='listbox' aria-label={t.sort} className='absolute right-0 z-30 mt-2 w-full min-w-[190px] overflow-hidden rounded-xl border border-gray-200 bg-white p-1.5 shadow-xl shadow-gray-900/10 dark:border-slate-700 dark:bg-slate-900'>
+                  {[
+                    { value: 'relavent', label: t.relevant },
+                    { value: 'low-high', label: t.lowToHigh },
+                    { value: 'high-low', label: t.highToLow },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type='button'
+                      role='option'
+                      aria-selected={sortType === option.value}
+                      onClick={() => {
+                        setSortType(option.value);
+                        setSortMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs transition-colors sm:text-sm ${sortType === option.value ? 'bg-gray-100 font-semibold text-gray-900 dark:bg-slate-800 dark:text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'}`}
+                    >
+                      <span>{option.label}</span>
+                      {sortType === option.value && <span aria-hidden='true' className='text-sm'>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

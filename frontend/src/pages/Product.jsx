@@ -16,6 +16,7 @@ const Product = () => {
   const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
   const footwearSizes = ['6', '7', '8', '9', '10'];
   const [image, setImage] = useState('');
+  const [galleryDirection, setGalleryDirection] = useState('next');
   const [size, setSize] = useState('');
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -159,6 +160,7 @@ const Product = () => {
   const changeImageByDirection = (direction) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
 
+    setGalleryDirection(direction);
     setCurrentImageIndex((prevIndex) => {
       const nextIndex = direction === 'next'
         ? (prevIndex + 1) % productData.image.length
@@ -350,7 +352,7 @@ const Product = () => {
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
             <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start gap-3 sm:gap-0 sm:w-[18.7%] w-full'>
             {productData.image.map((item, index) => (
-              <WatermarkedImage watermarked={Boolean(productData.logoWatermarked)} onClick={() => { setImage(item); setCurrentImageIndex(index); openImageViewer(index); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} wrapperClassName='w-[24%] sm:w-full sm:mb-3 flex-shrink-0' className='w-full cursor-pointer' alt="" />
+              <WatermarkedImage watermarked={Boolean(productData.logoWatermarked)} onClick={() => { setGalleryDirection(index >= currentImageIndex ? 'next' : 'prev'); setImage(item); setCurrentImageIndex(index); openImageViewer(index); if (imageRef.current) imageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} src={item} key={index} wrapperClassName='w-[24%] sm:w-full sm:mb-3 flex-shrink-0' className='w-full cursor-pointer' alt="" />
             ))}
           </div>
           <div
@@ -362,10 +364,12 @@ const Product = () => {
             onWheel={handleWheelNavigation}
           >
             <WatermarkedImage
+              key={`${image}-${galleryDirection}`}
               watermarked={Boolean(productData.logoWatermarked)}
               onClick={() => {
                 if (!galleryMovedRef.current) openImageViewer(currentImageIndex);
               }}
+              wrapperClassName={`animate-gallery-slide-${galleryDirection}`}
               className='w-full h-auto cursor-zoom-in select-none'
               src={image}
               alt=""

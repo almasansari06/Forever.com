@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 
 const PlaceOrder = () => {
     const [method, setMethod] = useState('cod'); // Default COD
-    const { backendUrl, token, formatPrice, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
+    const { backendUrl, token, formatPrice, currency, currencyRate, cartItems, getCartAmount, delivery_fee, products, navigate, setCartItems, userData, language } = useContext(ShopContext);
     const t = translations[language] || translations.en;
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
     const [countrySearch, setCountrySearch] = useState('');
@@ -180,6 +180,8 @@ const PlaceOrder = () => {
                 },
                 items: orderItems,
                 amount: finalAmount,
+                currency,
+                currencyRate,
                 couponCode: appliedCoupon?.code || '',
             };
 

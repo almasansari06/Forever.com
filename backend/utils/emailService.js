@@ -158,18 +158,27 @@ export const sendWelcomeEmail = async ({ to, name }) => {
 export const sendOrderEmail = async ({ to, name, order }) => {
   if (!to || !order) return { success: false, skipped: true };
 
+  const currency = order.currency || 'USD';
+  const currencyRate = Number(order.currencyRate) || 1;
+  const formatAmount = (amount) => new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: currency === 'JPY' ? 0 : 2,
+  }).format(Number(amount || 0) * currencyRate);
+
   const itemsHtml = (order.items || [])
     .map((item) => `
       <tr>
         <td style="padding: 8px 10px; border-bottom: 1px solid #eee;">${item.name || 'Product'}</td>
         <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity || 1}</td>
-        <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right;">$${Number(item.price || 0).toFixed(2)}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right;">${formatAmount(item.price)}</td>
       </tr>
     `)
     .join('');
 
   const subject = 'Your Forever order details';
-  const text = `Hi ${name || 'there'},\n\nYour order has been placed successfully.\nOrder ID: ${order._id || 'N/A'}\nTotal Amount: $${Number(order.amount || 0).toFixed(2)}\nPayment Method: ${order.paymentMethod || 'COD'}\n\nShipping Address:\n${order.address ? `${order.address.street || ''}, ${order.address.city || ''}, ${order.address.state || ''}, ${order.address.country || ''}` : 'N/A'}\n\nRegards,\nForever Team`;
+  const formattedTotal = formatAmount(order.amount);
+  const text = `Hi ${name || 'there'},\n\nYour order has been placed successfully.\nOrder ID: ${order._id || 'N/A'}\nTotal Amount: ${formattedTotal}\nPayment Method: ${order.paymentMethod || 'COD'}\n\nShipping Address:\n${order.address ? `${order.address.street || ''}, ${order.address.city || ''}, ${order.address.state || ''}, ${order.address.country || ''}` : 'N/A'}\n\nRegards,\nForever Team`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.6;">
@@ -177,7 +186,7 @@ export const sendOrderEmail = async ({ to, name, order }) => {
       <p>Hi ${name || 'there'},</p>
       <p>Your order has been placed successfully.</p>
       <p><strong>Order ID:</strong> ${order._id || 'N/A'}</p>
-      <p><strong>Total Amount:</strong> $${Number(order.amount || 0).toFixed(2)}</p>
+      <p><strong>Total Amount:</strong> ${formattedTotal}</p>
       <p><strong>Payment Method:</strong> ${order.paymentMethod || 'COD'}</p>
 
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">

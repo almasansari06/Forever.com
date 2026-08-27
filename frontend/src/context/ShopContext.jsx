@@ -190,9 +190,23 @@ const ShopContextProvider = (props) => {
         };
 
         fetchProducts();
-        const refreshTimer = window.setInterval(fetchProducts, 24 * 60 * 60 * 1000);
 
-        return () => window.clearInterval(refreshTimer);
+        const refreshProducts = () => fetchProducts();
+        const handleProductsUpdated = (event) => {
+            if (event.key === 'products_updated_at') {
+                refreshProducts();
+            }
+        };
+
+        window.addEventListener('focus', refreshProducts);
+        window.addEventListener('storage', handleProductsUpdated);
+        const refreshTimer = window.setInterval(fetchProducts, 15 * 1000);
+
+        return () => {
+            window.clearInterval(refreshTimer);
+            window.removeEventListener('focus', refreshProducts);
+            window.removeEventListener('storage', handleProductsUpdated);
+        };
     }, [backendUrl]);
 
     const addToCart = async (itemId, size) => {
@@ -264,6 +278,7 @@ const ShopContextProvider = (props) => {
 
     const value = {
         currency: currencyDetails.code,
+        currencyRate: currencyDetails.rate,
         formatPrice,
         delivery_fee,
         backendUrl,

@@ -4,6 +4,36 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes gallery-slide-next {
+  from {
+    opacity: 0.35;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes gallery-slide-prev {
+  from {
+    opacity: 0.35;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-gallery-slide-next {
+  animation: gallery-slide-next 320ms ease-out both;
+}
+
+.animate-gallery-slide-prev {
+  animation: gallery-slide-prev 320ms ease-out both;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
