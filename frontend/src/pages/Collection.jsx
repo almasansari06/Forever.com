@@ -194,6 +194,11 @@ const Collection = () => {
     document.body.scrollTop = 0;
   }, [currentPage]);
 
+  const totalPages = Math.ceil(filterProducts.length / itemsPerPage);
+  const pageStart = currentPage < 5 ? 1 : currentPage;
+  const pageEnd = Math.min(totalPages, pageStart + 5);
+  const visiblePages = Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
+
   return (
     <div className='flex flex-col md:flex-row gap-6 md:gap-10 pt-8 border-t border-gray-100 max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 dark:border-slate-800'>
 
@@ -362,8 +367,8 @@ const Collection = () => {
                   ←
                 </button>
 
-                <div className='flex flex-shrink-0 flex-nowrap gap-1'>
-                  {Array.from({ length: Math.ceil(filterProducts.length / itemsPerPage) }, (_, i) => i + 1).map((pageNum) => (
+                <div className='flex flex-shrink-0 flex-nowrap items-center gap-1'>
+                  {visiblePages.map((pageNum) => (
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
@@ -376,11 +381,24 @@ const Collection = () => {
                       {pageNum}
                     </button>
                   ))}
+
+                  {pageEnd < totalPages && (
+                    <>
+                      <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
+                      <button
+                        type='button'
+                        onClick={() => setCurrentPage(totalPages)}
+                        className='flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 font-medium transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <button 
-                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filterProducts.length / itemsPerPage), prev + 1))}
-                  disabled={currentPage === Math.ceil(filterProducts.length / itemsPerPage)}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
                   className='flex-shrink-0 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
                 >
                   →
