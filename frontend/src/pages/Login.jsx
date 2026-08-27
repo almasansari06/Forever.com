@@ -1,6 +1,7 @@
 import React, { useContext, useState, useRef } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { translations } from '../data/translations';
 
@@ -22,6 +23,7 @@ const Login = () => {
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
   const [captureIntervalId, setCaptureIntervalId] = useState(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const routerNavigate = useNavigate();
 
   const streamRef = useRef(null);
   const videoRef = useRef(null);
@@ -332,6 +334,7 @@ const Login = () => {
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
           toast.success(response.data.message || 'Login successful');
+          routerNavigate('/');
         } else {
           toast.error(response.data.message);
         }
