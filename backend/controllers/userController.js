@@ -484,7 +484,7 @@ const updateProfile = async (req, res) => {
 
 const updateUserLocation = async (req, res) => {
     try {
-        const { userId, latitude, longitude, accuracy, saveAsLogin } = req.body;
+        const { userId, latitude, longitude, accuracy } = req.body;
 
         if (!userId) {
             return res.json({ success: false, message: 'User ID is required' });
@@ -508,23 +508,10 @@ const updateUserLocation = async (req, res) => {
             accuracy: Number.isFinite(parsedAccuracy) ? parsedAccuracy : null,
             updatedAt: new Date(),
         };
-        const loginLocation = {
-            latitude: parsedLatitude,
-            longitude: parsedLongitude,
-            accuracy: Number.isFinite(parsedAccuracy) ? parsedAccuracy : null,
-            savedAt: new Date(),
-        };
         const update = {
-            $set: { location, lastLocationUpdateAt: new Date() }
+            $set: { location, lastLocationUpdateAt: new Date() },
+            $unset: { locationHistory: 1 }
         };
-
-        if (saveAsLogin === true || saveAsLogin === 'true') {
-            const existingUser = await userModel.findById(userId).select('locationHistory');
-            const history = existingUser?.locationHistory || [];
-            update.$set.locationHistory = history.length >= 5
-                ? [loginLocation]
-                : [...history, loginLocation];
-        }
 
         const updatedUser = await userModel.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).select('-password');
 
