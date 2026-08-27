@@ -23,7 +23,6 @@ const Collection = () => {
   useEffect(() => {
     const updateItemsPerPage = () => {
       setItemsPerPage(window.innerWidth < 768 ? 20 : 30);
-      setCurrentPage(1);
     };
 
     window.addEventListener('resize', updateItemsPerPage);
@@ -185,8 +184,15 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter();
-    setCurrentPage(1); // Reset to first page when filters change
   }, [category, subCategory, search, products, sortType, featuredType]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, subCategory, search, sortType, featuredType]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
