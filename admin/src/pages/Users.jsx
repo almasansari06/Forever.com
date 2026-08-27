@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { backendUrl } from '../App';
 import { toast } from 'react-toastify';
+import Pagination from '../components/Pagination';
 
 const Users = ({ token }) => {
   const [users, setUsers] = useState([]);
@@ -123,17 +124,7 @@ const Users = ({ token }) => {
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className='flex flex-wrap items-center justify-center gap-2 py-4'>
-          <button type='button' onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className='rounded border px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'>Previous</button>
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
-            <button type='button' key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`min-w-8 rounded border px-2 py-1.5 text-sm ${currentPage === pageNumber ? 'border-black bg-black text-white' : 'hover:bg-gray-100'}`}>
-              {pageNumber}
-            </button>
-          ))}
-          <button type='button' onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} className='rounded border px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'>Next</button>
-        </div>
-      )}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 };
