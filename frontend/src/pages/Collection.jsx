@@ -358,16 +358,8 @@ const Collection = () => {
 
             {/* Pagination Controls */}
             {filterProducts.length > itemsPerPage && (
-              <div className='flex w-full items-center justify-start gap-2 overflow-x-auto px-1 py-1 mt-12 mb-8 sm:justify-center'>
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className='flex-shrink-0 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
-                >
-                  ←
-                </button>
-
-                <div className='flex flex-shrink-0 flex-nowrap items-center gap-1'>
+              <div className='flex w-full items-center justify-center gap-2 px-1 py-1 mt-12 mb-8'>
+                <div className='flex flex-nowrap items-center justify-center gap-1'>
                   {visiblePages.map((pageNum) => (
                     <button
                       key={pageNum}
@@ -396,13 +388,6 @@ const Collection = () => {
                   )}
                 </div>
 
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className='flex-shrink-0 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
-                >
-                  →
-                </button>
               </div>
             )}
           </>
