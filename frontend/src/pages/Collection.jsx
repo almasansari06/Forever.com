@@ -8,14 +8,14 @@ import { translations } from '../data/translations';
 
 const Collection = () => {
   const { products, search, showSearch, language } = useContext(ShopContext);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const featuredType = searchParams.get('featured');
   const t = translations[language] || translations.en;
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
   const [categories, setCategories] = useState(['Men', 'Women', 'Kids']);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
   const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth < 768 ? 20 : 30);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const sortMenuRef = useRef(null);
@@ -195,6 +195,26 @@ const Collection = () => {
   }, [category, subCategory, search, sortType, featuredType]);
 
   useEffect(() => {
+    const pageFromUrl = Math.max(1, Number(searchParams.get('page')) || 1);
+    setCurrentPage((page) => page === pageFromUrl ? page : pageFromUrl);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem('collection_scroll_y');
+    if (!savedScroll) return;
+
+    const restoreScroll = () => window.scrollTo({ top: Number(savedScroll), left: 0, behavior: 'auto' });
+    const frameId = window.requestAnimationFrame(restoreScroll);
+    const timeoutId = window.setTimeout(restoreScroll, 150);
+    sessionStorage.removeItem('collection_scroll_y');
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
@@ -369,7 +389,13 @@ const Collection = () => {
                   {visiblePages.map((pageNum) => (
                     <button
                       key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        const nextParams = new URLSearchParams(searchParams);
+                        if (pageNum === 1) nextParams.delete('page');
+                        else nextParams.set('page', String(pageNum));
+                        setSearchParams(nextParams);
+                      }}
                       className={`flex-shrink-0 px-3 py-2 rounded-lg font-medium transition-colors ${
                         currentPage === pageNum
                           ? 'bg-black text-white dark:bg-white dark:text-black'
@@ -385,7 +411,12 @@ const Collection = () => {
                       <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
                       <button
                         type='button'
-                        onClick={() => setCurrentPage(totalPages)}
+                        onClick={() => {
+                          setCurrentPage(totalPages);
+                          const nextParams = new URLSearchParams(searchParams);
+                          nextParams.set('page', String(totalPages));
+                          setSearchParams(nextParams);
+                        }}
                         className='flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 font-medium transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
                       >
                         {totalPages}
