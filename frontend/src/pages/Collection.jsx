@@ -353,21 +353,21 @@ const Collection = () => {
 
             {/* Pagination Controls */}
             {filterProducts.length > itemsPerPage && (
-              <div className='flex justify-center items-center gap-2 mt-12 mb-8'>
+              <div className='flex w-full items-center justify-start gap-2 overflow-x-auto px-1 py-1 mt-12 mb-8 sm:justify-center'>
                 <button 
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
+                  className='flex-shrink-0 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
                 >
                   ←
                 </button>
 
-                <div className='flex gap-1 flex-wrap justify-center'>
+                <div className='flex flex-shrink-0 flex-nowrap gap-1'>
                   {Array.from({ length: Math.ceil(filterProducts.length / itemsPerPage) }, (_, i) => i + 1).map((pageNum) => (
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                      className={`flex-shrink-0 px-3 py-2 rounded-lg font-medium transition-colors ${
                         currentPage === pageNum
                           ? 'bg-black text-white dark:bg-white dark:text-black'
                           : 'border border-gray-300 hover:bg-gray-100 dark:border-slate-600 dark:hover:bg-slate-800 dark:text-slate-300'
@@ -381,7 +381,7 @@ const Collection = () => {
                 <button 
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filterProducts.length / itemsPerPage), prev + 1))}
                   disabled={currentPage === Math.ceil(filterProducts.length / itemsPerPage)}
-                  className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
+                  className='flex-shrink-0 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-slate-600 dark:hover:bg-slate-800'
                 >
                   →
                 </button>
