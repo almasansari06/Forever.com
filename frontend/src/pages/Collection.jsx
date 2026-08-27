@@ -195,7 +195,7 @@ const Collection = () => {
   }, [currentPage]);
 
   const totalPages = Math.ceil(filterProducts.length / itemsPerPage);
-  const pageStart = currentPage < 5 ? 1 : currentPage;
+  const pageStart = currentPage < 6 ? 1 : currentPage;
   const pageEnd = Math.min(totalPages, pageStart + 5);
   const visiblePages = Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
 
