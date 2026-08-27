@@ -217,9 +217,6 @@ const Login = () => {
       sessionStorage.setItem('location_login_pending', 'true');
       setToken(response.data.token);
       localStorage.setItem('token', response.data.token);
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
       return true;
     }
     toast.error(response.data.message);
@@ -335,9 +332,6 @@ const Login = () => {
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
           toast.success(response.data.message || 'Login successful');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 500);
         } else {
           toast.error(response.data.message);
         }

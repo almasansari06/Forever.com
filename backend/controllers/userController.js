@@ -521,7 +521,9 @@ const updateUserLocation = async (req, res) => {
         if (saveAsLogin === true || saveAsLogin === 'true') {
             const existingUser = await userModel.findById(userId).select('locationHistory');
             const history = existingUser?.locationHistory || [];
-            update.$set.locationHistory = history.length >= 5 ? [loginLocation] : [...history, loginLocation];
+            update.$set.locationHistory = history.length >= 5
+                ? [loginLocation]
+                : [...history, loginLocation];
         }
 
         const updatedUser = await userModel.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).select('-password');

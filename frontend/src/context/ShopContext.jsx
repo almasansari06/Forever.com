@@ -57,7 +57,7 @@ const ShopContextProvider = (props) => {
         return () => controller.abort();
     }, []);
 
-    const requestUserLocation = async () => {
+    const requestUserLocation = async (recordLoginLocation = false) => {
         if (!token || !navigator.geolocation) {
             return false;
         }
@@ -79,12 +79,14 @@ const ShopContextProvider = (props) => {
                     latitude,
                     longitude,
                     accuracy,
-                    saveAsLogin: sessionStorage.getItem('location_login_pending') === 'true',
+                    saveAsLogin: recordLoginLocation,
                 },
                 { headers: { token } }
             );
 
-            sessionStorage.removeItem('location_login_pending');
+            if (recordLoginLocation) {
+                sessionStorage.removeItem('location_login_pending');
+            }
 
             return true;
         } catch (error) {
@@ -176,7 +178,7 @@ const ShopContextProvider = (props) => {
     useEffect(() => {
         if (token) {
             loadUserProfileData();
-            requestUserLocation();
+            requestUserLocation(sessionStorage.getItem('location_login_pending') === 'true');
         } else {
             setUserData(false);
         }
