@@ -16,6 +16,12 @@ const userSchema = new mongoose.Schema({
         accuracy: { type: Number, default: null },
         updatedAt: { type: Date, default: null }
     },
+    locationHistory: [{
+        latitude: { type: Number, required: true },
+        longitude: { type: Number, required: true },
+        accuracy: { type: Number, default: null },
+        savedAt: { type: Date, default: Date.now }
+    }],
     lastLocationUpdateAt: { type: Date, default: null },
     passwordVersion: { type: Number, default: 1 },
     loginOtp: { type: String, default: '' },

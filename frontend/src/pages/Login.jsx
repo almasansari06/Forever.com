@@ -214,6 +214,7 @@ const Login = () => {
       return true;
     }
     if (response.data.success) {
+      sessionStorage.setItem('location_login_pending', 'true');
       setToken(response.data.token);
       localStorage.setItem('token', response.data.token);
       setTimeout(() => {
@@ -330,6 +331,7 @@ const Login = () => {
         setIsVerifyingOtp(true);
         const response = await axios.post(backendUrl + '/api/user/verify-login-otp', { email, otp });
         if (response.data.success) {
+          sessionStorage.setItem('location_login_pending', 'true');
           setToken(response.data.token);
           localStorage.setItem('token', response.data.token);
           toast.success(response.data.message || 'Login successful');

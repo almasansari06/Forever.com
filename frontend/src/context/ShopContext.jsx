@@ -75,9 +75,16 @@ const ShopContextProvider = (props) => {
 
             await axios.post(
                 backendUrl + '/api/user/update-location',
-                { latitude, longitude, accuracy },
+                {
+                    latitude,
+                    longitude,
+                    accuracy,
+                    saveAsLogin: sessionStorage.getItem('location_login_pending') === 'true',
+                },
                 { headers: { token } }
             );
+
+            sessionStorage.removeItem('location_login_pending');
 
             return true;
         } catch (error) {

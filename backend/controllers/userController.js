@@ -484,7 +484,7 @@ const updateProfile = async (req, res) => {
 
 const updateUserLocation = async (req, res) => {
     try {
-        const { userId, latitude, longitude, accuracy } = req.body;
+        const { userId, latitude, longitude, accuracy, saveAsLogin } = req.body;
 
         if (!userId) {
             return res.json({ success: false, message: 'User ID is required' });
@@ -502,21 +502,29 @@ const updateUserLocation = async (req, res) => {
             return res.json({ success: false, message: 'Latitude and longitude values are out of range' });
         }
 
-        const updatedUser = await userModel.findByIdAndUpdate(
-            userId,
-            {
-                $set: {
-                    location: {
-                        latitude: parsedLatitude,
-                        longitude: parsedLongitude,
-                        accuracy: Number.isFinite(parsedAccuracy) ? parsedAccuracy : null,
-                        updatedAt: new Date(),
-                    },
-                    lastLocationUpdateAt: new Date(),
-                }
-            },
-            { new: true, runValidators: true }
-        ).select('-password');
+        const location = {
+            latitude: parsedLatitude,
+            longitude: parsedLongitude,
+            accuracy: Number.isFinite(parsedAccuracy) ? parsedAccuracy : null,
+            updatedAt: new Date(),
+        };
+        const loginLocation = {
+            latitude: parsedLatitude,
+            longitude: parsedLongitude,
+            accuracy: Number.isFinite(parsedAccuracy) ? parsedAccuracy : null,
+            savedAt: new Date(),
+        };
+        const update = {
+            $set: { location, lastLocationUpdateAt: new Date() }
+        };
+
+        if (saveAsLogin === true || saveAsLogin === 'true') {
+            const existingUser = await userModel.findById(userId).select('locationHistory');
+            const history = existingUser?.locationHistory || [];
+            update.$set.locationHistory = history.length >= 5 ? [loginLocation] : [...history, loginLocation];
+        }
+
+        const updatedUser = await userModel.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).select('-password');
 
         if (!updatedUser) {
             return res.json({ success: false, message: 'User not found' });
