@@ -332,6 +332,20 @@ const Product = () => {
     : 0;
   const roundedAverageRating = Math.round(averageRating);
 
+  const selectedSizeGroup = Array.isArray(productData.sizes) && productData.sizes.some((size) => clothingSizes.includes(size))
+    ? 'clothing'
+    : Array.isArray(productData.sizes) && productData.sizes.some((size) => footwearSizes.includes(size))
+      ? 'footwear'
+      : null;
+
+  const sizeOptions = selectedSizeGroup === 'clothing'
+    ? clothingSizes
+    : selectedSizeGroup === 'footwear'
+      ? footwearSizes
+      : [];
+
+  const availableSizeSet = new Set(productData.sizes || []);
+
   const orderedSizes = [...(productData.sizes || [])].sort((a, b) => {
     const clothingOrder = clothingSizes.indexOf(a) >= 0 ? clothingSizes.indexOf(a) : Number.MAX_SAFE_INTEGER;
     const footwearOrder = footwearSizes.indexOf(a) >= 0 ? footwearSizes.indexOf(a) : Number.MAX_SAFE_INTEGER;
@@ -436,19 +450,36 @@ const Product = () => {
           )}
 
           {/* Render Size Section ONLY if sizes exist */}
-          {!productData.outOfStock && orderedSizes.length > 0 && (
+          {!productData.outOfStock && sizeOptions.length > 0 && (
             <div className='flex flex-col gap-4 my-8'>
               <p>{t.selectSize}</p>
               <div className='flex gap-2 flex-wrap'>
-                {orderedSizes.map((item, index) => (
-                  <button 
-                    onClick={() => setSize(item)} 
-                    className={`border py-2 px-4 bg-gray-100 ${item === size ? 'border-orange-500 bg-orange-50 font-semibold' : ''}`} 
-                    key={index}
-                  >
-                    {item}
-                  </button>
-                ))}
+                {sizeOptions.map((item, index) => {
+                  const isAvailable = availableSizeSet.has(item);
+                  const isSelected = item === size;
+
+                  return (
+                    <button
+                      type='button'
+                      key={`${item}-${index}`}
+                      onClick={() => isAvailable && setSize(item)}
+                      disabled={!isAvailable}
+                      className={`relative overflow-hidden border py-2 px-4 transition ${
+                        isAvailable
+                          ? isSelected
+                            ? 'border-orange-500 bg-orange-50 font-semibold text-gray-900'
+                            : 'border-gray-300 bg-gray-100 text-gray-800 hover:border-orange-300 hover:bg-orange-50'
+                          : 'border-red-200 bg-red-50 text-red-400 cursor-not-allowed opacity-80'
+                      }`}
+                      aria-label={isAvailable ? `Select size ${item}` : `${item} unavailable`}
+                    >
+                      {!isAvailable && (
+                        <span className='absolute inset-x-1 top-1/2 h-[2px] -translate-y-1/2 rotate-[18deg] bg-red-500' />
+                      )}
+                      <span className='relative z-10'>{item}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
