@@ -215,10 +215,20 @@ const Collection = () => {
   }, []);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  }, [currentPage]);
+    const pageFromUrl = Number(searchParams.get('page')) || 1;
+    if (pageFromUrl !== currentPage) {
+      return;
+    }
+
+    const savedScroll = sessionStorage.getItem('collection_scroll_y');
+    if (savedScroll && Number(savedScroll) > 0) {
+      return;
+    }
+
+    if (window.scrollY > 0) {
+      return;
+    }
+  }, [currentPage, searchParams]);
 
   const totalPages = Math.ceil(filterProducts.length / itemsPerPage);
   const pageStart = currentPage < 6 ? 1 : currentPage;
