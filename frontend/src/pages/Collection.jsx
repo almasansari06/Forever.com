@@ -42,31 +42,39 @@ const Collection = () => {
 
   const [category, setCategory] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('forever_collection_category')) || [];
+      const savedCategory = sessionStorage.getItem('forever_collection_category');
+      return savedCategory ? JSON.parse(savedCategory) : [];
     } catch {
       return [];
     }
   });
   const [subCategory, setSubCategory] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('forever_collection_subCategory')) || [];
+      const savedSubCategory = sessionStorage.getItem('forever_collection_subCategory');
+      return savedSubCategory ? JSON.parse(savedSubCategory) : [];
     } catch {
       return [];
     }
   });
-  const [sortType, setSortType] = useState(() => localStorage.getItem('forever_collection_sort') || 'relavent');
+  const [sortType, setSortType] = useState(() => sessionStorage.getItem('forever_collection_sort') || 'relavent');
 
   useEffect(() => {
-    localStorage.setItem('forever_collection_category', JSON.stringify(category));
+    sessionStorage.setItem('forever_collection_category', JSON.stringify(category));
   }, [category]);
 
   useEffect(() => {
-    localStorage.setItem('forever_collection_subCategory', JSON.stringify(subCategory));
+    sessionStorage.setItem('forever_collection_subCategory', JSON.stringify(subCategory));
   }, [subCategory]);
 
   useEffect(() => {
-    localStorage.setItem('forever_collection_sort', sortType);
+    sessionStorage.setItem('forever_collection_sort', sortType);
   }, [sortType]);
+
+  useEffect(() => {
+    localStorage.removeItem('forever_collection_category');
+    localStorage.removeItem('forever_collection_subCategory');
+    localStorage.removeItem('forever_collection_sort');
+  }, []);
 
   const toggleCategory = (e) => {
     if (category.includes(e.target.value)) {
@@ -235,6 +243,20 @@ const Collection = () => {
   const pageEnd = Math.min(totalPages, pageStart + 5);
   const visiblePages = Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
 
+  const handlePageChange = (pageNum) => {
+    if (pageNum === currentPage) return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    setCurrentPage(pageNum);
+    const nextParams = new URLSearchParams(searchParams);
+    if (pageNum === 1) nextParams.delete('page');
+    else nextParams.set('page', String(pageNum));
+    setSearchParams(nextParams);
+  };
+
   return (
     <div className='flex flex-col md:flex-row gap-6 md:gap-10 pt-8 border-t border-gray-100 max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 dark:border-slate-800'>
 
@@ -399,13 +421,7 @@ const Collection = () => {
                   {visiblePages.map((pageNum) => (
                     <button
                       key={pageNum}
-                      onClick={() => {
-                        setCurrentPage(pageNum);
-                        const nextParams = new URLSearchParams(searchParams);
-                        if (pageNum === 1) nextParams.delete('page');
-                        else nextParams.set('page', String(pageNum));
-                        setSearchParams(nextParams);
-                      }}
+                      onClick={() => handlePageChange(pageNum)}
                       className={`flex-shrink-0 px-3 py-2 rounded-lg font-medium transition-colors ${
                         currentPage === pageNum
                           ? 'bg-black text-white dark:bg-white dark:text-black'
@@ -421,12 +437,7 @@ const Collection = () => {
                       <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
                       <button
                         type='button'
-                        onClick={() => {
-                          setCurrentPage(totalPages);
-                          const nextParams = new URLSearchParams(searchParams);
-                          nextParams.set('page', String(totalPages));
-                          setSearchParams(nextParams);
-                        }}
+                        onClick={() => handlePageChange(totalPages)}
                         className='flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 font-medium transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
                       >
                         {totalPages}
