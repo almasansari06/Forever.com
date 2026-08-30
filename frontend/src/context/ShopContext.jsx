@@ -244,19 +244,21 @@ const ShopContextProvider = (props) => {
 
         const refreshProducts = () => fetchProducts();
         const handleProductsUpdated = (event) => {
-            if (event.key === 'products_updated_at') {
+            if (event.key === 'products_updated_at' || event.type === 'products-updated') {
                 refreshProducts();
             }
         };
 
         window.addEventListener('focus', refreshProducts);
         window.addEventListener('storage', handleProductsUpdated);
-        const refreshTimer = window.setInterval(fetchProducts, 15 * 1000);
+        window.addEventListener('products-updated', handleProductsUpdated);
+        const refreshTimer = window.setInterval(fetchProducts, 5000);
 
         return () => {
             window.clearInterval(refreshTimer);
             window.removeEventListener('focus', refreshProducts);
             window.removeEventListener('storage', handleProductsUpdated);
+            window.removeEventListener('products-updated', handleProductsUpdated);
         };
     }, [backendUrl]);
 

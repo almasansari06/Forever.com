@@ -173,21 +173,36 @@ const Collection = () => {
     setFilterProducts(productsCopy);
   };
 
-  useEffect(() => {
-    const fetchProductTypes = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/product-type/list`);
-        const data = await response.json();
-        if (data.success) {
-          setProductTypes(data.productTypes || []);
-          setCategories(data.productCategories || ['Men', 'Women', 'Kids']);
-        }
-      } catch (error) {
-        console.log(error);
+  const fetchProductTypes = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/product-type/list`);
+      const data = await response.json();
+      if (data.success) {
+        setProductTypes(data.productTypes || []);
+        setCategories(data.productCategories || ['Men', 'Women', 'Kids']);
       }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProductTypes();
+
+    const handleProductDataUpdated = () => {
+      fetchProductTypes();
     };
 
-    fetchProductTypes();
+    window.addEventListener('products-updated', handleProductDataUpdated);
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'products_updated_at') {
+        handleProductDataUpdated();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('products-updated', handleProductDataUpdated);
+    };
   }, []);
 
   useEffect(() => {

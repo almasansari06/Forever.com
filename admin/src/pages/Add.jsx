@@ -6,6 +6,12 @@ import { toast } from 'react-toastify';
 
 let logoPromise;
 
+const notifyProductsUpdated = () => {
+    const stamp = String(Date.now());
+    localStorage.setItem('products_updated_at', stamp);
+    window.dispatchEvent(new CustomEvent('products-updated', { detail: { stamp } }));
+};
+
 const Add = ({ token }) => {
     const [image1, setImage1] = useState(false);
     const [image2, setImage2] = useState(false);
@@ -39,6 +45,7 @@ const Add = ({ token }) => {
     const [editingCategory, setEditingCategory] = useState('');
     const [editingCategoryName, setEditingCategoryName] = useState('');
     const [selectedCategoryForManagement, setSelectedCategoryForManagement] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [openActionMenu, setOpenActionMenu] = useState('');
     const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
@@ -83,28 +90,32 @@ const Add = ({ token }) => {
         setSizes([]);
     };
 
-    const handleAddCategory = () => {
+    const handleAddCategory = async () => {
         const trimmed = newCategory.trim();
         if (!trimmed) {
             toast.error('Category name required');
             return;
         }
 
-        setCategoryOptions((prev) => {
-            const exists = prev.some((item) => item.toLowerCase() === trimmed.toLowerCase());
-            if (exists) {
+        try {
+            const response = await axios.post(backendUrl + '/api/product-type/category/add', { name: trimmed }, { headers: { token } });
+            if (response.data.success) {
+                const categories = response.data.productCategories || [];
+                setCategoryOptions(categories);
                 setCategory(trimmed);
                 setNewCategory('');
-                toast.info('Category already exists');
-                return prev;
+                setSelectedCategoryForManagement('');
+                setEditingCategory('');
+                setEditingCategoryName('');
+                notifyProductsUpdated();
+                toast.success(response.data.message || 'Category added successfully');
+            } else {
+                toast.error(response.data.message || 'Unable to add category');
             }
-
-            const next = [...prev, trimmed];
-            setCategory(trimmed);
-            setNewCategory('');
-            toast.success('Category added');
-            return next;
-        });
+        } catch (error) {
+            console.log(error);
+            toast.error(error.response?.data?.message || error.message);
+        }
     };
 
     const handleEditCategory = async (categoryName) => {
@@ -120,8 +131,10 @@ const Add = ({ token }) => {
                 const categories = response.data.productCategories || [];
                 setCategoryOptions(categories);
                 setCategory((prev) => (prev.toLowerCase() === categoryName.toLowerCase() ? trimmedName : prev));
+                setSelectedCategoryForManagement('');
                 setEditingCategory('');
                 setEditingCategoryName('');
+                notifyProductsUpdated();
                 toast.success(response.data.message || 'Category updated successfully');
             } else {
                 toast.error(response.data.message || 'Unable to update category');
@@ -134,7 +147,7 @@ const Add = ({ token }) => {
 
     const handleDeleteCategory = async (categoryName) => {
         if (!categoryName) return;
-        const shouldDelete = window.confirm(`Do you want to remove the category "${categoryName}"?`);
+        const shouldDelete = window.confirm(`Delete category "${categoryName}" and all products under it?`);
         if (!shouldDelete) return;
 
         try {
@@ -146,6 +159,10 @@ const Add = ({ token }) => {
                     if (categories.length === 0) return 'Men';
                     return categories.includes(prev) ? prev : categories[0];
                 });
+                setSelectedCategoryForManagement('');
+                setEditingCategory('');
+                setEditingCategoryName('');
+                notifyProductsUpdated();
                 toast.success(response.data.message || 'Category removed');
             } else {
                 toast.error(response.data.message || 'Unable to delete category');
@@ -170,6 +187,10 @@ const Add = ({ token }) => {
                 setProductTypes(types);
                 setSubCategory(types.includes(trimmed) ? trimmed : types[0] || '');
                 setNewType('');
+                setSelectedTypeForManagement('');
+                setEditingType('');
+                setEditingTypeName('');
+                notifyProductsUpdated();
                 toast.success(response.data.message || 'Type added successfully');
             } else {
                 toast.error(response.data.message || 'Unable to add type');
@@ -182,7 +203,7 @@ const Add = ({ token }) => {
 
     const handleDeleteType = async (typeName) => {
         if (!typeName) return;
-        const shouldDelete = window.confirm(`Do you want to delete the product type "${typeName}"?`);
+        const shouldDelete = window.confirm(`Delete product type "${typeName}" and all products under it?`);
         if (!shouldDelete) return;
 
         try {
@@ -194,6 +215,10 @@ const Add = ({ token }) => {
                     if (types.length === 0) return '';
                     return types.includes(prev) ? prev : types[0];
                 });
+                setSelectedTypeForManagement('');
+                setEditingType('');
+                setEditingTypeName('');
+                notifyProductsUpdated();
                 toast.success(response.data.message || 'Type deleted');
             } else {
                 toast.error(response.data.message || 'Unable to delete type');
@@ -217,8 +242,10 @@ const Add = ({ token }) => {
                 const types = response.data.productTypes || [];
                 setProductTypes(types);
                 setSubCategory((prev) => prev.toLowerCase() === typeName.toLowerCase() ? trimmedName : prev);
+                setSelectedTypeForManagement('');
                 setEditingType('');
                 setEditingTypeName('');
+                notifyProductsUpdated();
                 toast.success(response.data.message || 'Type updated successfully');
             } else {
                 toast.error(response.data.message || 'Unable to update type');
@@ -319,42 +346,9 @@ const Add = ({ token }) => {
         </div>
     );
 
-    // ⚡ Ultra-fast image compression without logo watermarking
-    const compressImage = (file) => new Promise((resolve) => {
-        const image = new Image();
-        const objectUrl = URL.createObjectURL(file);
-
-        image.onload = () => {
-            const maxDimension = 1200;
-            const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(image.width * scale);
-            canvas.height = Math.round(image.height * scale);
-            const ctx = canvas.getContext('2d', { alpha: false });
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-            
-            canvas.toBlob((blob) => {
-                URL.revokeObjectURL(objectUrl);
-                resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
-            }, 'image/jpeg', 0.85);
-        };
-
-        image.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            resolve(file);
-        };
-        image.src = objectUrl;
-    });
-
     const handleImageChange = async (files, startIndex) => {
-        // ⚡ Show images instantly without blocking UI
         const selectedImages = Array.from(files).slice(0, 10 - startIndex);
         selectedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
-        
-        // ⚡ Compress in background
-        Promise.all(selectedImages.map(compressImage)).then((compressedImages) => {
-            compressedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
-        });
     };
 
     const removeImage = (index) => {
@@ -363,11 +357,11 @@ const Add = ({ token }) => {
 
     const onSubmitHandler = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
 
         try {
-            // ⚡ Optimistic loading state
-            toast.loading('Adding product...');
-            
             const formData = new FormData();
             formData.append('name', name);
             formData.append('description', description);
@@ -385,19 +379,11 @@ const Add = ({ token }) => {
                 }
             });
 
-            // ⚡ Timeout for faster error handling
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000);
-            
-            const response = await axios.post(backendUrl + '/api/product/add', formData, { 
-                headers: { token },
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+            const response = await axios.post(backendUrl + '/api/product/add', formData, { headers: { token } });
 
             if (response.data.success) {
                 toast.success('✅ Product added successfully!');
-                localStorage.setItem('products_updated_at', String(Date.now()));
+                notifyProductsUpdated();
                 setName('');
                 setDescription('');
                 setImage1(false);
@@ -424,6 +410,8 @@ const Add = ({ token }) => {
             console.log(error);
             const errorMessage = error.response?.data?.message || error.message;
             toast.error(errorMessage);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -595,7 +583,7 @@ const Add = ({ token }) => {
                 </div>
             </div>
 
-            <button type="submit" className="w-28 py-3 mt-4 bg-black text-white cursor-pointer">ADD</button>
+            <button type="submit" disabled={isSubmitting} className="w-28 py-3 mt-4 bg-black text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">{isSubmitting ? 'ADDING...' : 'ADD'}</button>
         </form>
     );
 };

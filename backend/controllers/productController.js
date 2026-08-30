@@ -17,6 +17,40 @@ const normalizeSizes = (sizes = []) => {
     return [...clothing, ...footwear];
 };
 
+const uploadImagesFast = async (images = []) => {
+    if (!images.length) return [];
+
+    const results = [];
+    const concurrency = 4;
+
+    for (let i = 0; i < images.length; i += concurrency) {
+        const chunk = images.slice(i, i + concurrency);
+        const chunkResults = await Promise.allSettled(
+            chunk.map(async (item) => {
+                try {
+                    const result = await cloudinary.uploader.upload(item.path, {
+                        resource_type: 'image',
+                        quality: 'auto',
+                        fetch_format: 'auto'
+                    });
+                    return result.secure_url;
+                } catch (error) {
+                    console.error('Image upload error:', error);
+                    return null;
+                }
+            })
+        );
+
+        chunkResults.forEach((result) => {
+            if (result.status === 'fulfilled' && result.value) {
+                results.push(result.value);
+            }
+        });
+    }
+
+    return results;
+};
+
 // Function for add product
 const addProduct = async (req, res) => {
     try {
@@ -34,29 +68,20 @@ const addProduct = async (req, res) => {
 
         const uploadedFiles = Object.values(req.files || {}).flat();
         const images = uploadedFiles.filter((item) => item && item.path);
+        const imagesUrl = await uploadImagesFast(images);
 
-        // ⚡ Parallel upload with concurrency limit (max 3 at a time)
-        const chunkSize = 3;
-        let imagesUrl = [];
-        for (let i = 0; i < images.length; i += chunkSize) {
-            const chunk = images.slice(i, i + chunkSize);
-            const results = await Promise.all(
-                chunk.map(async (item) => {
-                    try {
-                        let result = await cloudinary.uploader.upload(item.path, { 
-                            resource_type: 'image',
-                            quality: 'auto',
-                            fetch_format: 'auto'
-                        });
-                        return result.secure_url;
-                    } catch (error) {
-                        console.error('Image upload error:', error);
-                        return null;
-                    }
-                })
-            );
-            imagesUrl = imagesUrl.concat(results.filter(Boolean));
-        }
+        const parsedSizes = (() => {
+            if (Array.isArray(sizes)) return sizes;
+            if (typeof sizes === 'string') {
+                try {
+                    const parsed = JSON.parse(sizes || '[]');
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch {
+                    return [];
+                }
+            }
+            return [];
+        })();
 
         const productData = {
             name,
@@ -68,7 +93,7 @@ const addProduct = async (req, res) => {
             latestCollection: latestCollection === "true",
             logoWatermarked: true,
             outOfStock: outOfStock === "true" ? true : false,
-            sizes: normalizeSizes(JSON.parse(sizes || '[]')),
+            sizes: normalizeSizes(parsedSizes),
             image: imagesUrl,
             displayOrder: Date.now(),
             date: Date.now()
@@ -174,14 +199,20 @@ const singleProduct = async (req, res) => {
 const getProductTypes = async (req, res) => {
     try {
         const typeDocs = await productTypeModel.find({}).sort({ name: 1 });
-        const typeNames = typeDocs.map(item => item.name);
+        const typeNames = typeDocs
+            .map(item => item.name)
+            .filter((value) => value && value.toLowerCase() !== 'other');
 
         const productTypesFromProducts = await productModel.distinct('subCategory');
-        const uniqueTypes = [...new Set([...typeNames, ...productTypesFromProducts])].sort((a, b) => a.localeCompare(b));
+        const uniqueTypes = [...new Set([...typeNames, ...productTypesFromProducts])]
+            .filter((value) => value && value.toLowerCase() !== 'other')
+            .sort((a, b) => a.localeCompare(b));
 
         const productCategoriesFromProducts = await productModel.distinct('category');
         const defaultCategories = ['Men', 'Women', 'Kids'];
-        const uniqueCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts])].sort((a, b) => a.localeCompare(b));
+        const uniqueCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts])]
+            .filter((value) => value && value.toLowerCase() !== 'other')
+            .sort((a, b) => a.localeCompare(b));
 
         res.json({ success: true, productTypes: uniqueTypes, productCategories: uniqueCategories });
     } catch (error) {
@@ -226,7 +257,7 @@ const deleteProductType = async (req, res) => {
             return res.json({ success: false, message: 'Type name is required.' });
         }
 
-        const deletedType = await productTypeModel.findOneAndDelete({
+        const deletedType = await productTypeModel.findOne({
             name: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
         });
 
@@ -239,8 +270,10 @@ const deleteProductType = async (req, res) => {
             subCategory: { $regex: new RegExp(`^${deletedType.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
         });
 
+        await productTypeModel.deleteOne({ _id: deletedType._id });
+
         const allTypes = await getAllProductTypes();
-        res.json({ success: true, message: 'Type deleted and related products removed', productTypes: allTypes });
+        res.json({ success: true, message: 'Type deleted and all related products removed', productTypes: allTypes });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -286,7 +319,41 @@ const getAllProductTypes = async () => {
 const getAllProductCategories = async () => {
     const defaultCategories = ['Men', 'Women', 'Kids'];
     const productCategoriesFromProducts = await productModel.distinct('category');
-    return [...new Set([...defaultCategories, ...productCategoriesFromProducts])].sort((a, b) => a.localeCompare(b));
+    const visibleCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts])]
+        .filter((value) => value && value.toLowerCase() !== 'other')
+        .sort((a, b) => a.localeCompare(b));
+
+    return visibleCategories;
+};
+
+const addProductCategory = async (req, res) => {
+    try {
+        const { name } = req.body;
+        const trimmedName = String(name || '').trim();
+
+        if (!trimmedName) {
+            return res.json({ success: false, message: 'Category name is required.' });
+        }
+
+        if (trimmedName.toLowerCase() === 'other') {
+            return res.json({ success: false, message: '"Other" is reserved and cannot be used as a category name.' });
+        }
+
+        const currentCategories = await getAllProductCategories();
+        const existing = currentCategories.find((category) => category.toLowerCase() === trimmedName.toLowerCase());
+        if (existing) {
+            return res.json({ success: true, message: 'Category already exists.', productCategories: currentCategories });
+        }
+
+        const allCategories = await getAllProductCategories();
+        allCategories.push(trimmedName);
+        allCategories.sort((a, b) => a.localeCompare(b));
+
+        res.json({ success: true, message: 'Category added successfully.', productCategories: allCategories });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
 };
 
 const updateProductCategory = async (req, res) => {
@@ -297,6 +364,10 @@ const updateProductCategory = async (req, res) => {
 
         if (!trimmedName || !trimmedNewName) {
             return res.json({ success: false, message: 'Old and new category names are required.' });
+        }
+
+        if (trimmedNewName.toLowerCase() === 'other') {
+            return res.json({ success: false, message: '"Other" is reserved and cannot be used as a category name.' });
         }
 
         const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -325,12 +396,16 @@ const deleteProductCategory = async (req, res) => {
             return res.json({ success: false, message: 'Category name is required.' });
         }
 
+        if (trimmedName.toLowerCase() === 'other') {
+            return res.json({ success: false, message: '"Other" is reserved and cannot be deleted.' });
+        }
+
         const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const oldNameRegex = new RegExp(`^${escapeRegex(trimmedName)}$`, 'i');
 
-        await productModel.updateMany({ category: oldNameRegex }, { $set: { category: 'Other' } });
+        await productModel.deleteMany({ category: oldNameRegex });
         const allCategories = await getAllProductCategories();
-        res.json({ success: true, message: 'Category removed and related products moved to Other.', productCategories: allCategories });
+        res.json({ success: true, message: 'Category deleted and all related products removed.', productCategories: allCategories });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -379,6 +454,7 @@ export {
     addProductType,
     deleteProductType,
     updateProductType,
+    addProductCategory,
     updateProductCategory,
     deleteProductCategory,
     updateProduct,
