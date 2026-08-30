@@ -7,6 +7,8 @@ const footwearSizes = ['6', '7', '8', '9', '10'];
 
 const normalizeImages = (images = []) => (Array.isArray(images) ? images : []).filter(Boolean);
 
+const normalizeName = (value) => String(value ?? '').trim();
+
 const normalizeSizes = (sizes = []) => {
     const raw = Array.isArray(sizes) ? sizes : [];
     const unique = [...new Set(raw.map((size) => String(size).trim()).filter(Boolean))];
@@ -113,10 +115,16 @@ const addProduct = async (req, res) => {
 // Function for list all products (for frontend - uses displayOrder from shuffle)
 const listProduct = async (req, res) => {
     try {
-        const products = (await productModel.find({}).sort({ displayOrder: -1, date: -1 })).map((product) => ({
-            ...product.toObject(),
-            image: normalizeImages(product.image),
-        }));
+        const products = (await productModel.find({}).sort({ displayOrder: -1, date: -1 })).map((product) => {
+            const item = product.toObject();
+            return {
+                ...item,
+                category: normalizeName(item.category),
+                subCategory: normalizeName(item.subCategory),
+                name: normalizeName(item.name),
+                image: normalizeImages(item.image),
+            };
+        });
         res.json({ success: true, products });
     } catch (error) {
         console.log(error);
@@ -200,17 +208,17 @@ const getProductTypes = async (req, res) => {
     try {
         const typeDocs = await productTypeModel.find({}).sort({ name: 1 });
         const typeNames = typeDocs
-            .map(item => item.name)
+            .map(item => normalizeName(item.name))
             .filter((value) => value && value.toLowerCase() !== 'other');
 
         const productTypesFromProducts = await productModel.distinct('subCategory');
-        const uniqueTypes = [...new Set([...typeNames, ...productTypesFromProducts])]
+        const uniqueTypes = [...new Set([...typeNames, ...productTypesFromProducts.map(normalizeName)])]
             .filter((value) => value && value.toLowerCase() !== 'other')
             .sort((a, b) => a.localeCompare(b));
 
         const productCategoriesFromProducts = await productModel.distinct('category');
         const defaultCategories = ['Men', 'Women', 'Kids'];
-        const uniqueCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts])]
+        const uniqueCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts.map(normalizeName)])]
             .filter((value) => value && value.toLowerCase() !== 'other')
             .sort((a, b) => a.localeCompare(b));
 

@@ -76,11 +76,14 @@ const Collection = () => {
     localStorage.removeItem('forever_collection_sort');
   }, []);
 
+  const normalizeFilterValue = (value) => String(value ?? '').trim().toLowerCase();
+
   const toggleCategory = (e) => {
-    if (category.includes(e.target.value)) {
-      setCategory(prev => prev.filter(item => item !== e.target.value));
+    const nextValue = String(e.target.value || '').trim();
+    if (category.includes(nextValue)) {
+      setCategory(prev => prev.filter(item => item !== nextValue));
     } else {
-      setCategory(prev => [...prev, e.target.value]);
+      setCategory(prev => [...prev, nextValue]);
     }
     // Sirf mobile screens par filter auto-close hoga
     if (window.innerWidth < 768) {
@@ -134,19 +137,21 @@ const Collection = () => {
 
     // Category Filter (Case-Insensitive)
     if (category.length > 0) {
-      productsCopy = productsCopy.filter(item => 
-        item.category && category.some(cat => cat.toLowerCase() === item.category.toLowerCase())
-      );
+      productsCopy = productsCopy.filter(item => {
+        const itemCategory = normalizeFilterValue(item.category);
+        return itemCategory && category.some(cat => normalizeFilterValue(cat) === itemCategory);
+      });
     }
 
     // SubCategory Filter (Smart Case & Spelling Match)
     if (subCategory.length > 0) {
       productsCopy = productsCopy.filter(item => {
         if (!item.subCategory) return false;
-        
+
+        const itemVal = normalizeFilterValue(item.subCategory);
+
         return subCategory.some(subCat => {
-          const filterVal = subCat.toLowerCase();
-          const itemVal = item.subCategory.toLowerCase();
+          const filterVal = normalizeFilterValue(subCat);
 
           // Auto-match both 'Jewellery' and 'Jewelry' spellings
           if (filterVal.includes('jewel') && itemVal.includes('jewel')) {
