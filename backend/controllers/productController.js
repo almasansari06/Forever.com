@@ -69,10 +69,24 @@ const addProduct = async (req, res) => {
     }
 };
 
-// Function for list all products
+// Function for list all products (for frontend - uses displayOrder from shuffle)
 const listProduct = async (req, res) => {
     try {
         const products = (await productModel.find({}).sort({ displayOrder: -1, date: -1 })).map((product) => ({
+            ...product.toObject(),
+            image: normalizeImages(product.image),
+        }));
+        res.json({ success: true, products });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// Function for list all products (for admin - always sorted by date, ignores shuffle)
+const listProductAdmin = async (req, res) => {
+    try {
+        const products = (await productModel.find({}).sort({ date: -1 })).map((product) => ({
             ...product.toObject(),
             image: normalizeImages(product.image),
         }));
@@ -340,6 +354,7 @@ const updateProduct = async (req, res) => {
 
 export {
     listProduct,
+    listProductAdmin,
     shuffleProducts,
     addProduct,
     removeProduct,

@@ -1,5 +1,5 @@
 import express from 'express';
-import { addProduct, listProduct, removeProduct, shuffleProducts, singleProduct, updateProduct } from '../controllers/productController.js';
+import { addProduct, listProduct, listProductAdmin, removeProduct, shuffleProducts, singleProduct, updateProduct } from '../controllers/productController.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
 
@@ -23,5 +23,6 @@ productRouter.post('/single', singleProduct);
 productRouter.post('/update', adminAuth, updateProduct);
 productRouter.post('/shuffle', adminAuth, shuffleProducts);
 productRouter.get('/list', listProduct);
+productRouter.get('/admin-list', adminAuth, listProductAdmin);
 
 export default productRouter;
