@@ -125,6 +125,11 @@ const Add = ({ token }) => {
             return;
         }
 
+        if (['Men', 'Women', 'Kids'].includes(categoryName)) {
+            toast.error('Protected categories cannot be edited.');
+            return;
+        }
+
         try {
             const response = await axios.post(backendUrl + '/api/product-type/category/edit', { name: categoryName, newName: trimmedName }, { headers: { token } });
             if (response.data.success) {
@@ -147,6 +152,12 @@ const Add = ({ token }) => {
 
     const handleDeleteCategory = async (categoryName) => {
         if (!categoryName) return;
+
+        if (['Men', 'Women', 'Kids'].includes(categoryName)) {
+            toast.error('Protected categories cannot be deleted.');
+            return;
+        }
+
         const shouldDelete = window.confirm(`Delete category "${categoryName}" and all products under it?`);
         if (!shouldDelete) return;
 
@@ -276,7 +287,10 @@ const Add = ({ token }) => {
         });
     };
 
-    const renderOptionList = ({ items, editingKey, editingValue, setEditingValue, onSave, onCancel, onEdit, onRemove, selectedKey, selectedForManagement, setSelectedForManagement, managementType }) => (
+    const renderOptionList = ({ items, editingKey, editingValue, setEditingValue, onSave, onCancel, onEdit, onRemove, selectedKey, selectedForManagement, setSelectedForManagement, managementType }) => {
+        const isProtected = (name) => ['Men', 'Women', 'Kids'].includes(name);
+        
+        return (
         <div className="mt-4 space-y-3">
             <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Changes:</label>
@@ -285,12 +299,25 @@ const Add = ({ token }) => {
                     onChange={(e) => {
                         const selected = e.target.value;
                         setSelectedForManagement(selected);
+                        if (selected) {
+                            if (isProtected(selected)) {
+                                toast.error(`${selected} is a protected category and cannot be edited or deleted.`);
+                                setSelectedForManagement('');
+                                onCancel();
+                            } else {
+                                onEdit(selected);
+                            }
+                        } else {
+                            onCancel();
+                        }
                     }}
                     className="flex-1 px-3 py-2 border border-slate-300 rounded"
                 >
                     <option value="">Select {managementType} to edit</option>
                     {items.map((item) => (
-                        <option key={item} value={item}>{item}</option>
+                        <option key={item} value={item}>
+                            {item}{isProtected(item) ? ' (Protected)' : ''}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -345,6 +372,7 @@ const Add = ({ token }) => {
             )}
         </div>
     );
+    };
 
     const compressImageFile = async (file, maxWidth = 1400, quality = 0.72) => {
         if (!file || !file.type?.startsWith('image/')) return file;

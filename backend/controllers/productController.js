@@ -374,6 +374,10 @@ const updateProductCategory = async (req, res) => {
             return res.json({ success: false, message: 'Old and new category names are required.' });
         }
 
+        if (['Men', 'Women', 'Kids'].includes(trimmedName)) {
+            return res.json({ success: false, message: 'Protected categories cannot be edited.' });
+        }
+
         if (trimmedNewName.toLowerCase() === 'other') {
             return res.json({ success: false, message: '"Other" is reserved and cannot be used as a category name.' });
         }
@@ -402,6 +406,10 @@ const deleteProductCategory = async (req, res) => {
 
         if (!trimmedName) {
             return res.json({ success: false, message: 'Category name is required.' });
+        }
+
+        if (['Men', 'Women', 'Kids'].includes(trimmedName)) {
+            return res.json({ success: false, message: 'Protected categories cannot be deleted.' });
         }
 
         if (trimmedName.toLowerCase() === 'other') {
