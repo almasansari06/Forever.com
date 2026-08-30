@@ -253,6 +253,60 @@ const getAllProductTypes = async () => {
     return [...new Set([...typeNames, ...productTypesFromProducts])].sort((a, b) => a.localeCompare(b));
 };
 
+const getAllProductCategories = async () => {
+    const defaultCategories = ['Men', 'Women', 'Kids'];
+    const productCategoriesFromProducts = await productModel.distinct('category');
+    return [...new Set([...defaultCategories, ...productCategoriesFromProducts])].sort((a, b) => a.localeCompare(b));
+};
+
+const updateProductCategory = async (req, res) => {
+    try {
+        const { name, newName } = req.body;
+        const trimmedName = String(name || '').trim();
+        const trimmedNewName = String(newName || '').trim();
+
+        if (!trimmedName || !trimmedNewName) {
+            return res.json({ success: false, message: 'Old and new category names are required.' });
+        }
+
+        const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const oldNameRegex = new RegExp(`^${escapeRegex(trimmedName)}$`, 'i');
+        const existingCategory = await productModel.findOne({ category: new RegExp(`^${escapeRegex(trimmedNewName)}$`, 'i') });
+
+        if (existingCategory && existingCategory.category.toLowerCase() !== trimmedName.toLowerCase()) {
+            return res.json({ success: false, message: 'A product category with this name already exists.' });
+        }
+
+        await productModel.updateMany({ category: oldNameRegex }, { $set: { category: trimmedNewName } });
+        const allCategories = await getAllProductCategories();
+        res.json({ success: true, message: 'Category updated successfully.', productCategories: allCategories });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const deleteProductCategory = async (req, res) => {
+    try {
+        const { name } = req.body;
+        const trimmedName = String(name || '').trim();
+
+        if (!trimmedName) {
+            return res.json({ success: false, message: 'Category name is required.' });
+        }
+
+        const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const oldNameRegex = new RegExp(`^${escapeRegex(trimmedName)}$`, 'i');
+
+        await productModel.updateMany({ category: oldNameRegex }, { $set: { category: 'Other' } });
+        const allCategories = await getAllProductCategories();
+        res.json({ success: true, message: 'Category removed and related products moved to Other.', productCategories: allCategories });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 const updateProduct = async (req, res) => {
     try {
         const { id, price, sizes, outOfStock } = req.body;
@@ -284,4 +338,17 @@ const updateProduct = async (req, res) => {
     }
 };
 
-export { listProduct, shuffleProducts, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType, updateProductType, updateProduct };
+export {
+    listProduct,
+    shuffleProducts,
+    addProduct,
+    removeProduct,
+    singleProduct,
+    getProductTypes,
+    addProductType,
+    deleteProductType,
+    updateProductType,
+    updateProductCategory,
+    deleteProductCategory,
+    updateProduct,
+};

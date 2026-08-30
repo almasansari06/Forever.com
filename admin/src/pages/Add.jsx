@@ -35,6 +35,8 @@ const Add = ({ token }) => {
     const [newType, setNewType] = useState('');
     const [editingType, setEditingType] = useState('');
     const [editingTypeName, setEditingTypeName] = useState('');
+    const [editingCategory, setEditingCategory] = useState('');
+    const [editingCategoryName, setEditingCategoryName] = useState('');
     const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
     const selectedSizeGroup = sizes.some((size) => clothingSizes.includes(size)) ? 'clothing' : sizes.some((size) => footwearSizes.includes(size)) ? 'footwear' : null;
@@ -100,6 +102,55 @@ const Add = ({ token }) => {
             toast.success('Category added');
             return next;
         });
+    };
+
+    const handleEditCategory = async (categoryName) => {
+        const trimmedName = editingCategoryName.trim();
+        if (!trimmedName) {
+            toast.error('Category name required');
+            return;
+        }
+
+        try {
+            const response = await axios.post(backendUrl + '/api/product-type/category/edit', { name: categoryName, newName: trimmedName }, { headers: { token } });
+            if (response.data.success) {
+                const categories = response.data.productCategories || [];
+                setCategoryOptions(categories);
+                setCategory((prev) => (prev.toLowerCase() === categoryName.toLowerCase() ? trimmedName : prev));
+                setEditingCategory('');
+                setEditingCategoryName('');
+                toast.success(response.data.message || 'Category updated successfully');
+            } else {
+                toast.error(response.data.message || 'Unable to update category');
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error.response?.data?.message || error.message);
+        }
+    };
+
+    const handleDeleteCategory = async (categoryName) => {
+        if (!categoryName) return;
+        const shouldDelete = window.confirm(`Do you want to remove the category "${categoryName}"?`);
+        if (!shouldDelete) return;
+
+        try {
+            const response = await axios.post(backendUrl + '/api/product-type/category/delete', { name: categoryName }, { headers: { token } });
+            if (response.data.success) {
+                const categories = response.data.productCategories || [];
+                setCategoryOptions(categories);
+                setCategory((prev) => {
+                    if (categories.length === 0) return 'Men';
+                    return categories.includes(prev) ? prev : categories[0];
+                });
+                toast.success(response.data.message || 'Category removed');
+            } else {
+                toast.error(response.data.message || 'Unable to delete category');
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error.response?.data?.message || error.message);
+        }
     };
 
     const handleAddType = async () => {
@@ -383,6 +434,47 @@ const Add = ({ token }) => {
                             />
                             <button type="button" onClick={handleAddCategory} className="px-3 py-2 bg-black text-white cursor-pointer">Add</button>
                         </div>
+                        {categoryOptions.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {categoryOptions.map((item) => (
+                                    editingCategory === item ? (
+                                        <div key={item} className="flex items-center gap-1">
+                                            <input
+                                                value={editingCategoryName}
+                                                onChange={(e) => setEditingCategoryName(e.target.value)}
+                                                className="w-28 px-2 py-1 border text-xs"
+                                                aria-label={`Edit ${item}`}
+                                                autoFocus
+                                            />
+                                            <button type="button" onClick={() => handleEditCategory(item)} className="px-2 py-1 bg-black text-white text-xs">Save</button>
+                                            <button type="button" onClick={() => setEditingCategory('')} className="px-2 py-1 border text-xs">Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <div key={item} className="flex items-center gap-3 border border-slate-200 px-3 py-1 text-xs">
+                                            <span>{item}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setEditingCategory(item); setEditingCategoryName(item); }}
+                                                className="px-1 text-blue-600 hover:text-blue-800"
+                                                title={`Edit ${item}`}
+                                                aria-label={`Edit ${item}`}
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteCategory(item)}
+                                                className="px-1 text-red-600 hover:text-red-800"
+                                                title={`Remove ${item}`}
+                                                aria-label={`Remove ${item}`}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="w-full">
@@ -437,7 +529,7 @@ const Add = ({ token }) => {
                                                 title={`Delete ${item}`}
                                                 aria-label={`Delete ${item}`}
                                             >
-                                                ×
+                                                Remove
                                             </button>
                                         </div>
                                     )
