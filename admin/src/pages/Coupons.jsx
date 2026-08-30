@@ -60,17 +60,26 @@ const Coupons = ({ token }) => {
 
   const toggleCoupon = async (couponCode) => {
     try {
+      // ⚡ Optimistic update
+      setCoupons((previous) => previous.map((coupon) => (
+        coupon.code === couponCode ? {...coupon, active: !coupon.active} : coupon
+      )));
+
       const response = await axios.post(`${backendUrl}/api/coupon/toggle`, { code: couponCode }, { headers: { token } });
       if (response.data.success) {
         setCoupons((previous) => previous.map((coupon) => (
           coupon.code === couponCode ? response.data.coupon : coupon
         )));
-        toast.success(response.data.message);
+        toast.success('✅ Coupon updated!')
       } else {
         toast.error(response.data.message || 'Unable to update coupon.');
+        // ⚡ Revert on error
+        await fetchCoupons();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
+      // ⚡ Revert on error
+      await fetchCoupons();
     }
   };
 
@@ -78,15 +87,21 @@ const Coupons = ({ token }) => {
     if (!window.confirm(`Do you want to delete coupon "${couponCode}"?`)) return;
 
     try {
+      // ⚡ Optimistic update
+      setCoupons((previous) => previous.filter((coupon) => coupon.code !== couponCode));
+
       const response = await axios.post(`${backendUrl}/api/coupon/delete`, { code: couponCode }, { headers: { token } });
       if (response.data.success) {
-        setCoupons((previous) => previous.filter((coupon) => coupon.code !== couponCode));
-        toast.success(response.data.message);
+        toast.success('✅ Coupon deleted!')
       } else {
         toast.error(response.data.message || 'Unable to delete coupon.');
+        // ⚡ Revert on error
+        await fetchCoupons();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
+      // ⚡ Revert on error
+      await fetchCoupons();
     }
   };
 

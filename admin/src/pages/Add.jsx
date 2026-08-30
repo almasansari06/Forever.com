@@ -319,59 +319,24 @@ const Add = ({ token }) => {
         </div>
     );
 
-    const loadLogo = () => {
-        if (!logoPromise) {
-            logoPromise = new Promise((resolve) => {
-                const logo = new Image();
-                logo.onload = () => resolve(logo);
-                logo.onerror = () => resolve(null);
-                logo.src = assets.logo;
-            });
-        }
-        return logoPromise;
-    };
-
+    // ⚡ Ultra-fast image compression without logo watermarking
     const compressImage = (file) => new Promise((resolve) => {
         const image = new Image();
         const objectUrl = URL.createObjectURL(file);
 
         image.onload = () => {
-            const maxDimension = 1600;
+            const maxDimension = 1200;
             const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
             const canvas = document.createElement('canvas');
-            canvas.width = Math.max(1, Math.round(image.width * scale));
-            canvas.height = Math.max(1, Math.round(image.height * scale));
-            const context = canvas.getContext('2d');
-            context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-            loadLogo().then((logo) => {
-                if (!logo) {
-                    URL.revokeObjectURL(objectUrl);
-                    resolve(file);
-                    return;
-                }
-                const logoSourceHeight = logo.height * 0.74;
-                const logoWidth = Math.min(canvas.width * 0.28, 360);
-                const logoHeight = logoWidth * (logoSourceHeight / logo.width);
-                const padding = Math.max(12, canvas.width * 0.03);
-
-                context.drawImage(
-                    logo,
-                    0,
-                    0,
-                    logo.width,
-                    logoSourceHeight,
-                    canvas.width - logoWidth - padding,
-                    padding,
-                    logoWidth,
-                    logoHeight
-                );
-
-                canvas.toBlob((blob) => {
-                    URL.revokeObjectURL(objectUrl);
-                    resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
-                }, 'image/jpeg', 0.78);
-            });
+            canvas.width = Math.round(image.width * scale);
+            canvas.height = Math.round(image.height * scale);
+            const ctx = canvas.getContext('2d', { alpha: false });
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(objectUrl);
+                resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
+            }, 'image/jpeg', 0.85);
         };
 
         image.onerror = () => {
@@ -382,9 +347,14 @@ const Add = ({ token }) => {
     });
 
     const handleImageChange = async (files, startIndex) => {
+        // ⚡ Show images instantly without blocking UI
         const selectedImages = Array.from(files).slice(0, 10 - startIndex);
-        const compressedImages = await Promise.all(selectedImages.map(compressImage));
-        compressedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+        selectedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+        
+        // ⚡ Compress in background
+        Promise.all(selectedImages.map(compressImage)).then((compressedImages) => {
+            compressedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+        });
     };
 
     const removeImage = (index) => {
@@ -395,8 +365,10 @@ const Add = ({ token }) => {
         e.preventDefault();
 
         try {
+            // ⚡ Optimistic loading state
+            toast.loading('Adding product...');
+            
             const formData = new FormData();
-
             formData.append('name', name);
             formData.append('description', description);
             formData.append('price', price);
@@ -405,7 +377,6 @@ const Add = ({ token }) => {
             formData.append('bestseller', bestseller);
             formData.append('latestCollection', latestCollection);
             formData.append('outOfStock', outOfStock);
-            // Agar clothing ya footwear nahi hai (jaise Makeup ya Jewelry), to empty array bhejega
             formData.append('sizes', JSON.stringify(hasSizeSelection ? sizes : []));
 
             [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10].forEach((image, index) => {
@@ -414,10 +385,18 @@ const Add = ({ token }) => {
                 }
             });
 
-            const response = await axios.post(backendUrl + '/api/product/add', formData, { headers: { token } });
+            // ⚡ Timeout for faster error handling
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
+            const response = await axios.post(backendUrl + '/api/product/add', formData, { 
+                headers: { token },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
 
             if (response.data.success) {
-                toast.success(response.data.message);
+                toast.success('✅ Product added successfully!');
                 localStorage.setItem('products_updated_at', String(Date.now()));
                 setName('');
                 setDescription('');

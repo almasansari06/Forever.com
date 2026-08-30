@@ -35,12 +35,28 @@ const addProduct = async (req, res) => {
         const uploadedFiles = Object.values(req.files || {}).flat();
         const images = uploadedFiles.filter((item) => item && item.path);
 
-        let imagesUrl = await Promise.all(
-            images.map(async (item) => {
-                let result = await cloudinary.uploader.upload(item.path, { resource_type: 'image' });
-                return result.secure_url;
-            })
-        );
+        // ⚡ Parallel upload with concurrency limit (max 3 at a time)
+        const chunkSize = 3;
+        let imagesUrl = [];
+        for (let i = 0; i < images.length; i += chunkSize) {
+            const chunk = images.slice(i, i + chunkSize);
+            const results = await Promise.all(
+                chunk.map(async (item) => {
+                    try {
+                        let result = await cloudinary.uploader.upload(item.path, { 
+                            resource_type: 'image',
+                            quality: 'auto',
+                            fetch_format: 'auto'
+                        });
+                        return result.secure_url;
+                    } catch (error) {
+                        console.error('Image upload error:', error);
+                        return null;
+                    }
+                })
+            );
+            imagesUrl = imagesUrl.concat(results.filter(Boolean));
+        }
 
         const productData = {
             name,

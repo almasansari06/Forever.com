@@ -183,33 +183,45 @@ const List = ({token}) => {
     if (!shouldDelete) return;
 
     try {
+      // ⚡ Optimistic update: remove from UI immediately
+      setList(prev => prev.filter(p => p._id !== id));
+      
       const response = await axios.post(backendUrl + '/api/product/remove', { id },{headers:{token}})
 
       if (response.data.success) {
-        toast.success(response.data.message)
-        await fetchList();
+        toast.success('✅ Product deleted!')
       }
       else {
         toast.error(response.data.message)
+        // ⚡ Revert if error
+        await fetchList();
       }
     } catch (error) {
       console.log(error);
       toast.error(error.message);
+      // ⚡ Revert on error
+      await fetchList();
     }
   }
 
   const updateProduct = async (id, payload) => {
     try {
+      // ⚡ Optimistic update: update UI immediately
+      setList(prev => prev.map(p => p._id === id ? {...p, ...payload} : p));
+      
       const response = await axios.post(backendUrl + '/api/product/update', { id, ...payload }, { headers: { token } })
       if (response.data.success) {
-        toast.success(response.data.message || 'Product updated successfully.')
-        await fetchList();
+        toast.success('✅ Product updated!')
       } else {
         toast.error(response.data.message || 'Unable to update product.')
+        // ⚡ Revert if error
+        await fetchList();
       }
     } catch (error) {
       console.log(error)
       toast.error(error.response?.data?.message || error.message)
+      // ⚡ Revert on error
+      await fetchList();
     }
   }
 

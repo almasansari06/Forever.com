@@ -30,36 +30,50 @@ const Users = ({ token }) => {
   const toggleStatusHandler = async (userId, currentStatus) => {
     const newStatus = currentStatus === 'disabled' ? 'active' : 'disabled';
     try {
+      // ⚡ Optimistic update
+      setUsers((prev) => prev.map(u => u._id === userId ? {...u, status: newStatus} : u));
+
       const response = await axios.post(
         backendUrl + '/api/user/toggle-status',
         { userId, status: newStatus },
         { headers: { token } }
       );
       if (response.data.success) {
-        toast.success(response.data.message);
-        fetchUsers();
+        toast.success('✅ Status updated!')
+      } else {
+        toast.error(response.data.message);
+        // ⚡ Revert on error
+        await fetchUsers();
       }
     } catch (error) {
       toast.error(error.message);
+      // ⚡ Revert on error
+      await fetchUsers();
     }
   };
 
   const deleteUserHandler = async (userId) => {
     if (!window.confirm('Are you sure you want to permanently delete this user?')) return;
     try {
+      // ⚡ Optimistic update
+      setUsers((prev) => prev.filter(u => u._id !== userId));
+
       const response = await axios.post(
         backendUrl + '/api/user/delete-user',
         { userId },
         { headers: { token } }
       );
       if (response.data.success) {
-        toast.success(response.data.message || 'User deleted successfully');
-        fetchUsers();
+        toast.success('✅ User deleted!')
       } else {
         toast.error(response.data.message || 'Failed to delete user');
+        // ⚡ Revert on error
+        await fetchUsers();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || 'An error occurred');
+      // ⚡ Revert on error
+      await fetchUsers();
     }
   };
 

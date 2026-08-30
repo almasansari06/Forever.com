@@ -29,18 +29,30 @@ const Orders = ({ token }) => {
 
   const statusHandler = async (event, orderId) => {
     try {
-      const response = await axios.post(backendUrl + '/api/order/status', { orderId, status: event.target.value }, { headers: { token } })
+      // ⚡ Optimistic update
+      const newStatus = event.target.value;
+      setOrders(prev => prev.map(o => o._id === orderId ? {...o, status: newStatus} : o));
+      
+      const response = await axios.post(backendUrl + '/api/order/status', { orderId, status: newStatus }, { headers: { token } })
       if (response.data.success) {
-        await fetchAllOrders()
+        toast.success('✅ Status updated!')
+      } else {
+        // ⚡ Revert on error
+        await fetchAllOrders();
       }
     } catch (error) {
       console.log(error);
       toast.error(error.message)
+      // ⚡ Revert on error
+      await fetchAllOrders();
     }
   }
 
   const approvePaymentHandler = async (orderId) => {
     try {
+      // ⚡ Optimistic update
+      setOrders(prev => prev.map(o => o._id === orderId ? {...o, payment: true} : o));
+      
       const response = await axios.post(
         backendUrl + '/api/order/approve-payment',
         { orderId },
@@ -48,14 +60,17 @@ const Orders = ({ token }) => {
       );
 
       if (response.data.success) {
-        toast.success('Payment approved. Order is now confirmed and placed.');
-        await fetchAllOrders();
+        toast.success('✅ Payment approved!')
       } else {
         toast.error(response.data.message);
+        // ⚡ Revert on error
+        await fetchAllOrders();
       }
     } catch (error) {
       console.log(error);
       toast.error(error.message);
+      // ⚡ Revert on error
+      await fetchAllOrders();
     }
   }
 
@@ -65,6 +80,9 @@ const Orders = ({ token }) => {
     }
 
     try {
+      // ⚡ Optimistic update
+      setOrders(prev => prev.filter(o => o._id !== orderId));
+      
       const response = await axios.post(
         backendUrl + '/api/order/admin-cancel',
         { orderId },
@@ -72,30 +90,37 @@ const Orders = ({ token }) => {
       )
 
       if (response.data.success) {
-        toast.success(response.data.message || 'Order Cancelled Successfully')
-        await fetchAllOrders()
+        toast.success('✅ Order cancelled!')
       } else {
         toast.error(response.data.message)
+        // ⚡ Revert on error
+        await fetchAllOrders()
       }
     } catch (error) {
       console.log(error)
       toast.error(error.message)
+      // ⚡ Revert on error
+      await fetchAllOrders()
     }
   }
 
   const confirmCancellationHandler = async (orderId) => {
     if (!window.confirm('Confirm cancellation for this order?')) return;
     try {
+      // ⚡ Optimistic update
+      setOrders(prev => prev.filter(o => o._id !== orderId));
+      
       const response = await axios.post(
         backendUrl + '/api/order/admin-cancel',
         { orderId },
         { headers: { token } }
       );
       if (response.data.success) {
-        toast.success('Your order has been cancelled successfully.');
-        await fetchAllOrders();
+        toast.success('✅ Order cancelled!')
       } else {
         toast.error(response.data.message);
+        // ⚡ Revert on error
+        await fetchAllOrders();
       }
     } catch (error) {
       console.log(error);
