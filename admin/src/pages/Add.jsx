@@ -346,9 +346,49 @@ const Add = ({ token }) => {
         </div>
     );
 
+    const compressImageFile = async (file, maxWidth = 1400, quality = 0.72) => {
+        if (!file || !file.type?.startsWith('image/')) return file;
+
+        const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Failed to read image file'));
+            reader.readAsDataURL(file);
+        });
+
+        const img = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error('Failed to load image'));
+            image.src = dataUrl;
+        });
+
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, maxWidth / Math.max(img.width, 1));
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise((resolve) => {
+            canvas.toBlob((result) => resolve(result || file), 'image/jpeg', quality);
+        });
+
+        return new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.jpg', {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+        });
+    };
+
     const handleImageChange = async (files, startIndex) => {
         const selectedImages = Array.from(files).slice(0, 10 - startIndex);
-        selectedImages.forEach((image, offset) => imageSetters[startIndex + offset](image));
+
+        for (let index = 0; index < selectedImages.length; index += 1) {
+            const image = selectedImages[index];
+            const compressedImage = await compressImageFile(image);
+            imageSetters[startIndex + index](compressedImage);
+        }
     };
 
     const removeImage = (index) => {
