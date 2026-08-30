@@ -35,8 +35,11 @@ const Add = ({ token }) => {
     const [newType, setNewType] = useState('');
     const [editingType, setEditingType] = useState('');
     const [editingTypeName, setEditingTypeName] = useState('');
+    const [selectedTypeForManagement, setSelectedTypeForManagement] = useState('');
     const [editingCategory, setEditingCategory] = useState('');
     const [editingCategoryName, setEditingCategoryName] = useState('');
+    const [selectedCategoryForManagement, setSelectedCategoryForManagement] = useState('');
+    const [openActionMenu, setOpenActionMenu] = useState('');
     const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
     const selectedSizeGroup = sizes.some((size) => clothingSizes.includes(size)) ? 'clothing' : sizes.some((size) => footwearSizes.includes(size)) ? 'footwear' : null;
@@ -246,6 +249,76 @@ const Add = ({ token }) => {
         });
     };
 
+    const renderOptionList = ({ items, editingKey, editingValue, setEditingValue, onSave, onCancel, onEdit, onRemove, selectedKey, selectedForManagement, setSelectedForManagement, managementType }) => (
+        <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Changes:</label>
+                <select 
+                    value={selectedForManagement}
+                    onChange={(e) => {
+                        const selected = e.target.value;
+                        setSelectedForManagement(selected);
+                    }}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded"
+                >
+                    <option value="">Select {managementType} to edit</option>
+                    {items.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                    ))}
+                </select>
+            </div>
+
+            {(editingKey || selectedForManagement) && (
+                <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    {editingKey ? (
+                        <>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <label className="text-xs font-medium text-slate-600 whitespace-nowrap">Edit name:</label>
+                                <input
+                                    value={editingValue}
+                                    onChange={(e) => setEditingValue(e.target.value)}
+                                    className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm"
+                                    aria-label={`Edit ${editingKey}`}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 sm:justify-end">
+                                <button type="button" onClick={() => onSave(editingKey)} className="rounded bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700">Save</button>
+                                <button type="button" onClick={() => {onCancel(); setSelectedForManagement('');}} className="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">Cancel</button>
+                                <button type="button" onClick={() => {onRemove(editingKey); setSelectedForManagement('');}} className="rounded border border-red-300 bg-red-50 px-4 py-2 text-xs font-medium text-red-700 hover:bg-red-100">Delete</button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-slate-700">{selectedForManagement}</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onEdit(selectedForManagement);
+                                    }}
+                                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onRemove(selectedForManagement);
+                                        setSelectedForManagement('');
+                                    }}
+                                    className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+
     const loadLogo = () => {
         if (!logoPromise) {
             logoPromise = new Promise((resolve) => {
@@ -434,47 +507,20 @@ const Add = ({ token }) => {
                             />
                             <button type="button" onClick={handleAddCategory} className="px-3 py-2 bg-black text-white cursor-pointer">Add</button>
                         </div>
-                        {categoryOptions.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {categoryOptions.map((item) => (
-                                    editingCategory === item ? (
-                                        <div key={item} className="flex items-center gap-1">
-                                            <input
-                                                value={editingCategoryName}
-                                                onChange={(e) => setEditingCategoryName(e.target.value)}
-                                                className="w-28 px-2 py-1 border text-xs"
-                                                aria-label={`Edit ${item}`}
-                                                autoFocus
-                                            />
-                                            <button type="button" onClick={() => handleEditCategory(item)} className="px-2 py-1 bg-black text-white text-xs">Save</button>
-                                            <button type="button" onClick={() => setEditingCategory('')} className="px-2 py-1 border text-xs">Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <div key={item} className="flex items-center gap-3 border border-slate-200 px-3 py-1 text-xs">
-                                            <span>{item}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => { setEditingCategory(item); setEditingCategoryName(item); }}
-                                                className="px-1 text-blue-600 hover:text-blue-800"
-                                                title={`Edit ${item}`}
-                                                aria-label={`Edit ${item}`}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteCategory(item)}
-                                                className="px-1 text-red-600 hover:text-red-800"
-                                                title={`Remove ${item}`}
-                                                aria-label={`Remove ${item}`}
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                    )
-                                ))}
-                            </div>
-                        )}
+                        {categoryOptions.length > 0 && renderOptionList({
+                            items: categoryOptions,
+                            editingKey: editingCategory,
+                            editingValue: editingCategoryName,
+                            setEditingValue: setEditingCategoryName,
+                            onSave: handleEditCategory,
+                            onCancel: () => setEditingCategory(''),
+                            onEdit: (item) => { setEditingCategory(item); setEditingCategoryName(item); },
+                            onRemove: handleDeleteCategory,
+                            selectedKey: category,
+                            selectedForManagement: selectedCategoryForManagement,
+                            setSelectedForManagement: setSelectedCategoryForManagement,
+                            managementType: 'category',
+                        })}
                     </div>
                 </div>
                 <div className="w-full">
@@ -495,47 +541,20 @@ const Add = ({ token }) => {
                             />
                             <button type="button" onClick={handleAddType} className="px-3 py-2 bg-black text-white cursor-pointer">Add</button>
                         </div>
-                        {productTypes.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {productTypes.map((item) => (
-                                    editingType === item ? (
-                                        <div key={item} className="flex items-center gap-1">
-                                            <input
-                                                value={editingTypeName}
-                                                onChange={(e) => setEditingTypeName(e.target.value)}
-                                                className="w-28 px-2 py-1 border text-xs"
-                                                aria-label={`Edit ${item}`}
-                                                autoFocus
-                                            />
-                                            <button type="button" onClick={() => handleEditType(item)} className="px-2 py-1 bg-black text-white text-xs">Save</button>
-                                            <button type="button" onClick={() => setEditingType('')} className="px-2 py-1 border text-xs">Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <div key={item} className="flex items-center gap-3 border border-slate-200 px-3 py-1 text-xs">
-                                            <span>{item}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => { setEditingType(item); setEditingTypeName(item); }}
-                                                className="px-1 text-blue-600 hover:text-blue-800"
-                                                title={`Edit ${item}`}
-                                                aria-label={`Edit ${item}`}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteType(item)}
-                                                className="px-1 text-red-600 hover:text-red-800"
-                                                title={`Delete ${item}`}
-                                                aria-label={`Delete ${item}`}
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                    )
-                                ))}
-                            </div>
-                        )}
+                        {productTypes.length > 0 && renderOptionList({
+                            items: productTypes,
+                            editingKey: editingType,
+                            editingValue: editingTypeName,
+                            setEditingValue: setEditingTypeName,
+                            onSave: handleEditType,
+                            onCancel: () => setEditingType(''),
+                            onEdit: (item) => { setEditingType(item); setEditingTypeName(item); },
+                            onRemove: handleDeleteType,
+                            selectedKey: subCategory,
+                            selectedForManagement: selectedTypeForManagement,
+                            setSelectedForManagement: setSelectedTypeForManagement,
+                            managementType: 'type',
+                        })}
                     </div>
                 </div>
 
