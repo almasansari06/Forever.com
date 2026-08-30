@@ -6,16 +6,45 @@ import Stripe from 'stripe';
 import { sendOrderEmail, sendOrderStatusEmail } from '../utils/emailService.js';
 
 const currency = 'usd';
-const currencyRates = {
+const fallbackCurrencyRates = {
     USD: 1, INR: 83.5, AED: 3.67, SAR: 3.75, QAR: 3.64,
     KWD: 0.307, BHD: 0.376, GBP: 0.79, EUR: 0.92, CAD: 1.37,
     AUD: 1.53, SGD: 1.34, JPY: 157, CNY: 7.2
 };
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-const getOrderCurrency = (currencyCode) => {
+const fetchLiveCurrencyRates = async () => {
+    const endpoints = [
+        'https://open.er-api.com/v6/latest/USD',
+        'https://api.exchangerate.host/latest?base=USD',
+    ];
+
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(endpoint);
+            if (!response.ok) continue;
+
+            const data = await response.json();
+            const rates = data?.rates;
+
+            if (rates && typeof rates === 'object' && Object.keys(rates).length > 0) {
+                return Object.fromEntries(
+                    Object.entries(rates).map(([key, value]) => [String(key).toUpperCase(), Number(value)])
+                );
+            }
+        } catch (error) {
+            console.log('Live currency fetch failed:', endpoint, error.message);
+        }
+    }
+
+    return fallbackCurrencyRates;
+};
+
+const getOrderCurrency = async (currencyCode) => {
     const code = String(currencyCode || '').toUpperCase();
-    return currencyRates[code] ? { code, rate: currencyRates[code] } : { code: 'USD', rate: 1 };
+    const liveRates = await fetchLiveCurrencyRates();
+    const rate = Number(liveRates[code]);
+    return Number.isFinite(rate) ? { code, rate } : { code: 'USD', rate: 1 };
 };
 
 const mergeOrderItems = (items = []) => {
@@ -59,7 +88,7 @@ const calculateOrderTotals = async (items, couponCode) => {
 const placeOrder = async (req, res) => {
     try {
         const { userId, items, address, couponCode } = req.body;
-        const orderCurrency = getOrderCurrency(req.body.currency);
+        const orderCurrency = await getOrderCurrency(req.body.currency);
         const mergedItems = mergeOrderItems(items);
         const { amount, coupon } = await calculateOrderTotals(mergedItems, couponCode);
 
@@ -115,7 +144,7 @@ const placeOrderStripe = async (req, res) => {
         }
 
         const { userId, items, address, couponCode } = req.body;
-        const orderCurrency = getOrderCurrency(req.body.currency);
+        const orderCurrency = await getOrderCurrency(req.body.currency);
         const { origin } = req.headers;
         const mergedItems = mergeOrderItems(items);
         const { amount, coupon } = await calculateOrderTotals(mergedItems, couponCode);

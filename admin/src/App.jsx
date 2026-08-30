@@ -15,6 +15,7 @@ const Orders = lazy(() => import('./pages/Orders'))
 const CancelledOrders = lazy(() => import('./pages/CancelledOrders'))
 const Users = lazy(() => import('./pages/Users'))
 const Coupons = lazy(() => import('./pages/Coupons'))
+const Shuffle = lazy(() => import('./pages/Shuffle'))
 
 const App = () => {
   const storedToken = localStorage.getItem('token');
@@ -50,6 +51,7 @@ const App = () => {
                       <Route path='/cancelled' element={<CancelledOrders token={token} />} />
                       <Route path='/users' element={<Users token={token} />} />
                       <Route path='/coupons' element={<Coupons token={token} />} />
+                      <Route path='/shuffle' element={<Shuffle token={token} />} />
                     </Routes>
                   </Suspense>
                 </main>

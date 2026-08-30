@@ -8,7 +8,8 @@ const navItems = [
   { to: '/orders', label: 'Orders', icon: assets.parcel_icon },
   { to: '/cancelled', label: 'Cancelled', icon: assets.cross_icon },
   { to: '/users', label: 'Users', icon: assets.user_icon },
-  { to: '/coupons', label: 'Coupons', icon: assets.tag_icon || assets.list_icon },
+  { to: '/coupons', label: 'Coupons', icon: assets.tag_icon },
+  { to: '/shuffle', label: 'Shuffle', icon: assets.shuffle_icon },
 ]
 
 const Sidebar = () => {

@@ -6,6 +6,8 @@ import parcel_icon from './parcel_icon.svg'
 import user_icon from './user_icon.svg'
 import cross_icon from './cross_icon.svg'
 import list_icon from './list_icon.svg'
+import tag_icon from './tag_icon.svg'
+import shuffle_icon from './shuffle_icon.svg'
 
 export const assets = {
     logo,
@@ -13,9 +15,10 @@ export const assets = {
     order_icon,
     upload_area,
     parcel_icon,
-    user_icon
-    ,
+    user_icon,
     cross_icon,
-    list_icon
+    list_icon,
+    tag_icon,
+    shuffle_icon,
 }
 

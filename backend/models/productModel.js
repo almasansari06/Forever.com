@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema({
     bestseller: { type: Boolean, default: false },
     latestCollection: { type: Boolean, default: false },
     logoWatermarked: { type: Boolean, default: false },
+    displayOrder: { type: Number, default: 0 },
     date: { type: Date, required: true },
 })
 

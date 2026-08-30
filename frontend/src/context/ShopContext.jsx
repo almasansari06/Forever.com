@@ -6,6 +6,39 @@ import { products as localProducts } from "../assets/assets";
 // Create and export ShopContext
 export const ShopContext = createContext();
 
+const fallbackCurrencyRates = {
+    USD: 1, INR: 83.5, AED: 3.67, SAR: 3.75, QAR: 3.64,
+    KWD: 0.307, BHD: 0.376, GBP: 0.79, EUR: 0.92, CAD: 1.37,
+    AUD: 1.53, SGD: 1.34, JPY: 157, CNY: 7.2
+};
+
+const fetchLiveCurrencyRates = async () => {
+    const endpoints = [
+        'https://open.er-api.com/v6/latest/USD',
+        'https://api.exchangerate.host/latest?base=USD',
+    ];
+
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(endpoint);
+            if (!response.ok) continue;
+
+            const data = await response.json();
+            const rates = data?.rates;
+
+            if (rates && typeof rates === 'object' && Object.keys(rates).length > 0) {
+                return Object.fromEntries(
+                    Object.entries(rates).map(([key, value]) => [String(key).toUpperCase(), Number(value)])
+                );
+            }
+        } catch (error) {
+            console.log('Live currency fetch failed:', endpoint, error.message);
+        }
+    }
+
+    return fallbackCurrencyRates;
+};
+
 const ShopContextProvider = (props) => {
     const [currencyDetails, setCurrencyDetails] = useState({ code: 'USD', rate: 1 });
     const delivery_fee = 10;
@@ -42,14 +75,28 @@ const ShopContextProvider = (props) => {
         const controller = new AbortController();
         const detectCurrency = async () => {
             try {
+                const liveRates = await fetchLiveCurrencyRates();
                 const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
                 const data = await response.json();
                 const details = currencyByCountry[data.country_code];
+
                 if (details) {
-                    setCurrencyDetails({ code: details[0], rate: details[1] });
+                    const rate = Number(liveRates[details[0]] ?? details[1]);
+                    setCurrencyDetails({
+                        code: details[0],
+                        rate: Number.isFinite(rate) ? rate : (details[1] || 1),
+                    });
+                } else {
+                    setCurrencyDetails({
+                        code: 'USD',
+                        rate: Number(liveRates.USD ?? 1),
+                    });
                 }
             } catch (error) {
-                if (error.name !== 'AbortError') console.log('Currency detection failed:', error.message);
+                if (error.name !== 'AbortError') {
+                    console.log('Currency detection failed:', error.message);
+                    setCurrencyDetails({ code: 'USD', rate: 1 });
+                }
             }
         };
 

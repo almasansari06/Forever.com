@@ -54,6 +54,7 @@ const addProduct = async (req, res) => {
             outOfStock: outOfStock === "true" ? true : false,
             sizes: normalizeSizes(JSON.parse(sizes || '[]')),
             image: imagesUrl,
+            displayOrder: Date.now(),
             date: Date.now()
         };
 
@@ -71,11 +72,34 @@ const addProduct = async (req, res) => {
 // Function for list all products
 const listProduct = async (req, res) => {
     try {
-        const products = (await productModel.find({}).sort({ date: -1 })).map((product) => ({
+        const products = (await productModel.find({}).sort({ displayOrder: -1, date: -1 })).map((product) => ({
             ...product.toObject(),
             image: normalizeImages(product.image),
         }));
         res.json({ success: true, products });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const shuffleProducts = async (req, res) => {
+    try {
+        const products = await productModel.find({}).sort({ date: -1 });
+
+        if (products.length === 0) {
+            return res.json({ success: true, message: 'No products found to shuffle.' });
+        }
+
+        const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+
+        await Promise.all(
+            shuffledProducts.map((product, index) =>
+                productModel.findByIdAndUpdate(product._id, { $set: { displayOrder: index + 1 } })
+            )
+        );
+
+        res.json({ success: true, message: 'Products shuffled successfully.' });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -260,4 +284,4 @@ const updateProduct = async (req, res) => {
     }
 };
 
-export { listProduct, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType, updateProductType, updateProduct };
+export { listProduct, shuffleProducts, addProduct, removeProduct, singleProduct, getProductTypes, addProductType, deleteProductType, updateProductType, updateProduct };
