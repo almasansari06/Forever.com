@@ -562,7 +562,8 @@ const Add = ({ token }) => {
                     <p className="mb-2">Product Type</p>
                     <div className="flex flex-col gap-2">
                         <select value={subCategory} onChange={handleSubCategoryChange} className="w-full px-3 py-2">
-                            {productTypes.length === 0 ? <option value="">No types available</option> : productTypes.map((item) => (
+                            <option value="">None</option>
+                            {productTypes.map((item) => (
                                 <option key={item} value={item}>{item}</option>
                             ))}
                         </select>

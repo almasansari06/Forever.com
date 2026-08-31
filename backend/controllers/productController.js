@@ -33,25 +33,24 @@ const uploadImagesFast = async (images = []) => {
                     const result = await cloudinary.uploader.upload(item.path, {
                         resource_type: 'image',
                         quality: 'auto',
-                        fetch_format: 'auto',
-                        transformation: [
-                            {
-                                overlay: {
-                                    font_family: 'Arial',
-                                    font_size: 50,
-                                    font_weight: 'bold',
-                                    text: 'FOREVER',
-                                    text_align: 'right'
-                                },
-                                gravity: 'east',
-                                x: 30,
-                                y: 30,
-                                color: 'white',
-                                opacity: 0.8
-                            }
-                        ]
+                        fetch_format: 'auto'
                     });
-                    return result.secure_url;
+                    
+                    // Apply FOREVER watermark text transformation to the URL
+                    const watermarkedUrl = cloudinary.url(result.public_id, {
+                        resource_type: 'image',
+                        quality: 'auto',
+                        fetch_format: 'auto',
+                        overlay: 'text:Arial_50_bold:FOREVER',
+                        gravity: 'east',
+                        x: 30,
+                        y: 30,
+                        background: 'rgb:ffffff',
+                        opacity: 80,
+                        secure: true
+                    });
+                    
+                    return watermarkedUrl;
                 } catch (error) {
                     console.error('Image upload error:', error);
                     return null;
@@ -75,13 +74,13 @@ const addProduct = async (req, res) => {
         const { name, description, price, category, subCategory, sizes, bestseller, latestCollection, outOfStock } = req.body;
 
         const normalizedSubCategory = String(subCategory || '').trim();
-        if (!normalizedSubCategory) {
-            return res.json({ success: false, message: 'Product type is required.' });
-        }
-
-        const existingType = await productTypeModel.findOne({ name: { $regex: new RegExp(`^${normalizedSubCategory.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
-        if (!existingType) {
-            await productTypeModel.create({ name: normalizedSubCategory });
+        
+        // Only create product type if subCategory is provided
+        if (normalizedSubCategory) {
+            const existingType = await productTypeModel.findOne({ name: { $regex: new RegExp(`^${normalizedSubCategory.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
+            if (!existingType) {
+                await productTypeModel.create({ name: normalizedSubCategory });
+            }
         }
 
         const uploadedFiles = Object.values(req.files || {}).flat();
@@ -106,7 +105,7 @@ const addProduct = async (req, res) => {
             description,
             category,
             price: Number(price),
-            subCategory: normalizedSubCategory,
+            subCategory: normalizedSubCategory || '',
             bestseller: bestseller === "true" ? true : false,
             latestCollection: latestCollection === "true",
             logoWatermarked: true,
