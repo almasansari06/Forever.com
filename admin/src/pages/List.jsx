@@ -225,25 +225,6 @@ const List = ({token}) => {
     }
   }
 
-  const invertAllWatermarks = async () => {
-    if (!window.confirm('Add logo to all products that don\'t have it yet?')) {
-      return;
-    }
-
-    try {
-      const response = await axios.post(backendUrl + '/api/product/add-logo', {}, { headers: { token } })
-      if (response.data.success) {
-        toast.success(`✅ Logo added to ${response.data.modifiedCount} products!`)
-        await fetchList()
-      } else {
-        toast.error(response.data.message || 'Unable to add logos.')
-      }
-    } catch (error) {
-      console.log(error)
-      toast.error(error.response?.data?.message || error.message)
-    }
-  }
-
   useEffect(()=>{
     fetchList()
     fetchProductTypes()
@@ -319,13 +300,6 @@ const List = ({token}) => {
           )}
         </div>
         {renderFilter()}
-
-        <button 
-          onClick={invertAllWatermarks}
-          className='px-4 py-2 bg-blue-500 text-white rounded font-medium hover:bg-blue-600 transition-colors w-fit'
-        >
-          ➕ Add Logo to All
-        </button>
 
         {/*---------------------------list table---------------------------*/}
 

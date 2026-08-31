@@ -409,13 +409,14 @@ const Add = ({ token }) => {
         });
     };
 
-    const handleImageChange = async (files, startIndex) => {
-        const selectedImages = Array.from(files).slice(0, 10 - startIndex);
+    const handleImageChange = async (files) => {
+        // Always start from index 0, regardless of which box was clicked
+        const selectedImages = Array.from(files).slice(0, 10);
 
         for (let index = 0; index < selectedImages.length; index += 1) {
             const image = selectedImages[index];
             const compressedImage = await compressImageFile(image);
-            imageSetters[startIndex + index](compressedImage);
+            imageSetters[index](compressedImage);
         }
     };
 
@@ -494,7 +495,7 @@ const Add = ({ token }) => {
                             <div key={inputId} className="relative">
                                 <label htmlFor={inputId} aria-label={`Upload Image ${index + 1}`}>
                                     <img className="w-20 cursor-pointer" src={!image ? assets.upload_area : URL.createObjectURL(image)} alt={`Upload Area ${index + 1}`} />
-                                    <input onChange={(e) => handleImageChange(e.target.files, index)} multiple accept="image/*" type="file" id={inputId} hidden />
+                                    <input onChange={(e) => handleImageChange(e.target.files)} multiple accept="image/*" type="file" id={inputId} hidden />
                                 </label>
                                 {image && (
                                     <button
