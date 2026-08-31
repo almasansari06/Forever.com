@@ -4,7 +4,7 @@ import { backendUrl, currency } from '../App'
 import Pagination from '../components/Pagination'
 import { toast } from 'react-toastify'
 
-const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const footwearSizes = ['6', '7', '8', '9', '10'];
 
 const PriceEditor = ({ value, onUpdate }) => {

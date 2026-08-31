@@ -13,7 +13,7 @@ const Product = () => {
   const { products, formatPrice, addToCart, backendUrl, language, token, navigate } = useContext(ShopContext);
   const t = translations[language] || translations.en;
   const [productData, setProductData] = useState(null);
-  const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   const footwearSizes = ['6', '7', '8', '9', '10'];
   const [image, setImage] = useState('');
   const [galleryDirection, setGalleryDirection] = useState('next');
@@ -51,10 +51,6 @@ const Product = () => {
   };
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
     if (!products || products.length === 0) return;
 
     const product = products.find(item => item._id === productId);

@@ -2,7 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
 import productTypeModel from "../models/productTypeModel.js";
 
-const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const footwearSizes = ['6', '7', '8', '9', '10'];
 
 const normalizeImages = (images = []) => (Array.isArray(images) ? images : []).filter(Boolean);

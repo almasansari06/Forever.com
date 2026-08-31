@@ -47,9 +47,9 @@ const Add = ({ token }) => {
     const [selectedCategoryForManagement, setSelectedCategoryForManagement] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [openActionMenu, setOpenActionMenu] = useState('');
-    const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const [selectedSizeGroup, setSelectedSizeGroup] = useState('');
+    const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
-    const selectedSizeGroup = sizes.some((size) => clothingSizes.includes(size)) ? 'clothing' : sizes.some((size) => footwearSizes.includes(size)) ? 'footwear' : null;
 
     const getOrderedSizes = (nextSizes) => {
         const unique = [...new Set(nextSizes.filter(Boolean))];
@@ -88,6 +88,7 @@ const Add = ({ token }) => {
         const selectedValue = e.target.value;
         setSubCategory(selectedValue);
         setSizes([]);
+        setSelectedSizeGroup('');
     };
 
     const handleAddCategory = async () => {
@@ -214,6 +215,12 @@ const Add = ({ token }) => {
 
     const handleDeleteType = async (typeName) => {
         if (!typeName) return;
+
+        if (typeName === 'None') {
+            toast.error('Protected product type cannot be deleted.');
+            return;
+        }
+
         const shouldDelete = window.confirm(`Delete product type "${typeName}" and all products under it?`);
         if (!shouldDelete) return;
 
@@ -247,6 +254,11 @@ const Add = ({ token }) => {
             return;
         }
 
+        if (typeName === 'None') {
+            toast.error('Protected product type cannot be edited.');
+            return;
+        }
+
         try {
             const response = await axios.post(backendUrl + '/api/product-type/edit', { name: typeName, newName: trimmedName }, { headers: { token } });
             if (response.data.success) {
@@ -267,23 +279,35 @@ const Add = ({ token }) => {
         }
     };
 
-    const toggleSize = (size) => {
+    const toggleGroupSize = (group, size) => {
         setSizes((prev) => {
-            const sizeGroup = clothingSizes.includes(size) ? 'clothing' : footwearSizes.includes(size) ? 'footwear' : null;
-
-            if (!sizeGroup) return prev;
+            const currentGroup = group === 'clothing' ? clothingSizes : footwearSizes;
+            const otherGroup = group === 'clothing' ? footwearSizes : clothingSizes;
 
             const next = prev.includes(size)
                 ? prev.filter((item) => item !== size)
-                : [...prev, size];
+                : [...prev.filter((item) => !otherGroup.includes(item)), size];
 
-            const filtered = sizeGroup === 'clothing'
-                ? next.filter((item) => !footwearSizes.includes(item))
-                : sizeGroup === 'footwear'
-                    ? next.filter((item) => !clothingSizes.includes(item))
-                    : next;
+            const orderedSizes = getOrderedSizes(next.filter((item) => currentGroup.includes(item) || !otherGroup.includes(item)));
+            setSelectedSizeGroup(orderedSizes.length > 0 ? group : '');
+            return orderedSizes;
+        });
+    };
 
-            return getOrderedSizes(filtered);
+    const toggleClothingSize = (size) => toggleGroupSize('clothing', size);
+    const toggleFootwearSize = (size) => toggleGroupSize('footwear', size);
+
+    const handleSizeGroupChange = (event) => {
+        const nextGroup = event.target.value;
+        setSelectedSizeGroup(nextGroup);
+
+        setSizes((prev) => {
+            const next = prev.filter((item) => {
+                if (nextGroup === 'clothing') return !footwearSizes.includes(item);
+                if (nextGroup === 'footwear') return !clothingSizes.includes(item);
+                return true;
+            });
+            return getOrderedSizes(next);
         });
     };
 
@@ -300,8 +324,9 @@ const Add = ({ token }) => {
                         const selected = e.target.value;
                         setSelectedForManagement(selected);
                         if (selected) {
-                            if (isProtected(selected)) {
-                                toast.error(`${selected} is a protected category and cannot be edited or deleted.`);
+                            const protectedForType = selected === 'None';
+                            if (isProtected(selected) || protectedForType) {
+                                toast.error(`${selected} is protected and cannot be edited or deleted.`);
                                 setSelectedForManagement('');
                                 onCancel();
                             } else {
@@ -605,34 +630,41 @@ const Add = ({ token }) => {
                 <div className="w-full max-w-[500px]">
                     <p className="mb-2">Product Sizes</p>
                     <div className="flex flex-col gap-3">
-                        {selectedSizeGroup !== 'footwear' && (
-                            <div>
-                                <p className="mb-1 text-sm font-medium">Clothing / Apparel</p>
-                                <div className="flex gap-3 flex-wrap">
-                                    {clothingSizes.map((item) => (
-                                        <div key={item} onClick={() => toggleSize(item)}>
-                                            <p className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}>
-                                                {item}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
+                        {(!selectedSizeGroup || selectedSizeGroup === 'clothing') && <div>
+                            <p className="mb-1 text-sm font-medium">Clothing / Apparel</p>
+                            <div className="flex gap-3 flex-wrap">
+                                {clothingSizes.map((item) => (
+                                    <button
+                                        key={item}
+                                        type="button"
+                                        onClick={() => toggleClothingSize(item)}
+                                        className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}
+                                        aria-pressed={sizes.includes(item)}
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
                             </div>
-                        )}
-                        {selectedSizeGroup !== 'clothing' && (
-                            <div>
-                                <p className="mb-1 text-sm font-medium">Footwear</p>
-                                <div className="flex gap-3 flex-wrap">
-                                    {footwearSizes.map((item) => (
-                                        <div key={item} onClick={() => toggleSize(item)}>
-                                            <p className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}>
-                                                {item}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
+                        </div>}
+
+                        {(!selectedSizeGroup || selectedSizeGroup === 'footwear') && <div>
+                            <p className="mb-1 text-sm font-medium">Footwear</p>
+                            <div className="flex gap-3 flex-wrap">
+                                {footwearSizes.map((item) => (
+                                    <button
+                                        key={item}
+                                        type="button"
+                                        onClick={() => toggleFootwearSize(item)}
+                                        className={`${sizes.includes(item) ? 'bg-pink-100' : 'bg-slate-200'} px-3 py-1 cursor-pointer`}
+                                        aria-pressed={sizes.includes(item)}
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
                             </div>
-                        )}
+                        </div>}
+
+
                     </div>
                 </div>
             )}
