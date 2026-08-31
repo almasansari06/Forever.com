@@ -82,7 +82,7 @@ const Add = ({ token }) => {
         fetchProductTypes();
     }, []);
 
-    const hasSizeSelection = Boolean(subCategory);
+    const hasSizeSelection = true;
 
     const handleSubCategoryChange = (e) => {
         const selectedValue = e.target.value;
