@@ -263,6 +263,20 @@ const Collection = () => {
   const pageEnd = Math.min(totalPages, pageStart + 5);
   const visiblePages = Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
 
+  // Helper function to count products by category
+  const getProductCountByCategory = (cat) => {
+    return products.filter(product => 
+      product.category && product.category.toLowerCase() === cat.toLowerCase()
+    ).length;
+  };
+
+  // Helper function to count products by product type
+  const getProductCountByType = (type) => {
+    return products.filter(product => 
+      product.subCategory && product.subCategory.toLowerCase() === type.toLowerCase()
+    ).length;
+  };
+
   const handlePageChange = (pageNum) => {
     if (pageNum === currentPage) return;
 
@@ -316,18 +330,24 @@ const Collection = () => {
               )}
             </div>
             <div className='space-y-2.5 text-sm font-medium text-gray-600 dark:text-slate-300'>
-              {categories.map((cat) => (
-                <label key={cat} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
-                  <input 
-                    className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
-                    type="checkbox" 
-                    value={cat} 
-                    checked={category.includes(cat)}
-                    onChange={toggleCategory} 
-                  />
-                  <span className='group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{cat}</span>
-                </label>
-              ))}
+              {categories.map((cat) => {
+                const productCount = getProductCountByCategory(cat);
+                return (
+                  <label key={cat} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
+                    <input 
+                      className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
+                      type="checkbox" 
+                      value={cat} 
+                      checked={category.includes(cat)}
+                      onChange={toggleCategory} 
+                    />
+                    <span className='group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{cat}</span>
+                    {productCount === 0 && (
+                      <span className='ml-auto text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold dark:bg-orange-900 dark:text-orange-200'>Coming Soon</span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -345,18 +365,24 @@ const Collection = () => {
               {productTypes.length === 0 ? (
                 <p className='text-xs text-gray-400 dark:text-slate-400'>{t.noProductTypes}</p>
               ) : (
-                productTypes.map((type) => (
-                  <label key={type} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
-                    <input 
-                      className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
-                      type="checkbox" 
-                      value={type} 
-                      checked={subCategory.includes(type)}
-                      onChange={toggleSubCategory} 
-                    />
-                    <span className='group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{type}</span>
-                  </label>
-                ))
+                productTypes.map((type) => {
+                  const productCount = getProductCountByType(type);
+                  return (
+                    <label key={type} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
+                      <input 
+                        className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
+                        type="checkbox" 
+                        value={type} 
+                        checked={subCategory.includes(type)}
+                        onChange={toggleSubCategory} 
+                      />
+                      <span className='group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{type}</span>
+                      {productCount === 0 && (
+                        <span className='ml-auto text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold dark:bg-orange-900 dark:text-orange-200'>Coming Soon</span>
+                      )}
+                    </label>
+                  );
+                })
               )}
             </div>
           </div>

@@ -225,6 +225,25 @@ const List = ({token}) => {
     }
   }
 
+  const invertAllWatermarks = async () => {
+    if (!window.confirm('Are you sure? This will invert the logo watermark status for ALL products.')) {
+      return;
+    }
+
+    try {
+      const response = await axios.post(backendUrl + '/api/product/invert-watermarks', {}, { headers: { token } })
+      if (response.data.success) {
+        toast.success('✅ All watermarks inverted successfully!')
+        await fetchList()
+      } else {
+        toast.error(response.data.message || 'Unable to invert watermarks.')
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error.response?.data?.message || error.message)
+    }
+  }
+
   useEffect(()=>{
     fetchList()
     fetchProductTypes()
@@ -300,6 +319,13 @@ const List = ({token}) => {
           )}
         </div>
         {renderFilter()}
+
+        <button 
+          onClick={invertAllWatermarks}
+          className='px-4 py-2 bg-orange-500 text-white rounded font-medium hover:bg-orange-600 transition-colors w-fit'
+        >
+          🔄 Invert All Watermarks
+        </button>
 
         {/*---------------------------list table---------------------------*/}
 

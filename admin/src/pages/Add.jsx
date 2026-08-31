@@ -465,8 +465,7 @@ const Add = ({ token }) => {
                 setImage9(false);
                 setImage10(false);
                 setPrice('');
-                setCategory(categoryOptions[0] || 'Men');
-                setSubCategory(productTypes[0] || '');
+                // Keep category and subCategory persistent until page refresh
                 setBestseller(false);
                 setLatestCollection(false);
                 setOutOfStock(false);

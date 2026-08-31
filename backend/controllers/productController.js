@@ -35,22 +35,7 @@ const uploadImagesFast = async (images = []) => {
                         quality: 'auto',
                         fetch_format: 'auto'
                     });
-                    
-                    // Apply FOREVER watermark text transformation to the URL
-                    const watermarkedUrl = cloudinary.url(result.public_id, {
-                        resource_type: 'image',
-                        quality: 'auto',
-                        fetch_format: 'auto',
-                        overlay: 'text:Arial_50_bold:FOREVER',
-                        gravity: 'east',
-                        x: 30,
-                        y: 30,
-                        background: 'rgb:ffffff',
-                        opacity: 80,
-                        secure: true
-                    });
-                    
-                    return watermarkedUrl;
+                    return result.secure_url;
                 } catch (error) {
                     console.error('Image upload error:', error);
                     return null;
@@ -108,7 +93,7 @@ const addProduct = async (req, res) => {
             subCategory: normalizedSubCategory || '',
             bestseller: bestseller === "true" ? true : false,
             latestCollection: latestCollection === "true",
-            logoWatermarked: true,
+            logoWatermarked: false,
             outOfStock: outOfStock === "true" ? true : false,
             sizes: normalizeSizes(parsedSizes),
             image: imagesUrl,
@@ -474,6 +459,28 @@ const updateProduct = async (req, res) => {
     }
 };
 
+// Function to invert logoWatermarked for all products
+const invertAllProductWatermarks = async (req, res) => {
+    try {
+        // Update products where logoWatermarked is true → set to false
+        await productModel.updateMany(
+            { logoWatermarked: true },
+            { $set: { logoWatermarked: false } }
+        );
+
+        // Update products where logoWatermarked is false or doesn't exist → set to true
+        await productModel.updateMany(
+            { $or: [{ logoWatermarked: false }, { logoWatermarked: { $exists: false } }] },
+            { $set: { logoWatermarked: true } }
+        );
+
+        res.json({ success: true, message: 'All product watermarks inverted successfully!' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export {
     listProduct,
     listProductAdmin,
@@ -489,4 +496,5 @@ export {
     updateProductCategory,
     deleteProductCategory,
     updateProduct,
+    invertAllProductWatermarks,
 };
