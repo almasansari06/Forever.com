@@ -33,7 +33,23 @@ const uploadImagesFast = async (images = []) => {
                     const result = await cloudinary.uploader.upload(item.path, {
                         resource_type: 'image',
                         quality: 'auto',
-                        fetch_format: 'auto'
+                        fetch_format: 'auto',
+                        transformation: [
+                            {
+                                overlay: {
+                                    font_family: 'Arial',
+                                    font_size: 50,
+                                    font_weight: 'bold',
+                                    text: 'FOREVER',
+                                    text_align: 'right'
+                                },
+                                gravity: 'east',
+                                x: 30,
+                                y: 30,
+                                color: 'white',
+                                opacity: 0.8
+                            }
+                        ]
                     });
                     return result.secure_url;
                 } catch (error) {
