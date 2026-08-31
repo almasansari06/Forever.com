@@ -226,17 +226,17 @@ const List = ({token}) => {
   }
 
   const invertAllWatermarks = async () => {
-    if (!window.confirm('Are you sure? This will invert the logo watermark status for ALL products.')) {
+    if (!window.confirm('Add logo to all products that don\'t have it yet?')) {
       return;
     }
 
     try {
-      const response = await axios.post(backendUrl + '/api/product/invert-watermarks', {}, { headers: { token } })
+      const response = await axios.post(backendUrl + '/api/product/add-logo', {}, { headers: { token } })
       if (response.data.success) {
-        toast.success('✅ All watermarks inverted successfully!')
+        toast.success(`✅ Logo added to ${response.data.modifiedCount} products!`)
         await fetchList()
       } else {
-        toast.error(response.data.message || 'Unable to invert watermarks.')
+        toast.error(response.data.message || 'Unable to add logos.')
       }
     } catch (error) {
       console.log(error)
@@ -322,9 +322,9 @@ const List = ({token}) => {
 
         <button 
           onClick={invertAllWatermarks}
-          className='px-4 py-2 bg-orange-500 text-white rounded font-medium hover:bg-orange-600 transition-colors w-fit'
+          className='px-4 py-2 bg-blue-500 text-white rounded font-medium hover:bg-blue-600 transition-colors w-fit'
         >
-          🔄 Invert All Watermarks
+          ➕ Add Logo to All
         </button>
 
         {/*---------------------------list table---------------------------*/}

@@ -459,22 +459,20 @@ const updateProduct = async (req, res) => {
     }
 };
 
-// Function to invert logoWatermarked for all products
-const invertAllProductWatermarks = async (req, res) => {
+// Function to add logo to all products that don't have it
+const addLogoToAllProducts = async (req, res) => {
     try {
-        // Update products where logoWatermarked is true → set to false
-        await productModel.updateMany(
-            { logoWatermarked: true },
-            { $set: { logoWatermarked: false } }
-        );
-
         // Update products where logoWatermarked is false or doesn't exist → set to true
-        await productModel.updateMany(
+        const result = await productModel.updateMany(
             { $or: [{ logoWatermarked: false }, { logoWatermarked: { $exists: false } }] },
             { $set: { logoWatermarked: true } }
         );
 
-        res.json({ success: true, message: 'All product watermarks inverted successfully!' });
+        res.json({ 
+            success: true, 
+            message: `Logo added to ${result.modifiedCount} products!`,
+            modifiedCount: result.modifiedCount
+        });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -496,5 +494,5 @@ export {
     updateProductCategory,
     deleteProductCategory,
     updateProduct,
-    invertAllProductWatermarks,
+    addLogoToAllProducts,
 };
