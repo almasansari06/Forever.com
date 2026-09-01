@@ -96,7 +96,7 @@ const addProduct = async (req, res) => {
 
         const productData = {
             name,
-            description,
+            description: String(description ?? '').trim(),
             category,
             price: Number(price),
             subCategory: normalizedSubCategory || '',

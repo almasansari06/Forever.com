@@ -545,7 +545,7 @@ const Add = ({ token }) => {
 
             <div className="w-full max-w-[500px]">
                 <p className="mb-2">Product Description</p>
-                <textarea onChange={(e) => setDescription(e.target.value)} value={description} rows="6" className="w-full max-w-[500px] px-3 py-2 min-h-[140px] max-h-[260px] resize-y" placeholder="Write content here" required />
+                <textarea onChange={(e) => setDescription(e.target.value)} value={description} rows="6" className="w-full max-w-[500px] px-3 py-2 min-h-[140px] max-h-[260px] resize-y" placeholder="Write content here" />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:gap-8">
