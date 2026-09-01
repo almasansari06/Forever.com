@@ -107,8 +107,7 @@ const Collection = () => {
     let productsCopy = products.slice(0);
 
     if (featuredType === 'latest') {
-      const hasLatestFlags = productsCopy.some(item => item.latestCollection);
-      productsCopy = productsCopy.filter(item => item.latestCollection || !hasLatestFlags);
+      productsCopy = productsCopy.filter(item => item.latestCollection === true || item.latestCollection === 'true');
       productsCopy.sort((first, second) => new Date(second.date || 0) - new Date(first.date || 0));
     }
 

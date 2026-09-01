@@ -10,9 +10,8 @@ const LatestCollection = () => {
 
     useEffect(() => {
         const updateLatestProducts = () => {
-            const hasLatestFlags = products.some((item) => item.latestCollection);
             const latest = products
-                .filter((item) => item.latestCollection || !hasLatestFlags)
+                .filter((item) => item.latestCollection === true || item.latestCollection === 'true')
                 .sort((first, second) => new Date(second.date || 0) - new Date(first.date || 0));
 
             setLatestProducts(latest);
