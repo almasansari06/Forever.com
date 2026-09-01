@@ -9,6 +9,8 @@ const normalizeImages = (images = []) => (Array.isArray(images) ? images : []).f
 
 const normalizeName = (value) => String(value ?? '').trim();
 
+const normalizeFlag = (value) => value === true || value === 'true' || value === 1 || value === '1';
+
 const normalizeSizes = (sizes = []) => {
     const raw = Array.isArray(sizes) ? sizes : [];
     const unique = [...new Set(raw.map((size) => String(size).trim()).filter(Boolean))];
@@ -91,10 +93,10 @@ const addProduct = async (req, res) => {
             category,
             price: Number(price),
             subCategory: normalizedSubCategory || '',
-            bestseller: bestseller === "true" ? true : false,
-            latestCollection: latestCollection === "true",
+            bestseller: normalizeFlag(bestseller),
+            latestCollection: normalizeFlag(latestCollection),
             logoWatermarked: false,
-            outOfStock: outOfStock === "true" ? true : false,
+            outOfStock: normalizeFlag(outOfStock),
             sizes: normalizeSizes(parsedSizes),
             image: imagesUrl,
             displayOrder: Date.now(),
@@ -430,7 +432,7 @@ const deleteProductCategory = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
-        const { id, price, sizes, outOfStock } = req.body;
+        const { id, price, sizes, outOfStock, latestCollection } = req.body;
 
         if (!id) {
             return res.json({ success: false, message: 'Product ID is required.' });
@@ -449,7 +451,8 @@ const updateProduct = async (req, res) => {
 
         product.price = Number(price ?? product.price);
         product.sizes = normalizeSizes(parsedSizes);
-        product.outOfStock = Boolean(outOfStock);
+        product.outOfStock = normalizeFlag(outOfStock) || (outOfStock === undefined ? product.outOfStock : false);
+        product.latestCollection = normalizeFlag(latestCollection) || (latestCollection === undefined ? product.latestCollection : false);
         await product.save();
 
         res.json({ success: true, message: 'Product updated successfully.' });
