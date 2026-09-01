@@ -349,14 +349,24 @@ const List = ({token}) => {
                     <span className='text-[10px] text-gray-400'>No sizes</span>
                   )}
                 </div>
-                <label className='flex items-center gap-2 justify-center'>
-                  <input
-                    type='checkbox'
-                    checked={Boolean(item.outOfStock)}
-                    onChange={(e) => updateProduct(item._id, { outOfStock: e.target.checked })}
-                  />
-                  <span className='text-xs'>{item.outOfStock ? 'Out' : 'In'}</span>
-                </label>
+                <div className='flex flex-col items-center gap-2'>
+                  <label className='flex items-center gap-2 justify-center'>
+                    <input
+                      type='checkbox'
+                      checked={Boolean(item.outOfStock)}
+                      onChange={(e) => updateProduct(item._id, { outOfStock: e.target.checked })}
+                    />
+                    <span className='text-xs'>{item.outOfStock ? 'Out' : 'In'}</span>
+                  </label>
+                  <label className='flex items-center gap-2 justify-center'>
+                    <input
+                      type='checkbox'
+                      checked={Boolean(item.latestCollection === true || item.latestCollection === 'true')}
+                      onChange={(e) => updateProduct(item._id, { latestCollection: e.target.checked })}
+                    />
+                    <span className='text-[10px]'>Latest</span>
+                  </label>
+                </div>
                 <p onClick={()=>removeProduct(item._id)} className='text-right md:text-center cursor-pointer text-lg'>X</p>
             </div>
           ))

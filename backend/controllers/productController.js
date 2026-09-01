@@ -11,6 +11,13 @@ const normalizeName = (value) => String(value ?? '').trim();
 
 const normalizeFlag = (value) => value === true || value === 'true' || value === 1 || value === '1';
 
+const sanitizeProductFlags = (product = {}) => ({
+    ...product,
+    bestseller: normalizeFlag(product.bestseller),
+    latestCollection: normalizeFlag(product.latestCollection),
+    outOfStock: normalizeFlag(product.outOfStock),
+});
+
 const normalizeSizes = (sizes = []) => {
     const raw = Array.isArray(sizes) ? sizes : [];
     const unique = [...new Set(raw.map((size) => String(size).trim()).filter(Boolean))];
@@ -118,7 +125,7 @@ const addProduct = async (req, res) => {
 const listProduct = async (req, res) => {
     try {
         const products = (await productModel.find({}).sort({ displayOrder: -1, date: -1 })).map((product) => {
-            const item = product.toObject();
+            const item = sanitizeProductFlags(product.toObject());
             return {
                 ...item,
                 category: normalizeName(item.category),
@@ -137,10 +144,13 @@ const listProduct = async (req, res) => {
 // Function for list all products (for admin - always sorted by date, ignores shuffle)
 const listProductAdmin = async (req, res) => {
     try {
-        const products = (await productModel.find({}).sort({ date: -1 })).map((product) => ({
-            ...product.toObject(),
-            image: normalizeImages(product.image),
-        }));
+        const products = (await productModel.find({}).sort({ date: -1 })).map((product) => {
+            const item = sanitizeProductFlags(product.toObject());
+            return {
+                ...item,
+                image: normalizeImages(item.image),
+            };
+        });
         res.json({ success: true, products });
     } catch (error) {
         console.log(error);
@@ -197,7 +207,7 @@ const singleProduct = async (req, res) => {
         const { productId } = req.body;
         const productDocument = await productModel.findById(productId);
         const product = productDocument
-            ? { ...productDocument.toObject(), image: normalizeImages(productDocument.image) }
+            ? { ...sanitizeProductFlags(productDocument.toObject()), image: normalizeImages(productDocument.image) }
             : null;
         res.json({ success: true, product });
     } catch (error) {
