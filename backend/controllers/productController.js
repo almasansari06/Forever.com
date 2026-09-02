@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
 import productTypeModel from "../models/productTypeModel.js";
+import productCategoryModel from "../models/productCategoryModel.js";
 
 const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const footwearSizes = ['6', '7', '8', '9', '10'];
@@ -228,9 +229,11 @@ const getProductTypes = async (req, res) => {
             .filter((value) => value && value.toLowerCase() !== 'other')
             .sort((a, b) => a.localeCompare(b));
 
+        const categoryDocs = await productCategoryModel.find({}).sort({ name: 1 });
         const productCategoriesFromProducts = await productModel.distinct('category');
         const defaultCategories = ['Men', 'Women', 'Kids'];
-        const uniqueCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts.map(normalizeName)])]
+        const categoriesFromDatabase = categoryDocs.map(item => normalizeName(item.name));
+        const uniqueCategories = [...new Set([...defaultCategories, ...categoriesFromDatabase, ...productCategoriesFromProducts.map(normalizeName)])]
             .filter((value) => value && value.toLowerCase() !== 'other')
             .sort((a, b) => a.localeCompare(b));
 
@@ -338,8 +341,10 @@ const getAllProductTypes = async () => {
 
 const getAllProductCategories = async () => {
     const defaultCategories = ['Men', 'Women', 'Kids'];
+    const categoryDocs = await productCategoryModel.find({}).sort({ name: 1 });
+    const categoriesFromDatabase = categoryDocs.map(item => item.name);
     const productCategoriesFromProducts = await productModel.distinct('category');
-    const visibleCategories = [...new Set([...defaultCategories, ...productCategoriesFromProducts])]
+    const visibleCategories = [...new Set([...defaultCategories, ...categoriesFromDatabase, ...productCategoriesFromProducts])]
         .filter((value) => value && value.toLowerCase() !== 'other')
         .sort((a, b) => a.localeCompare(b));
 
@@ -365,9 +370,8 @@ const addProductCategory = async (req, res) => {
             return res.json({ success: true, message: 'Category already exists.', productCategories: currentCategories });
         }
 
+        await productCategoryModel.create({ name: trimmedName });
         const allCategories = await getAllProductCategories();
-        allCategories.push(trimmedName);
-        allCategories.sort((a, b) => a.localeCompare(b));
 
         res.json({ success: true, message: 'Category added successfully.', productCategories: allCategories });
     } catch (error) {
@@ -403,6 +407,7 @@ const updateProductCategory = async (req, res) => {
         }
 
         await productModel.updateMany({ category: oldNameRegex }, { $set: { category: trimmedNewName } });
+        await productCategoryModel.updateOne({ name: oldNameRegex }, { $set: { name: trimmedNewName } });
         const allCategories = await getAllProductCategories();
         res.json({ success: true, message: 'Category updated successfully.', productCategories: allCategories });
     } catch (error) {
@@ -432,6 +437,7 @@ const deleteProductCategory = async (req, res) => {
         const oldNameRegex = new RegExp(`^${escapeRegex(trimmedName)}$`, 'i');
 
         await productModel.deleteMany({ category: oldNameRegex });
+        await productCategoryModel.deleteOne({ name: oldNameRegex });
         const allCategories = await getAllProductCategories();
         res.json({ success: true, message: 'Category deleted and all related products removed.', productCategories: allCategories });
     } catch (error) {
