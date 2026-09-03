@@ -465,6 +465,19 @@ const Collection = () => {
             {filterProducts.length > itemsPerPage && (
               <div className='flex w-full items-center justify-center gap-2 px-1 py-1 mt-12 mb-8'>
                 <div className='flex flex-nowrap items-center justify-center gap-1'>
+                  {pageStart > 1 && (
+                    <>
+                      <button
+                        type='button'
+                        onClick={() => handlePageChange(1)}
+                        className='flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 font-medium transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
+                      >
+                        1
+                      </button>
+                      <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
+                    </>
+                  )}
+
                   {visiblePages.map((pageNum) => (
                     <button
                       key={pageNum}
@@ -478,19 +491,6 @@ const Collection = () => {
                       {pageNum}
                     </button>
                   ))}
-
-                  {pageStart > 1 && (
-                    <>
-                      <button
-                        type='button'
-                        onClick={() => handlePageChange(1)}
-                        className='flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 font-medium transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
-                      >
-                        1
-                      </button>
-                      <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
-                    </>
-                  )}
 
                   {pageEnd < totalPages && (
                     <>
