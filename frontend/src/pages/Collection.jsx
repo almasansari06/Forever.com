@@ -258,10 +258,14 @@ const Collection = () => {
   }, [currentPage, searchParams]);
 
   const totalPages = Math.ceil(filterProducts.length / itemsPerPage);
-  const pageStart = currentPage === totalPages
-    ? Math.max(1, totalPages - 5)
-    : currentPage < 6 ? 1 : currentPage;
-  const pageEnd = Math.min(totalPages, pageStart + 5);
+  const pageStart = totalPages <= 5
+    ? 1
+    : currentPage <= 3
+      ? 1
+      : currentPage >= totalPages - 2
+        ? totalPages - 4
+        : currentPage - 2;
+  const pageEnd = Math.min(totalPages, pageStart + 4);
   const visiblePages = Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
 
   // Helper function to count products by category
