@@ -50,6 +50,7 @@ const Product = () => {
   const imageRef = useRef(null);
   const viewerDescriptionRef = useRef(null);
   const detailDescriptionRef = useRef(null);
+  const loadedProductIdRef = useRef(null);
   const viewerHistoryRef = useRef(false);
   const reviewViewerStartXRef = useRef(null);
   const reviewViewerMovedRef = useRef(false);
@@ -74,9 +75,12 @@ const Product = () => {
       setImage(productImages[0] || '');
       setCurrentImageIndex(0);
       closeImageViewer();
-      setDescriptionExpanded(false);
-      setDetailDescriptionExpanded(false);
-      setActiveInfoTab('description');
+      if (loadedProductIdRef.current !== product._id) {
+        setDescriptionExpanded(false);
+        setDetailDescriptionExpanded(false);
+        setActiveInfoTab('description');
+        loadedProductIdRef.current = product._id;
+      }
       setSize(''); // Reset selected size on product change
     } else {
       setProductData(null);
