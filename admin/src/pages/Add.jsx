@@ -66,12 +66,6 @@ const Add = ({ token }) => {
     const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
 
-    const applyDescriptionFormat = (command) => {
-        descriptionEditorRef.current?.focus();
-        document.execCommand(command, false);
-        setDescription(descriptionEditorRef.current?.innerHTML || '');
-    };
-
     const getOrderedSizes = (nextSizes) => {
         const unique = [...new Set(nextSizes.filter(Boolean))];
         const clothing = clothingSizes.filter((size) => unique.includes(size));
@@ -567,12 +561,6 @@ const Add = ({ token }) => {
 
             <div className="w-full max-w-[500px]">
                 <p className="mb-2">Product Description</p>
-                <div className="mb-2 flex gap-2">
-                    <button type="button" onClick={() => applyDescriptionFormat('bold')} className="border px-3 py-1 font-bold">B</button>
-                    <button type="button" onClick={() => applyDescriptionFormat('italic')} className="border px-3 py-1 italic">I</button>
-                    <button type="button" onClick={() => applyDescriptionFormat('underline')} className="border px-3 py-1 underline">U</button>
-                    <button type="button" onClick={() => applyDescriptionFormat('insertUnorderedList')} className="border px-3 py-1">List</button>
-                </div>
                 <div
                     ref={descriptionEditorRef}
                     contentEditable
