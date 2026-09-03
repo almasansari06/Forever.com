@@ -8,6 +8,20 @@ import WatermarkedImage from '../components/WatermarkedImage';
 import { toast } from 'react-toastify';
 import { translations } from '../data/translations';
 
+const sanitizeDescription = (description = '') => {
+  const template = document.createElement('template');
+  template.innerHTML = String(description);
+  template.content.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach((element) => element.remove());
+  template.content.querySelectorAll('*').forEach((element) => {
+    [...element.attributes].forEach((attribute) => {
+      if (/^on/i.test(attribute.name) || /url\s*\(|expression\s*\(/i.test(attribute.value)) {
+        element.removeAttribute(attribute.name);
+      }
+    });
+  });
+  return template.innerHTML;
+};
+
 const Product = () => {
   const { productId } = useParams();
   const { products, formatPrice, addToCart, backendUrl, language, token, navigate } = useContext(ShopContext);
@@ -20,10 +34,6 @@ const Product = () => {
   const [size, setSize] = useState('');
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [descriptionHasMore, setDescriptionHasMore] = useState(false);
-  const [detailDescriptionExpanded, setDetailDescriptionExpanded] = useState(false);
-  const [detailDescriptionHasMore, setDetailDescriptionHasMore] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [activeInfoTab, setActiveInfoTab] = useState('description');
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -34,8 +44,6 @@ const Product = () => {
   const [reviewViewerIndex, setReviewViewerIndex] = useState(0);
   const dragStartXRef = useRef(null);
   const imageRef = useRef(null);
-  const viewerDescriptionRef = useRef(null);
-  const detailDescriptionRef = useRef(null);
   const viewerHistoryRef = useRef(false);
   const reviewViewerStartXRef = useRef(null);
   const reviewViewerMovedRef = useRef(false);
@@ -60,8 +68,6 @@ const Product = () => {
       setImage(productImages[0] || '');
       setCurrentImageIndex(0);
       closeImageViewer();
-      setDescriptionExpanded(false);
-      setDetailDescriptionExpanded(false);
       setActiveInfoTab('description');
       setSize(''); // Reset selected size on product change
     } else {
@@ -127,25 +133,10 @@ const Product = () => {
     };
   }, [viewerOpen, productData, currentImageIndex]);
 
-  useEffect(() => {
-    if (!viewerOpen || !viewerDescriptionRef.current) return;
-
-    const descriptionElement = viewerDescriptionRef.current;
-    setDescriptionHasMore(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
-  }, [viewerOpen, productData]);
-
-  useEffect(() => {
-    if (!productData || !detailDescriptionRef.current) return;
-
-    const descriptionElement = detailDescriptionRef.current;
-    setDetailDescriptionHasMore(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
-  }, [productData]);
-
   const openImageViewer = (index) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
     setCurrentImageIndex(index);
     setImage(productData.image[index]);
-    setDescriptionExpanded(false);
     if (!viewerHistoryRef.current) {
       window.history.pushState({ imageViewer: true }, '');
       viewerHistoryRef.current = true;
@@ -323,6 +314,7 @@ const Product = () => {
   }
 
   const reviewCount = reviews.length;
+  const descriptionHtml = sanitizeDescription(productData?.description);
   const averageRating = reviewCount > 0
     ? reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / reviewCount
     : 0;
@@ -415,29 +407,9 @@ const Product = () => {
           </div>
           <p className='mt-5 text-3xl font-medium'>{formatPrice(productData.price)}</p>
           <p
-            ref={detailDescriptionRef}
-            className='mt-5 w-full max-w-full whitespace-pre-wrap break-all text-gray-500 md:w-4/5'
-            style={detailDescriptionExpanded ? undefined : {
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
-            {productData.description}
-          </p>
-          {detailDescriptionHasMore && (
-            <button
-              type='button'
-              onClick={() => setDetailDescriptionExpanded((expanded) => !expanded)}
-              className='mt-2 block max-w-full text-left text-sm font-medium text-orange-600 underline cursor-pointer'
-            >
-              {detailDescriptionExpanded ? 'Read less' : 'Read more'}
-            </button>
-          )}
+            className='mt-5 w-full max-w-full break-words text-gray-500 md:w-4/5 [&_p]:mb-3 [&_ul]:ml-5 [&_ul]:list-disc [&_ol]:ml-5 [&_ol]:list-decimal [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic'
+            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          />
 
           {productData.outOfStock && (
             <div className='mt-5 inline-block rounded bg-red-100 text-red-700 px-3 py-2 text-sm font-medium'>
@@ -534,7 +506,7 @@ const Product = () => {
         </div>
         {activeInfoTab === 'description' ? (
           <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
-            <p className='whitespace-pre-wrap break-words max-h-[260px] overflow-y-auto pr-2'>{productData.description}</p>
+            <div className='break-words [&_p]:mb-3 [&_ul]:ml-5 [&_ul]:list-disc [&_ol]:ml-5 [&_ol]:list-decimal [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic' dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
           </div>
         ) : (
           <div className='border px-6 py-6 text-sm text-gray-500 dark:text-slate-300'>
@@ -696,28 +668,7 @@ const Product = () => {
               }}
             />
             <div className='mt-4 text-white text-sm'>
-              <p
-                ref={viewerDescriptionRef}
-                className='whitespace-pre-wrap break-words'
-                style={descriptionExpanded ? undefined : {
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {productData.description}
-              </p>
-              {descriptionHasMore && (
-                <button
-                  type='button'
-                  className='mt-2 text-orange-300 underline cursor-pointer'
-                  onClick={() => setDescriptionExpanded((expanded) => !expanded)}
-                >
-                  {descriptionExpanded ? 'Read less' : 'Read more'}
-                </button>
-              )}
+              <div className='break-words [&_p]:mb-3 [&_ul]:ml-5 [&_ul]:list-disc [&_ol]:ml-5 [&_ol]:list-decimal [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic' dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
             </div>
             <div className='mt-4 text-center text-white text-sm'>
               {currentImageIndex + 1} / {productData.image.length}

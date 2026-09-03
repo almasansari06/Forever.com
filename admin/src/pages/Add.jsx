@@ -1,10 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { assets } from '../assets/assets';
 import axios from 'axios';
 import { backendUrl } from '../App';
 import { toast } from 'react-toastify';
 
 let logoPromise;
+
+const sanitizeDescription = (description = '') => {
+    const template = document.createElement('template');
+    template.innerHTML = String(description);
+    template.content.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach((element) => element.remove());
+    template.content.querySelectorAll('*').forEach((element) => {
+        [...element.attributes].forEach((attribute) => {
+            if (/^on/i.test(attribute.name) || /url\s*\(|expression\s*\(/i.test(attribute.value)) {
+                element.removeAttribute(attribute.name);
+            }
+        });
+    });
+    return template.innerHTML;
+};
 
 const notifyProductsUpdated = () => {
     const stamp = String(Date.now());
@@ -27,6 +41,7 @@ const Add = ({ token }) => {
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const descriptionEditorRef = useRef(null);
     const [price, setPrice] = useState('');
     const defaultCategoryOptions = ['Men', 'Women', 'Kids'];
     const [category, setCategory] = useState('Men');
@@ -50,6 +65,12 @@ const Add = ({ token }) => {
     const [selectedSizeGroup, setSelectedSizeGroup] = useState('');
     const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
     const footwearSizes = ['6', '7', '8', '9', '10'];
+
+    const applyDescriptionFormat = (command) => {
+        descriptionEditorRef.current?.focus();
+        document.execCommand(command, false);
+        setDescription(descriptionEditorRef.current?.innerHTML || '');
+    };
 
     const getOrderedSizes = (nextSizes) => {
         const unique = [...new Set(nextSizes.filter(Boolean))];
@@ -458,7 +479,7 @@ const Add = ({ token }) => {
         try {
             const formData = new FormData();
             formData.append('name', name);
-            formData.append('description', description);
+            formData.append('description', sanitizeDescription(description));
             formData.append('price', price);
             formData.append('category', category);
             formData.append('subCategory', subCategory);
@@ -480,6 +501,7 @@ const Add = ({ token }) => {
                 notifyProductsUpdated();
                 setName('');
                 setDescription('');
+                if (descriptionEditorRef.current) descriptionEditorRef.current.innerHTML = '';
                 setImage1(false);
                 setImage2(false);
                 setImage3(false);
@@ -545,7 +567,21 @@ const Add = ({ token }) => {
 
             <div className="w-full max-w-[500px]">
                 <p className="mb-2">Product Description</p>
-                <textarea onChange={(e) => setDescription(e.target.value)} value={description} rows="6" className="w-full max-w-[500px] px-3 py-2 min-h-[140px] max-h-[260px] resize-y" placeholder="Write content here" />
+                <div className="mb-2 flex gap-2">
+                    <button type="button" onClick={() => applyDescriptionFormat('bold')} className="border px-3 py-1 font-bold">B</button>
+                    <button type="button" onClick={() => applyDescriptionFormat('italic')} className="border px-3 py-1 italic">I</button>
+                    <button type="button" onClick={() => applyDescriptionFormat('underline')} className="border px-3 py-1 underline">U</button>
+                    <button type="button" onClick={() => applyDescriptionFormat('insertUnorderedList')} className="border px-3 py-1">List</button>
+                </div>
+                <div
+                    ref={descriptionEditorRef}
+                    contentEditable
+                    role="textbox"
+                    aria-multiline="true"
+                    onInput={(e) => setDescription(e.currentTarget.innerHTML)}
+                    className="w-full max-w-[500px] min-h-[140px] max-h-[260px] overflow-y-auto border px-3 py-2 resize-y"
+                    data-placeholder="Write content here"
+                />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:gap-8">
