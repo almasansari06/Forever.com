@@ -260,7 +260,9 @@ const Collection = () => {
   const totalPages = Math.ceil(filterProducts.length / itemsPerPage);
   const pageStart = currentPage < 6 ? 1 : currentPage;
   const pageEnd = Math.min(totalPages, pageStart + 5);
-  const visiblePages = Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
+  const visiblePages = currentPage === totalPages
+    ? Array.from({ length: Math.min(6, totalPages) }, (_, index) => currentPage - index)
+    : Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => pageStart + index);
 
   // Helper function to count products by category
   const getProductCountByCategory = (cat) => {
@@ -477,7 +479,18 @@ const Collection = () => {
                     </button>
                   ))}
 
-                  {pageEnd < totalPages && (
+                  {currentPage === totalPages && !visiblePages.includes(1) ? (
+                    <>
+                      <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
+                      <button
+                        type='button'
+                        onClick={() => handlePageChange(1)}
+                        className='flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 font-medium transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
+                      >
+                        1
+                      </button>
+                    </>
+                  ) : pageEnd < totalPages && (
                     <>
                       <span className='px-1 py-2 text-gray-400 dark:text-slate-500'>...</span>
                       <button
