@@ -433,9 +433,9 @@ const Product = () => {
             <p className='pl-2'>({reviewCount})</p>
           </div>
           <p className='mt-5 text-3xl font-medium'>{formatPrice(productData.price)}</p>
-          <p
+          <div
             ref={detailDescriptionRef}
-            className='mt-5 w-full max-w-full break-words text-gray-500 md:w-4/5 [&_p]:mb-3 [&_ul]:ml-5 [&_ul]:list-disc [&_ol]:ml-5 [&_ol]:list-decimal [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic'
+            className='mt-5 w-full max-w-full whitespace-pre-wrap break-words text-gray-500 md:w-4/5 [&_p]:mb-3 [&_ul]:ml-5 [&_ul]:list-disc [&_ol]:ml-5 [&_ol]:list-decimal [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic'
             style={detailDescriptionExpanded ? undefined : {
               display: '-webkit-box',
               WebkitLineClamp: 3,
@@ -445,7 +445,7 @@ const Product = () => {
               wordBreak: 'break-word',
             }}
             dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-          />
+          ></div>
           {detailDescriptionHasMore && (
             <button
               type='button'
