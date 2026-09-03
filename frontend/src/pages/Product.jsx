@@ -146,18 +146,18 @@ const Product = () => {
   }, [viewerOpen, productData, currentImageIndex]);
 
   useEffect(() => {
-    if (!viewerOpen || !viewerDescriptionRef.current) return;
+    if (!viewerOpen || descriptionExpanded || !viewerDescriptionRef.current) return;
 
     const descriptionElement = viewerDescriptionRef.current;
     setDescriptionHasMore(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
-  }, [viewerOpen, productData]);
+  }, [viewerOpen, productData, descriptionExpanded]);
 
   useEffect(() => {
-    if (!productData || !detailDescriptionRef.current) return;
+    if (!productData || detailDescriptionExpanded || !detailDescriptionRef.current) return;
 
     const descriptionElement = detailDescriptionRef.current;
     setDetailDescriptionHasMore(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
-  }, [productData]);
+  }, [productData, detailDescriptionExpanded]);
 
   const openImageViewer = (index) => {
     if (!productData || !productData.image || productData.image.length === 0) return;
