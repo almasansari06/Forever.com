@@ -22,7 +22,7 @@ const BestSeller = () => {
             </p>
 
         </div>
-        <FeaturedProductCarousel products={bestSeller} viewMorePath='/collection?featured=bestseller' />
+        <FeaturedProductCarousel products={bestSeller} viewMorePath='/collection' />
     </div>
   )
 }
