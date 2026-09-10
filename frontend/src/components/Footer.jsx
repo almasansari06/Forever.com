@@ -43,6 +43,10 @@ const Footer = () => {
     <div className='transition-colors duration-300'>
       <div className='flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 mt-40 text-sm'>
         <div>
+          <div className='luxury-trust-label' aria-label='Trusted luxury houses'>
+            <span className='luxury-trust-seal' aria-hidden='true'>✓</span>
+            <span>Trusted luxury houses</span>
+          </div>
           <div className='luxury-brands mb-6 border-y border-gray-200 dark:border-slate-700' aria-label='Luxury designers'>
             <div className='luxury-brands-track'>
               {[...luxuryBrands, ...luxuryBrands].map((brand, index) => (

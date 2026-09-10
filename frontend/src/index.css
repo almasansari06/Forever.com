@@ -184,6 +184,31 @@ a.active hr{
     background: rgba(255, 255, 255, 0.46);
   }
 
+  .luxury-trust-label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
+    color: #6b7280;
+    font-size: 0.67rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .luxury-trust-seal {
+    display: inline-flex;
+    width: 1.25rem;
+    height: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #a16207;
+    border-radius: 9999px;
+    color: #a16207;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
   .luxury-brands-track {
     display: flex;
     width: max-content;
