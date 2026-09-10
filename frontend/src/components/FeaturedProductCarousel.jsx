@@ -100,7 +100,6 @@ const FeaturedProductCarousel = ({ products, viewMorePath, maxProducts = 8 }) =>
 
 const SwipeHint = () => (
   <div className='swipe-hint' aria-hidden='true'>
-    <span className='swipe-hint-hand'>👉</span>
     <span className='swipe-hint-text'>Swipe to see the products</span>
   </div>
 )

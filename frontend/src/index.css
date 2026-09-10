@@ -180,7 +180,7 @@ a.active hr{
 
   .luxury-brands {
     overflow: hidden;
-    padding: 1.35rem 0;
+    padding: 1.35rem 1.5rem;
     background: rgba(255, 255, 255, 0.46);
   }
 
@@ -288,10 +288,6 @@ a.active hr{
     transform: translate(-50%, -50%);
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
     animation: swipeHint 2.2s ease-in-out 2;
-  }
-
-  .swipe-hint-hand {
-    font-size: 2rem;
   }
 
   .swipe-hint-text {
