@@ -167,7 +167,14 @@ const shuffleProducts = async (req, res) => {
             return res.json({ success: true, message: 'No products found to shuffle.' });
         }
 
-        const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+        const shuffledProducts = [...products];
+        for (let index = shuffledProducts.length - 1; index > 0; index -= 1) {
+            const randomIndex = Math.floor(Math.random() * (index + 1));
+            [shuffledProducts[index], shuffledProducts[randomIndex]] = [
+                shuffledProducts[randomIndex],
+                shuffledProducts[index],
+            ];
+        }
 
         await Promise.all(
             shuffledProducts.map((product, index) =>

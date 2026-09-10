@@ -11,8 +11,7 @@ const LatestCollection = () => {
     useEffect(() => {
         const updateLatestProducts = () => {
             const latest = products
-                .filter((item) => item.latestCollection === true || item.latestCollection === 'true')
-                .sort((first, second) => new Date(second.date || 0) - new Date(first.date || 0));
+                .filter((item) => item.latestCollection === true || item.latestCollection === 'true');
 
             setLatestProducts(latest);
         };
