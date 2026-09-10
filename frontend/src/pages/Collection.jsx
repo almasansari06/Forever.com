@@ -344,7 +344,7 @@ const Collection = () => {
                 return (
                   <label key={cat} className='flex items-start gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
                     <input 
-                      className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
+                      className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white'
                       type="checkbox" 
                       value={cat} 
                       checked={category.includes(cat)}
@@ -379,7 +379,7 @@ const Collection = () => {
                   return (
                     <label key={type} className='flex items-start gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
                       <input 
-                        className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
+                        className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white'
                         type="checkbox" 
                         value={type} 
                         checked={subCategory.includes(type)}
