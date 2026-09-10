@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
@@ -6,8 +6,10 @@ import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
 import { translations } from '../data/translations';
 
+const normalizeFilterValue = (value) => String(value ?? '').trim().toLowerCase();
+
 const Collection = () => {
-  const { products, search, showSearch, language } = useContext(ShopContext);
+  const { products, search, language } = useContext(ShopContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const featuredType = searchParams.get('featured');
   const t = translations[language] || translations.en;
@@ -81,8 +83,6 @@ const Collection = () => {
     localStorage.removeItem('forever_collection_sort');
   }, []);
 
-  const normalizeFilterValue = (value) => String(value ?? '').trim().toLowerCase();
-
   const toggleCategory = (e) => {
     const nextValue = String(e.target.value || '').trim();
     if (category.includes(nextValue)) {
@@ -108,7 +108,7 @@ const Collection = () => {
     }
   };
 
-  const applyFilter = () => {
+  const applyFilter = useCallback(() => {
     let productsCopy = products.slice(0);
 
     if (featuredType === 'latest') {
@@ -179,7 +179,7 @@ const Collection = () => {
     }
 
     setFilterProducts(productsCopy);
-  };
+  }, [category, featuredType, products, search, sortType, subCategory]);
 
   const fetchProductTypes = async () => {
     try {
@@ -215,7 +215,7 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter();
-  }, [category, subCategory, search, products, sortType, featuredType]);
+  }, [applyFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -342,15 +342,15 @@ const Collection = () => {
               {categories.map((cat) => {
                 const productCount = getProductCountByCategory(cat);
                 return (
-                  <label key={cat} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
+                  <label key={cat} className='flex items-start gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
                     <input 
-                      className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
+                      className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
                       type="checkbox" 
                       value={cat} 
                       checked={category.includes(cat)}
                       onChange={toggleCategory} 
                     />
-                    <span className='group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{cat}</span>
+                    <span className='min-w-0 flex-1 break-words leading-snug group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{cat}</span>
                     {productCount === 0 && (
                       <span className='ml-auto text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold dark:bg-orange-900 dark:text-orange-200'>Coming Soon</span>
                     )}
@@ -377,15 +377,15 @@ const Collection = () => {
                 productTypes.map((type) => {
                   const productCount = getProductCountByType(type);
                   return (
-                    <label key={type} className='flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
+                    <label key={type} className='flex items-start gap-3 p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group dark:hover:bg-slate-800'>
                       <input 
-                        className='w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
+                        className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-black focus:ring-black cursor-pointer accent-black dark:accent-white' 
                         type="checkbox" 
                         value={type} 
                         checked={subCategory.includes(type)}
                         onChange={toggleSubCategory} 
                       />
-                      <span className='group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{type}</span>
+                      <span className='min-w-0 flex-1 break-words leading-snug group-hover:text-gray-900 transition-colors dark:group-hover:text-white'>{type}</span>
                       {productCount === 0 && (
                         <span className='ml-auto text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold dark:bg-orange-900 dark:text-orange-200'>Coming Soon</span>
                       )}
