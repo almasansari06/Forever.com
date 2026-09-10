@@ -24,12 +24,34 @@ const Footer = () => {
     'Alexander McQueen',
     'Dolce & Gabbana',
     'Brunello Cucinelli',
+    'The Row',
+    'Jacquemus',
+    'Chloe',
+    'Tom Ford',
+    'Jimmy Choo',
+    'Manolo Blahnik',
+    'Valextra',
+    'Loro Piana',
+    'Zimmermann',
+    'Oscar de la Renta',
+    'Max Mara',
+    'Ralph Lauren',
+    'Tory Burch',
   ];
 
   return (
     <div className='transition-colors duration-300'>
       <div className='flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 mt-40 text-sm'>
         <div>
+          <div className='luxury-brands mb-6 border-y border-gray-200 dark:border-slate-700' aria-label='Luxury designers'>
+            <div className='luxury-brands-track'>
+              {[...luxuryBrands, ...luxuryBrands].map((brand, index) => (
+                <span key={`${brand}-${index}`} className='luxury-brand'>
+                  {brand}
+                </span>
+              ))}
+            </div>
+          </div>
           <img src={assets.logo} className='mb-5 w-32' alt="Forever Logo" />
           <p className='w-full md:w-2/3 text-gray-600 leading-relaxed dark:text-slate-300'>
             An edit of quiet luxury, considered silhouettes, and exceptional fabrics, curated for a wardrobe that speaks with confidence.
@@ -63,22 +85,6 @@ const Footer = () => {
               <a href='mailto:foreverglobal.new@gmail.com' className='hover:underline'>foreverglobal.new@gmail.com</a>
             </li>
           </ul>
-        </div>
-      </div>
-
-      <div className='luxury-brands border-y border-gray-200 dark:border-slate-700' aria-label='Luxury designers'>
-        <div className='luxury-brands-track'>
-          {[...luxuryBrands, ...luxuryBrands].map((brand, index) => (
-            <a
-              key={`${brand}-${index}`}
-              href='https://www.mytheresa.com/int/en/women/designers'
-              target='_blank'
-              rel='noreferrer'
-              className='luxury-brand'
-            >
-              {brand}
-            </a>
-          ))}
         </div>
       </div>
 
