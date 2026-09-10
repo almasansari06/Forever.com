@@ -16,13 +16,18 @@ const Collection = () => {
   const [productTypes, setProductTypes] = useState([]);
   const [categories, setCategories] = useState(['Men', 'Women', 'Kids']);
   const [currentPage, setCurrentPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
-  const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth < 768 ? 20 : 30);
+  const getItemsPerPage = () => {
+    if (window.innerWidth < 768) return 20;
+    if (window.innerWidth < 1024) return 30;
+    return 32;
+  };
+  const [itemsPerPage, setItemsPerPage] = useState(getItemsPerPage);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const sortMenuRef = useRef(null);
 
   useEffect(() => {
     const updateItemsPerPage = () => {
-      setItemsPerPage(window.innerWidth < 768 ? 20 : 30);
+      setItemsPerPage(getItemsPerPage());
     };
 
     window.addEventListener('resize', updateItemsPerPage);
