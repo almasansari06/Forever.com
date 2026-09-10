@@ -252,7 +252,7 @@ const ShopContextProvider = (props) => {
         window.addEventListener('focus', refreshProducts);
         window.addEventListener('storage', handleProductsUpdated);
         window.addEventListener('products-updated', handleProductsUpdated);
-        const refreshTimer = window.setInterval(fetchProducts, 5000);
+        const refreshTimer = window.setInterval(fetchProducts, 60 * 1000);
 
         return () => {
             window.clearInterval(refreshTimer);

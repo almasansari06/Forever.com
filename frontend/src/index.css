@@ -213,6 +213,8 @@ a.active hr{
     display: flex;
     width: max-content;
     align-items: center;
+    contain: layout paint;
+    will-change: transform;
     animation: luxuryMarquee 34s linear infinite;
   }
 
