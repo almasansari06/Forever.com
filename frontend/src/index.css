@@ -169,6 +169,62 @@ a.active hr{
     font-style: normal;
   }
 
+  @keyframes luxuryMarquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  .luxury-brands {
+    overflow: hidden;
+    padding: 1.35rem 0;
+    background: rgba(255, 255, 255, 0.46);
+  }
+
+  .luxury-brands-track {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    animation: luxuryMarquee 34s linear infinite;
+  }
+
+  .luxury-brand {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 1.5rem;
+    color: #111827;
+    font-family: Prata, serif;
+    font-size: clamp(0.9rem, 1.8vw, 1.35rem);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: color 180ms ease;
+  }
+
+  .luxury-brand::after {
+    content: '✦';
+    margin-left: 3rem;
+    color: #a16207;
+    font-family: Outfit, sans-serif;
+    font-size: 0.7rem;
+  }
+
+  .luxury-brand:hover {
+    color: #a16207;
+  }
+
+  .luxury-brands:hover .luxury-brands-track {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .luxury-brands-track {
+      animation: none;
+    }
+  }
+
   ::-webkit-scrollbar{
     display: none;
   }

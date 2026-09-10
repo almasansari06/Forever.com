@@ -7,6 +7,24 @@ import { translations } from '../data/translations';
 const Footer = () => {
   const { language } = useContext(ShopContext);
   const t = translations[language] || translations.en;
+  const luxuryBrands = [
+    'Gucci',
+    'Prada',
+    'Valentino',
+    'Bottega Veneta',
+    'Balenciaga',
+    'Burberry',
+    'Dior',
+    'Saint Laurent',
+    'Versace',
+    'Moncler',
+    'Loewe',
+    'Givenchy',
+    'Fendi',
+    'Alexander McQueen',
+    'Dolce & Gabbana',
+    'Brunello Cucinelli',
+  ];
 
   return (
     <div className='transition-colors duration-300'>
@@ -14,7 +32,7 @@ const Footer = () => {
         <div>
           <img src={assets.logo} className='mb-5 w-32' alt="Forever Logo" />
           <p className='w-full md:w-2/3 text-gray-600 leading-relaxed dark:text-slate-300'>
-            Elevating your everyday wardrobe with timeless designs, premium quality fabrics, and effortless style. Crafted to keep you confident for every occasion.
+            An edit of quiet luxury, considered silhouettes, and exceptional fabrics, curated for a wardrobe that speaks with confidence.
           </p>
         </div>
 
@@ -45,6 +63,22 @@ const Footer = () => {
               <a href='mailto:foreverglobal.new@gmail.com' className='hover:underline'>foreverglobal.new@gmail.com</a>
             </li>
           </ul>
+        </div>
+      </div>
+
+      <div className='luxury-brands border-y border-gray-200 dark:border-slate-700' aria-label='Luxury designers'>
+        <div className='luxury-brands-track'>
+          {[...luxuryBrands, ...luxuryBrands].map((brand, index) => (
+            <a
+              key={`${brand}-${index}`}
+              href='https://www.mytheresa.com/int/en/women/designers'
+              target='_blank'
+              rel='noreferrer'
+              className='luxury-brand'
+            >
+              {brand}
+            </a>
+          ))}
         </div>
       </div>
 
