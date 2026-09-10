@@ -30,7 +30,7 @@ const LatestCollection = () => {
             </p>
         </div>
       {/*Rendering products*/}
-            <FeaturedProductCarousel products={latestProducts} viewMorePath='/collection' />
+            <FeaturedProductCarousel products={latestProducts} viewMorePath='/collection?featured=latest' />
     </div>
   )
 }

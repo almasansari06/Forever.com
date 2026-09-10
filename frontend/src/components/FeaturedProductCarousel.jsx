@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductItem from './ProductItem'
 
-const MAX_FEATURED_PRODUCTS = 8
-
-const FeaturedProductCarousel = ({ products, viewMorePath }) => {
+const FeaturedProductCarousel = ({ products, viewMorePath, maxProducts = 8 }) => {
   const [hasInteracted, setHasInteracted] = useState(false)
-  const featuredProducts = products.slice(0, MAX_FEATURED_PRODUCTS)
+  const featuredProducts = products.slice(0, maxProducts)
   const desktopPages = []
   const tabletPages = []
   const mobilePages = []
@@ -50,9 +48,9 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
         onScroll={() => setHasInteracted(true)}
         className='sm:hidden relative flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
-        {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
+        {!hasInteracted && products.length > maxProducts && <SwipeHint />}
         {mobilePages.map((page, index) => productPage(page, index, 2))}
-        {products.length > MAX_FEATURED_PRODUCTS && (
+        {products.length > maxProducts && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
             <Link
               to={viewMorePath}
@@ -68,9 +66,9 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
         onScroll={() => setHasInteracted(true)}
         className='hidden sm:flex md:hidden relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
-        {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
+        {!hasInteracted && products.length > maxProducts && <SwipeHint />}
         {tabletPages.map((page, index) => productPage(page, index, 3))}
-        {products.length > MAX_FEATURED_PRODUCTS && (
+        {products.length > maxProducts && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
             <Link to={viewMorePath} className='w-36 h-12 flex items-center justify-center border border-gray-300 text-sm font-medium hover:bg-gray-100 transition-colors dark:border-slate-700 dark:hover:bg-slate-800'>
               View More
@@ -83,9 +81,9 @@ const FeaturedProductCarousel = ({ products, viewMorePath }) => {
         onScroll={() => setHasInteracted(true)}
         className='hidden md:flex relative overflow-x-auto snap-x snap-mandatory overscroll-x-contain scroll-smooth'
       >
-        {!hasInteracted && products.length > MAX_FEATURED_PRODUCTS && <SwipeHint />}
+        {!hasInteracted && products.length > maxProducts && <SwipeHint />}
         {desktopPages.map((page, index) => productPage(page, index, 4))}
-        {products.length > MAX_FEATURED_PRODUCTS && (
+        {products.length > maxProducts && (
           <div className='min-w-full snap-start flex items-center justify-center px-1'>
             <Link
               to={viewMorePath}
