@@ -5,6 +5,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
 import ChatBot from './components/ChatBot'
+import WelcomeTicker from './components/WelcomeTicker'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ShopContext } from './context/ShopContext'
@@ -61,6 +62,7 @@ const App = () => {
           theme={theme === 'dark' ? 'dark' : 'light'}
         />
         <Navbar />
+        <WelcomeTicker />
         <SearchBar />
         <Suspense fallback={<div className='min-h-[50vh] flex items-center justify-center text-sm text-gray-500'>Loading...</div>}>
           <Routes>

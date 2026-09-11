@@ -12,6 +12,13 @@ const fallbackCurrencyRates = {
     AUD: 1.53, SGD: 1.34, JPY: 157, CNY: 7.2
 };
 
+const countryCodeToFlag = (countryCode) => {
+    if (!countryCode || countryCode.length !== 2) return '🌍';
+    return [...countryCode.toUpperCase()]
+        .map((letter) => String.fromCodePoint(letter.charCodeAt(0) + 127397))
+        .join('');
+};
+
 const fetchLiveCurrencyRates = async () => {
     const endpoints = [
         'https://open.er-api.com/v6/latest/USD',
@@ -41,6 +48,7 @@ const fetchLiveCurrencyRates = async () => {
 
 const ShopContextProvider = (props) => {
     const [currencyDetails, setCurrencyDetails] = useState({ code: 'USD', rate: 1 });
+    const [countryDetails, setCountryDetails] = useState({ name: '', flag: '🌍' });
     const delivery_fee = 10;
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
@@ -78,6 +86,10 @@ const ShopContextProvider = (props) => {
                 const liveRates = await fetchLiveCurrencyRates();
                 const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
                 const data = await response.json();
+                setCountryDetails({
+                    name: data.country_name || '',
+                    flag: countryCodeToFlag(data.country_code),
+                });
                 const details = currencyByCountry[data.country_code];
 
                 if (details) {
@@ -332,6 +344,7 @@ const ShopContextProvider = (props) => {
     const value = {
         currency: currencyDetails.code,
         currencyRate: currencyDetails.rate,
+        countryDetails,
         formatPrice,
         delivery_fee,
         backendUrl,

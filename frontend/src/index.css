@@ -34,6 +34,59 @@
   animation: gallery-slide-prev 320ms ease-out both;
 }
 
+@keyframes welcomeTicker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.welcome-ticker {
+  overflow: hidden;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  background: #111827;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.welcome-ticker__track {
+  display: flex;
+  width: max-content;
+  animation: welcomeTicker 22s linear infinite;
+}
+
+.welcome-ticker__message {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.25rem;
+  padding: 0 3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.welcome-ticker__dot {
+  color: #fbbf24;
+  font-size: 0.7rem;
+}
+
+.welcome-ticker:hover .welcome-ticker__track {
+  animation-play-state: paused;
+}
+
+html.dark .welcome-ticker {
+  border-color: #334155;
+  background: #020617;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-ticker__track {
+    animation: none;
+    transform: translateX(0);
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
