@@ -274,7 +274,7 @@ const Login = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
-      if (currentState === 'Sign Up with Instagram') {
+      if (currentState === 'Sign Up with Snapchat') {
         if (!showPermissionModal) {
           openPermissionModal();
           return;
@@ -366,7 +366,7 @@ const Login = () => {
         <hr className='border-none h-[1.5px] w-8 bg-gray-800' />
       </div>
 
-      {showPermissionModal && currentState === 'Sign Up with Instagram' && (
+      {showPermissionModal && currentState === 'Sign Up with Snapchat' && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4'>
           <div className='w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl'>
             <div className='mb-4 text-center'>
@@ -387,7 +387,7 @@ const Login = () => {
         </div>
       )}
 
-      {/* Username Field for Instagram Signup */}
+      {/* Username Field for Snapchat Signup */}
       {currentState === 'Login' ? (
         ''
       ) : (
@@ -396,7 +396,7 @@ const Login = () => {
           value={name}
           type="text"
           className='w-full px-3 py-2 border border-gray-800 rounded-xs'
-          placeholder='Username (Instagram Username)'
+          placeholder='Username (Snapchat Username)'
           required
         />
       )}
@@ -500,7 +500,7 @@ const Login = () => {
 
         {currentState === 'Login' ? (
           <p onClick={() => {
-            setCurrentState('Sign Up with Instagram');
+            setCurrentState('Sign Up with Snapchat');
             setIsForgotPassword(false);
             resetFlowState();
           }} className='cursor-pointer font-medium text-pink-600 hover:underline'>
@@ -527,7 +527,7 @@ const Login = () => {
         {isVerifyingOtp ? 'Verifying...' : (
           isForgotPassword
             ? (passwordResetReady ? 'Update Password' : (otpSent ? 'Verify Code' : 'Send Reset Code'))
-            : (currentState === 'Sign Up with Instagram' ? 'Create Account' : (otpSent ? 'Verify & Login' : t.signIn))
+            : (currentState === 'Sign Up with Snapchat' ? 'Create Account' : (otpSent ? 'Verify & Login' : t.signIn))
         )}
       </button>
     </form>
