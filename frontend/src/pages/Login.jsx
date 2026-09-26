@@ -274,7 +274,7 @@ const Login = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
-      if (currentState === 'Sign Up with Snapchat') {
+      if (currentState === 'Sign Up') {
         if (!showPermissionModal) {
           openPermissionModal();
           return;
@@ -350,14 +350,13 @@ const Login = () => {
     }
   };
 
-
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-10 gap-4 text-gray-800'>
       
-      {/* English Discount Banner Message */}
+      {/* Discount Banner Message */}
       <div className='promo-banner w-full rounded-xl border p-3 text-center shadow-sm'>
         <p className='text-xs font-semibold leading-relaxed text-gray-800'>
-          {t.signUpDiscountBanner.replace('40%', '40%')}
+          Signup and get 40% off
         </p>
       </div>
 
@@ -366,7 +365,7 @@ const Login = () => {
         <hr className='border-none h-[1.5px] w-8 bg-gray-800' />
       </div>
 
-      {showPermissionModal && currentState === 'Sign Up with Snapchat' && (
+      {showPermissionModal && currentState === 'Sign Up' && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4'>
           <div className='w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl'>
             <div className='mb-4 text-center'>
@@ -387,7 +386,7 @@ const Login = () => {
         </div>
       )}
 
-      {/* Username Field for Snapchat Signup */}
+      {/* Name Field for Sign Up */}
       {currentState === 'Login' ? (
         ''
       ) : (
@@ -396,7 +395,7 @@ const Login = () => {
           value={name}
           type="text"
           className='w-full px-3 py-2 border border-gray-800 rounded-xs'
-          placeholder='Username (Snapchat Username)'
+          placeholder='Enter your name'
           required
         />
       )}
@@ -500,7 +499,7 @@ const Login = () => {
 
         {currentState === 'Login' ? (
           <p onClick={() => {
-            setCurrentState('Sign Up with Snapchat');
+            setCurrentState('Sign Up');
             setIsForgotPassword(false);
             resetFlowState();
           }} className='cursor-pointer font-medium text-pink-600 hover:underline'>
@@ -527,7 +526,7 @@ const Login = () => {
         {isVerifyingOtp ? 'Verifying...' : (
           isForgotPassword
             ? (passwordResetReady ? 'Update Password' : (otpSent ? 'Verify Code' : 'Send Reset Code'))
-            : (currentState === 'Sign Up with Snapchat' ? 'Create Account' : (otpSent ? 'Verify & Login' : t.signIn))
+            : (currentState === 'Sign Up' ? 'Create Account' : (otpSent ? 'Verify & Login' : t.signIn))
         )}
       </button>
     </form>
@@ -535,3 +534,4 @@ const Login = () => {
 };
 
 export default Login;
+                                          
